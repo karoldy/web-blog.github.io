@@ -1,0 +1,32 @@
+@tailwind utilities;
+
+@font-face {
+  font-family: "Open Monaco";
+  src: url('../../public/fonts/Monaco.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: Monaco, 'Open Monaco', Menlo, Consolas, Inconsolata;
+}
+
+code {
+  font-family: Monaco, 'Open Monaco', Menlo, Consolas, Inconsolata !important;
+}
+
+.cards.cards {
+  gap: 2rem;
+}
+
+.cards span {
+  margin: auto;
+}
+
+.dark .cards.cards a {
+  border-color: rgb(150, 150, 150);
+}
+
+.dark .cards.cards a:hover {
+  border-color: white;
+}

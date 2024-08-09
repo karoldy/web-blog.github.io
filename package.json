@@ -1,0 +1,50 @@
+{
+  "name": "web-blog.github.io",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev --port 8008",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:mdx": "markdownlint  ./src/pages/**/*.mdx"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.4.2",
+    "@fortawesome/fontawesome-svg-core": "^6.4.2",
+    "@fortawesome/free-solid-svg-icons": "^6.4.2",
+    "@fortawesome/react-fontawesome": "^0.2.0",
+    "next": "latest",
+    "nextra": "latest",
+    "nextra-theme-docs": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "reactflow": "^11.10.4"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "husky": "latest",
+    "lint-staged": "latest",
+    "markdownlint-cli": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "link-staged"
+    }
+  },
+  "lint-staged": {
+    "src/pages/**/*.mdx": [
+      "yarn lind:mdx ",
+      "git add"
+    ]
+  }
+}
