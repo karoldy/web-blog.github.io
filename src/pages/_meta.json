@@ -6,6 +6,9 @@
     },
     "display": "hidden"
   },
+  "browser": "浏览器",
+  "javascript": "JavaScript",
+  "linux": "Linux",
   "markdown": "Markdown",
   "markdown-link": "Markdown Link"
 }
