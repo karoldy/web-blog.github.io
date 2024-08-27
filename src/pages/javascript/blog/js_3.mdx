@@ -1,0 +1,93 @@
+# 同时多次调用同个接口，如何只触发一次而不是触发多次
+
+## 前言
+
+场景：我们进入某应用项目某页面，同时调用多个接口，此时，我们需要请求`token`，如果我们使用的是axios来请求，我们一般会在请求拦截器里进行处理，大致是如何检查到本地缓存不存在 `token`，说明是第一次进入应用，还没请求`token`并缓存下到本地，与此同时调用多个接口，也就会触发请求`token`的接口多次，而我们理想的方案是多个接口使用的是均是第一次请求的`token`，后续接口使用的也是第一次缓存的`token`，那么我们如何操作才能达实现呢？
+
+## 方案
+
+我们需要编写一个 **「重复触发多次，只返回第一次请求的结果」** 函数
+
+```js
+function repeatOnce (getResult, local_name) {
+  return new Promise(async (resolve) => {
+    const local_result = localStorage.getItem(local_name)
+    if(local_result){
+      console.log('%c [ 存在 ]-1166', 'font-size:13px; background:pink; color:#bf2c9f;', )
+      resolve(local_result)
+    } else{
+      if (!repeatOnce.count) {
+        repeatOnce.count = 0
+        repeatOnce.count++
+        console.log('%c [ 刚进入应用页面，缓存结果不存在，需要请求并缓存到本地 ]-1169', 'font-size:13px; background:pink; color:#bf2c9f;', )
+        const request_result = await getResult()
+        localStorage.setItem(local_name, request_result)
+        resolve(request_result)
+        repeatOnce.emitter.emit('ok', request_result)
+      } else {
+        repeatOnce.count++
+        console.log('%c [ repeatOnce.count 第'+repeatOnce.count+'次请求等待返回结果]-64', 'font-size:13px; background:pink; color:#bf2c9f;', repeatOnce.count)
+        repeatOnce.emitter.on('ok',(result) => {
+          repeatOnce.count = 0
+          resolve(result)
+        })
+      }
+    }
+  })
+}
+
+repeatOnce.emitter = {
+  _events:{},
+  on(eventName, callback){
+    //判断是有已经有对应的事件名
+    if (!this._events[eventName]) {
+      this._events[eventName] = [callback];
+    } else {
+      this._events[eventName].push(callback);
+    }
+  },
+  emit(eventName, ...args){
+    this._events[eventName]?.forEach(event => event(...args));
+  }
+}
+```
+
+通过静态变量 count 来计数，来判断是否的第一个请求，是则去调用 `token` 接口，后续发起的请求，就全部挂起等第一次`token`的结果返回，返回会第一时间通知后面发起的请求，`emitter`则是一个订阅和通知的对象，用它来挂起后面的请求，让等待第一个token接口返回结果 并 `emit` 携带 `token` 结果进行 通知
+
+**示例**
+
+```js
+// 模拟的请求token的方法
+function getToken(){
+  return new Promise((resolve, reject)=>{
+    setTimeout(()=>{
+      resolve('我是请求的结果数据 - token')
+    }
+    ,1000)
+  })
+}
+
+// token Promise
+const token = repeatOnce.bind(null, getToken, 'Access_Token')
+
+
+// 页面有3个方法，每个方法里面都调用了同个接口，类似token
+async function request1(){
+  const res= await token()
+  console.log('%c [ request1 ]-1226', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+}
+async function request2(){
+  const res= await token()
+  console.log('%c [ request2 ]-1226', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+}
+async function request3(){
+  const res= await token()
+  console.log('%c [ request3 ]-1226', 'font-size:13px; background:pink; color:#bf2c9f;', res)
+}
+
+// 页面触发了 3 个 接口，每个接口都请求了相同的接口，但是只会触发一次token接口，使用的token均是第一次请求的token值
+
+request1()
+request2()
+request3()
+```
