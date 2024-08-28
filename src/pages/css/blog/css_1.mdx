@@ -1,0 +1,908 @@
+# Css的几个重要属性
+
+## 前言
+
+本文将介绍一些常用的 CSS 属性，包括 `border`、`display`、`padding`、`margin`、`rem`、`em` 和 `box-sizing`。这些属性涵盖了 CSS 中的基本概念和常见用法，掌握它们可以让你在 CSS 中游刃有余
+
+## Box-sizing
+
+```css
+.css {
+  box-sizing: content-box;
+  box-sizing: border-box;
+}
+```
+
+CSS `box-sizing` 属性用于设置 HTML 元素的盒模型。
+盒模型是指元素的宽度和高度是由内容、内边距、边框和外边距组成的。
+CSS 中有两种盒模型：内容盒模型和边框盒模型。
+
+- 内容盒模型（`box-sizing: content-box`）：元素的宽度和高度只包括内容，
+不包括内边距、边框和外边距。这是默认的盒模型。
+
+- 边框盒模型（`box-sizing: border-box`）：元素的宽度和高度包括内容、
+内边距和边框，不包括外边距。
+
+使用 `border-box` 盒模型可以更方便地设置元素的宽度和高度，
+因为不需要考虑内边距和边框的影响。
+例如，如果要创建一个宽度为 200px、内边距为 10px、边框为 1px 的盒子，
+使用 `content-box` 盒模型需要将宽度设置为 212px（200px + 2 × 10px + 2 × 1px），
+而使用 `border-box` 盒模型只需要将宽度设置为 200px。
+
+以下代码展示了 `box-sizing` 属性的用法：
+
+```css
+div {
+  width: 200px;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin: 10px;
+  box-sizing: content-box; /* 默认值 */
+}
+
+div.box {
+  box-sizing: border-box;
+}
+```
+
+## Fonts (rem, em)
+
+```css
+html {
+  font-size: 16px;
+}
+
+.parent {
+  font-size: 1.5em;
+}
+
+.child {
+  font-size: 1.5rem;
+  width: 10rem;
+  height: 5rem;
+  margin: 1rem;
+}
+```
+
+`rem` 和 `em` 都是 CSS 中用于设置字体大小的单位，但它们的计算方式不同。
+
+`rem` 单位是相对于根元素（即 `<html>` 元素）的字体大小来计算的。
+例如，如果根元素的字体大小为 16px，那么 `1rem` 就等于 16px，`2rem` 就等于 32px，
+以此类推。
+使用 `rem` 单位可以方便地实现响应式设计，
+因为根元素的字体大小可以根据屏幕尺寸或设备类型进行调整。
+
+`em` 单位是相对于父元素的字体大小来计算的。例如，如果父元素的字体大小为 16px，
+那么 `1em` 就等于 16px，`2em` 就等于 32px，以此类推。使用 `em` 单位
+可以方便地实现相对大小的字体和布局，因为它们可以根据父元素的字体大小进行缩放。
+
+以下代码展示了 `rem` 和 `em` 单位的用法：
+
+```css
+html {
+  font-size: 16px;
+}
+
+h1 {
+  font-size: 2rem; /* 等于 32px */
+}
+
+p {
+  font-size: 1.2rem; /* 等于 19.2px */
+  line-height: 1.5em; /* 等于 28.8px */
+}
+
+.container {
+  font-size: 1.5em; /* 等于父元素字体大小的 1.5 倍 */
+}
+
+.box {
+  font-size: 0.8em; /* 等于父元素字体大小的 0.8 倍 */
+  padding: 1em; /* 等于父元素字体大小的 1 倍 */
+}
+```
+
+## Padding & Margin
+
+```css
+.box {
+  padding: 20px;
+  margin: 20px;
+  /* 上 下 左 右 */
+  padding: 20px 10px 20px 20px;
+}
+```
+
+CSS `padding` 和 `margin` 属性用于设置 HTML 元素的内边距和外边距：
+
+- `padding-top`、`padding-right`、`padding-bottom`、`padding-left`: 
+分别设置上、右、下、左四个方向的内边距。
+
+- `padding`: 设置上、右、下、左四个方向的内边距，可以使用一个、两个或四个值来设置。
+
+- `margin-top`、`margin-right`、`margin-bottom`、`margin-left`: 
+分别设置上、右、下、左四个方向的外边距。
+
+- `margin`: 设置上、右、下、左四个方向的外边距，可以使用一个、两个或四个值来设置。
+- `padding: auto`: 自动计算内边距，使元素居中。
+- `margin: auto`: 自动计算外边距，使元素居中。
+
+- `box-sizing: border-box`: 
+设置盒模型为边框盒模型，即元素的宽度和高度包括内边距和边框，不包括外边距。
+
+- `box-sizing: content-box`: 
+设置盒模型为内容盒模型，即元素的宽度和高度只包括内容，不包括内边距、边框和外边距。
+
+以下展示了 `padding` 和 `margin` 属性的多种用法：
+
+```css
+div {
+  padding-top: 10px;
+  padding-right: 20px;
+  padding-bottom: 30px;
+  padding-left: 40px;
+}
+
+span {
+  padding: 10px 20px;
+}
+
+p {
+  margin-top: 10px;
+  margin-right: 20px;
+  margin-bottom: 30px;
+  margin-left: 40px;
+}
+
+a {
+  margin: 10px 20px;
+}
+
+.center {
+  padding: auto;
+  margin: auto;
+  width: 200px;
+  height: 100px;
+  background-color: #ccc;
+}
+
+.box {
+  box-sizing: border-box;
+  width: 200px;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin: 10px;
+}
+
+.content {
+  box-sizing: content-box;
+  width: 200px;
+  height: 100px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin: 10px;
+}
+```
+
+## Display
+
+```css
+.box {
+  display: flex;
+  display: none;
+}
+```
+
+CSS 的 display 属性用于设置元素的显示方式：
+
+- `block`：将元素显示为块级元素，即在页面中显示为一块矩形区域，可以设置宽度、高度、内边距和外边距等属性。
+
+- `inline`：将元素显示为行内元素，即在页面中显示为一行，不可以设置宽度、高度、内边距和外边距等属性。
+
+- `inline-block`：将元素显示为行内块级元素，即在页面中显示为一行，但可以设置宽度、高度、内边距和外边距等属性。
+
+- `none`：将元素隐藏，不占用页面空间。
+
+- `flex`：将元素显示为弹性盒子，可以使用弹性盒子布局来排列子元素。
+
+- `grid`：将元素显示为网格容器，可以使用网格布局来排列子元素。
+
+- `table`：将元素显示为表格，可以使用表格布局来排列子元素。
+
+- `list-item`：将元素显示为列表项，通常用于 ul 和 ol 元素的子元素。
+
+- `inherit`：继承父元素的 display 属性值。 
+
+## Position
+
+```css
+.box {
+  position: absolute;
+}
+```
+
+CSS 的 position 属性用于设置元素的定位方式：
+
+- `static`：默认值，元素按照正常文档流排列，不进行定位。
+- `relative`：相对定位，元素相对于其正常位置进行定位，可以使用 top、right、bottom、left 属性来设置偏移量。
+- `absolute`：绝对定位，元素相对于其最近的已定位祖先元素进行定位，如果没有已定位的祖先元素，则相对于 body 元素进行定位，可以使用 top、right、bottom、left 属性来设置偏移量。
+- `fixed`：固定定位，元素相对于浏览器窗口进行定位，不随页面滚动而滚动，可以使用 top、right、bottom、left 属性来设置偏移量。
+- `sticky`：粘性定位，元素在滚动到特定位置时变为固定定位，可以使用 top、right、bottom、left 属性来设置偏移量。
+
+## Width & Height
+
+```css
+.box {
+  width: auto;
+  height: auto;
+  max-width: 1920px;
+  max-height: 1080px;
+}
+```
+
+CSS 的 width 和 height 属性用于设置元素的宽度和高度：
+
+- `auto`：默认值，元素的宽度或高度根据内容自适应。
+- `<length>`：使用具体的长度值来设置元素的宽度或高度，如 `width: 200px;`。
+- `<percentage>`：使用相对于父元素的百分比来设置元素的宽度或高度，如 `width: 50%;`。
+- `inherit`：继承父元素的宽度或高度属性值。
+
+除了这些基本用法，还可以使用其他一些属性来进一步控制元素的宽度和高度，例如：
+
+- `max-width` 和 `max-height`：设置元素的最大宽度和最大高度，超过这个值时会自动缩小。
+- `min-width` 和 `min-height`：设置元素的最小宽度和最小高度，小于这个值时会自动扩展。
+- `box-sizing`：设置元素的盒模型，可以选择 `content-box`（默认值，宽度和高度只包括内容，不包括内边距和边框）或 `border-box`（宽度和高度包括内容、内边距和边框）。
+- `padding` 和 `margin`：设置元素的内边距和外边距，会影响元素的实际宽度和高度。
+
+## max- & min-
+
+```css
+.box {
+  max-width: 1920px;
+  max-height: 1080px;
+  min-width: 1000px;
+  min-height: 500px;
+}
+```
+
+CSS 的 `max-width`、`min-width`、`max-height` 和 `min-height` 
+属性用于设置元素的最大宽度、最小宽度、最大高度和最小高度：
+
+- `max-width`：设置元素的最大宽度，超过这个宽度时会自动缩小。
+可以使用具体的长度值或百分比来设置，
+例如： `max-width: 500px;` 或 `max-width: 80%;`。
+
+- `min-width`：设置元素的最小宽度，小于这个宽度时会自动扩展。
+可以使用具体的长度值或百分比来设置，
+例如： `min-width: 200px;` 或 `min-width: 50%;`。
+
+- `max-height`：设置元素的最大高度，超过这个高度时会自动缩小。
+可以使用具体的长度值或百分比来设置，
+例如： `max-height: 300px;` 或 `max-height: 60%;`。
+
+- `min-height`：设置元素的最小高度，小于这个高度时会自动扩展。
+可以使用具体的长度值或百分比来设置，
+例如: `min-height: 100px;` 或 `min-height: 20%;`。
+
+## Border
+
+```css
+div {
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ccc;
+  border-top: 1px dashed #999;
+  border-radius: 10px;
+  border-image: url(border.png) 30 30 round;
+}
+```
+
+CSS `border` 属性用于设置 HTML 元素的边框样式、宽度和颜色：
+
+- `border-style`: 设置边框样式，如 `solid`、`dotted`、`dashed`、`double`、`groove`、`ridge`、`inset`、`outset` 或 `none`。
+- `border-width`: 设置边框宽度，如 `thin`、`medium`、`thick` 或具体的像素值。
+- `border-color`: 设置边框颜色，如颜色名称、十六进制值或 RGB 值。
+- `border-top`、`border-right`、`border-bottom`、`border-left`: 分别设置上、右、下、左四个方向的边框样式、宽度和颜色。
+- `border-radius`: 设置边框圆角，如 `10px` 或 `50%`。
+- `border-image`: 设置边框图片，如 `url(border.png) 30 30 round`。
+
+## Z-index
+
+```css
+.parent {
+  position: relative;
+  z-index: 1;
+}
+
+.child {
+  position: relative;
+  z-index: 2;
+}
+```
+
+`z-index` 属性用于控制元素的堆叠顺序，即控制元素在层叠上下文中的显示顺序。具体用法如下：
+
+1. 设置元素的 `z-index` 值，值越大，元素越靠近顶部，即显示在其他元素的上方。
+
+```css
+.element {
+  z-index: 10;
+}
+```
+
+2. 创建新的层叠上下文，通过设置 `position` 属性为 `relative`、`absolute` 或 `fixed` 来创建新的层叠上下文。
+
+```css
+.element {
+  position: relative;
+  z-index: 10;
+}
+```
+
+3. 层叠上下文的嵌套，当一个元素的子元素设置了 `z-index` 值时，子元素会在父元素的上方显示。
+
+```css
+.parent {
+  position: relative;
+  z-index: 1;
+}
+
+.child {
+  position: relative;
+  z-index: 2;
+}
+```
+
+>注意：`z-index` 属性只对设置了 `position` 属性的元素有效。
+
+## Overflow
+
+```css
+.demo {
+  overflow: auto;
+  overflow: visible;
+  overflow: hidden;
+}
+```
+
+`overflow` 属性用于控制元素内容溢出时的处理方式。具体用法如下：
+
+1. `overflow: visible;`（默认值）：内容不会被修剪，会呈现在元素框之外。
+
+2. `overflow: hidden;`：内容会被修剪，并且其余内容是不可见的。
+
+3. `overflow: scroll;`：内容会被修剪，但是浏览器会显示滚动条以便查看其余的内容。
+
+4. `overflow: auto;`：如果内容被修剪，则浏览器会显示滚动条以便查看其余的内容。
+
+>注意：`overflow` 属性只对设置了固定高度或宽度的元素有效。
+
+## CSS 伪类
+
+```css
+a:hover {
+  color: red;
+}
+
+li:nth-child(2) {
+  color: red;
+}
+```
+
+CSS 伪类用于向某些选择器添加特殊的效果：
+
+1. `:hover`：鼠标悬停在元素上时的效果。
+
+```css
+a:hover {
+  color: red;
+}
+```
+
+2. `:active`：元素被激活时的效果，通常是鼠标点击时。
+
+```css
+button:active {
+  background-color: blue;
+}
+```
+
+3. `:focus`：元素获得焦点时的效果，通常是通过 Tab 键或鼠标点击输入框等元素时。
+
+```css
+input:focus {
+  border: 2px solid blue;
+}
+```
+
+4. `:first-child`：选择元素的第一个子元素。
+
+```css
+li:first-child {
+  font-weight: bold;
+}
+```
+
+5. `:last-child`：选择元素的最后一个子元素。
+
+```css
+li:last-child {
+  margin-bottom: 0;
+}
+```
+
+6. `:nth-child(n)`：选择元素的第 n 个子元素。
+
+```css
+li:nth-child(2) {
+  color: red;
+}
+```
+
+7. `:nth-of-type(n)`：选择元素的第 n 个指定类型的子元素。
+
+```css
+p:nth-of-type(2) {
+  font-size: 20px;
+}
+```
+
+8. `:not(selector)`：选择不匹配指定选择器的元素。
+
+```css
+:not(.special) {
+  color: blue;
+}
+```
+
+## CSS 伪元素
+
+```css
+p::before {
+  content: '前缀: ';
+  font-weight: bold;
+}
+
+p::after {
+  content: '后缀: ';
+  font-style: italic;
+}
+```
+
+CSS 伪元素用于向某些选择器添加特殊的效果，
+它们可以创建一些不在文档树中的元素，并为其添加样式：
+
+1. `::before`：在元素的内容前面插入一个元素。
+
+```css
+p::before {
+  content: "前缀：";
+  font-weight: bold;
+}
+```
+
+2. `::after`：在元素的内容后面插入一个元素。
+
+```css
+p::after {
+  content: "后缀。";
+  font-style: italic;
+}
+```
+
+3. `::first-letter`：选择元素的第一个字母。
+
+```css
+p::first-letter {
+  font-size: 24px;
+  font-weight: bold;
+}
+```
+
+4. `::first-line`：选择元素的第一行。
+
+```css
+p::first-line {
+  font-size: 18px;
+  font-weight: bold;
+}
+```
+
+5. `::selection`：选择元素中被用户选中的部分。
+
+```css
+::selection {
+  background-color: yellow;
+  color: black;
+}
+```
+
+## Flexbox
+
+```css
+.container {
+  display: flex;
+}
+
+.container {
+  align-items: center;
+}
+```
+
+Flexbox 是一种用于布局的 CSS3 属性，它可以使元素在容器中按照一定的规则排列：
+
+1. `display: flex;`：将容器设置为 Flexbox 布局。
+
+```css
+.container {
+  display: flex;
+}
+```
+
+2. `flex-direction: row/column;`：设置主轴的方向，即元素的排列方向。
+
+```css
+.container {
+  flex-direction: row; /* 默认值 */
+}
+
+.container {
+  flex-direction: column;
+}
+```
+
+3. `justify-content: flex-start/center/flex-end/space-between/space-around;`：设置主轴上的对齐方式。
+
+```css
+.container {
+  justify-content: flex-start; /* 默认值 */
+}
+
+.container {
+  justify-content: center;
+}
+
+.container {
+  justify-content: flex-end;
+}
+
+.container {
+  justify-content: space-between;
+}
+
+.container {
+  justify-content: space-around;
+}
+```
+
+4. `align-items: stretch/flex-start/center/flex-end/baseline;`：设置交叉轴上的对齐方式。
+
+```css
+.container {
+  align-items: stretch; /* 默认值 */
+}
+
+.container {
+  align-items: flex-start;
+}
+
+.container {
+  align-items: center;
+}
+
+.container {
+  align-items: flex-end;
+}
+
+.container {
+  align-items: baseline;
+}
+```
+
+5. `flex-wrap: nowrap/wrap/wrap-reverse;`：设置元素是否换行。
+
+```css
+.container {
+  flex-wrap: nowrap; /* 默认值 */
+}
+
+.container {
+  flex-wrap: wrap;
+}
+
+.container {
+  flex-wrap: wrap-reverse;
+}
+
+6. `flex-grow: number;`：设置元素的放大比例。
+
+.item {
+  flex-grow: 1;
+}
+
+7. `flex-shrink: number;`：设置元素的缩小比例。
+
+.item {
+  flex-shrink: 1;
+}
+```
+
+8. `flex-basis: length/initial/auto;`：设置元素在主轴上的初始大小。
+
+```css
+.item {
+  flex-basis: 100px;
+}
+```
+
+## Grid
+
+```css
+.container {
+  display: grid;
+}
+
+.container {
+  grid-template-areas:
+    "header header header"
+    "sidebar content conyent"
+    "footer footer footer";
+}
+```
+
+CSS Grid 是一种用于布局的 CSS3 属性，它可以将元素划分为行和列，从而创建复杂的布局：
+
+1. `display: grid;`：将容器设置为 Grid 布局。
+
+```css
+.container {
+  display: grid;
+}
+```
+
+2. `grid-template-columns: value;`：设置列的大小和数量。
+
+```css
+.container {
+  grid-template-columns: 100px 100px 100px; /* 三列，每列宽度为 100px */
+}
+```
+
+3. `grid-template-rows: value;`：设置行的大小和数量。
+
+```css
+.container {
+  grid-template-rows: 100px 100px 100px; /* 三行，每行高度为 100px */
+}
+```
+
+4. `grid-template-areas: value;`：设置区域的名称。
+
+```css
+.container {
+  grid-template-areas:
+    "header header header"
+    "sidebar content content"
+    "footer footer footer";
+}
+```
+
+5. `grid-column-start/end: value;`：设置元素的列起始和结束位置。
+
+```css
+.item {
+  grid-column-start: 1;
+  grid-column-end: 3; /* 元素跨越两列 */
+}
+```
+
+6. `grid-row-start/end: value;`：设置元素的行起始和结束位置。
+
+```css
+.item {
+  grid-row-start: 1;
+  grid-row-end: 3; /* 元素跨越两行 */
+}
+```
+
+7. `grid-area: value;`：设置元素的区域名称。
+
+```css
+.item {
+  grid-area: content;
+}
+```
+
+8. `grid-gap: value;`：设置行和列之间的间距。
+
+```css
+.container {
+  grid-gap: 10px; /* 行和列之间的间距为 10px */
+}
+```
+
+## Transitions
+
+```css
+.box {
+  transition-property: background-color;
+}
+
+.box {
+  transition-delay: 0.5s;
+}
+```
+
+CSS Transitions 属性用于在元素从一种样式逐渐变为另一种样式时添加动画效果：
+
+1. `transition-property: value;`：设置要过渡的 CSS 属性。
+
+```css
+.box {
+  transition-property: background-color;
+}
+```
+
+2. `transition-duration: value;`：设置过渡的持续时间。
+
+```css
+.box {
+  transition-duration: 1s;
+}
+```
+
+3. `transition-timing-function: value;`：设置过渡的时间函数。
+
+```css
+.box {
+  transition-timing-function: ease-in-out;
+}
+```
+
+4. `transition-delay: value;`：设置过渡的延迟时间。
+
+```css
+.box {
+  transition-delay: 0.5s;
+}
+```
+
+## Animation
+
+```css
+.box {
+  animation-name: example;
+}
+
+.box {
+  animation-duration: 2s;
+}
+```
+
+CSS Animation 属性用于创建动画效果，它可以让元素从一种样式逐渐变为另一种样式：
+
+1. `animation-name: value;`：设置动画的名称。
+
+```css
+.box {
+  animation-name: example;
+}
+```
+
+2. `animation-duration: value;`：设置动画的持续时间。
+
+```css
+.box {
+  animation-duration: 2s;
+}
+```
+
+3. `animation-timing-function: value;`：设置动画的时间函数。
+
+```css
+.box {
+  animation-timing-function: ease-in-out;
+}
+```
+
+4. `animation-delay: value;`：设置动画的延迟时间。
+
+```css
+.box {
+  animation-delay: 0.5s;
+}
+```
+
+5. `animation-iteration-count: value;`：设置动画的播放次数。
+
+```css
+.box {
+  animation-iteration-count: infinite; /* 无限循环 */
+}
+```
+
+6. `animation-direction: value;`：设置动画的播放方向。
+
+```css
+.box {
+  animation-direction: alternate; /* 往返播放 */
+}
+```
+
+7. `animation-fill-mode: value;`：设置动画结束后元素的样式。
+
+```css
+.box {
+  animation-fill-mode: forwards; /* 保持最后一帧的样式 */
+}
+```
+
+8. `@keyframes`：定义动画的关键帧。
+
+```css
+@keyframes example {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+```
+
+## Media Queries
+
+```css
+@media screen and (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+}
+```
+
+CSS Media Queries 属性用于根据设备的特性（如屏幕宽度、高度、方向等）来应用不同的样式：
+
+1. `@media screen and (max-width: value) { ... }`：设置屏幕宽度小于某个值时应用的样式。
+
+```css
+@media screen and (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+}
+```
+
+2. `@media screen and (min-width: value) { ... }`：设置屏幕宽度大于某个值时应用的样式。
+
+```css
+@media screen and (min-width: 768px) {
+  body {
+    font-size: 18px;
+  }
+}
+```
+
+3. `@media screen and (orientation: value) { ... }`：设置屏幕方向为横向或纵向时应用的样式。
+
+```css
+@media screen and (orientation: landscape) {
+  body {
+    background-color: #f0f0f0;
+  }
+}
+```
+
+4. `@media screen and (resolution: value) { ... }`：设置屏幕分辨率大于某个值时应用的样式。
+
+```css
+@media screen and (resolution: 300dpi) {
+  body {
+    font-size: 20px;
+  }
+}
+```
