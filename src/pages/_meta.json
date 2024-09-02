@@ -12,7 +12,6 @@
   "javascript": "JavaScript",
   "react": "React",
   "linux": "Linux",
-  "markdown": "Markdown",
-  "markdown-link": "Markdown Link",
-  "resume": "简历"
+  "library": "工具库",
+  "markdown": "Markdown"
 }
