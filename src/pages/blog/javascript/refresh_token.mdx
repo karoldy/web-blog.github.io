@@ -1,0 +1,149 @@
+# 无感刷新token
+
+## 前言
+
+通常，对于一些需要记录用户行为的系统，在进行网络请求的时候都会要求传递一下登录的token。不过，为了接口数据的安全，服务器的token一般不会设置太长，根据需要一般是1-7天的样子，token过期后就需要重新登录。不过，频繁的登录会造成体验不好的问题，因此，需要体验好的话，就需要定时去刷新token，并替换之前的token。
+
+要做到token的无感刷新，主要有3种方案：
+
+## 方案一
+
+后端返回过期时间，前端每次请求就判断token的过期时间，如果快到过期时间，就去调用刷新token接口。
+
+**缺点**：需要后端额外提供一个token过期时间的字段；使用了本地时间判断，若本地时间被篡改，特别是本地时间比服务器时间慢时，拦截会失败。
+
+## 方案二
+
+写个定时器，然后定时刷新token接口。
+
+**缺点**：浪费资源，消耗性能,不建议采用。
+
+## 方案三
+
+在请求响应拦截器中拦截，判断token 返回过期后，调用刷新token接口。
+
+综合上面的三个方法，最好的是第三个，因为它不需要占用额外的资源。接下来，我们看一下使用`axios`进行网络请求，然后响应`service.interceptors.response`的拦截。
+
+```js
+import axios from 'axios';
+
+service.interceptors.response.use(
+  response => {
+    if (response.data.code === 401) {
+      return refreshToken(({ refreshToken: localStorage.getItem('refreshToken'), token: getToken() }))
+        .then((res) => {
+          const { tokne } = res.data;
+          setToken(token);
+          response.headers.Authorization = `${token}`;
+        })
+        .catch((err) => {
+          removeToken();
+          router.push('/login');
+          return Promise.reject(err);
+        })
+    }
+    return response && response.data;
+  },
+  (error) => {
+    Message.error(err.response.data.msg)
+    return Promise.reject(error);
+  }
+)
+```
+
+## 问题一：如何防止多次刷新token
+
+为了防止多次刷新token，可以通过一个变量isRefreshing 去控制是否在刷新token的状态
+
+```js
+import axios from 'axios';
+
+// 是否刷新的标记
+let isRefreshing = false;
+
+service.interceptors.response.use(
+  response => {
+    if (response.data.code === 401) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        return refreshToken(({ refreshToken: localStorage.getItem('refreshToken'), token: getToken() }))
+        .then((res) => {
+          const { tokne } = res.data;
+          setToken(token);
+          response.headers.Authorization = `${token}`;
+        })
+        .catch((err) => {
+          removeToken();
+          router.push('/login');
+          return Promise.reject(err);
+        })
+      }
+    }
+    return response && response.data;
+  },
+  (error) => {
+    Message.error(err.response.data.msg)
+    return Promise.reject(error);
+  }
+)
+```
+
+## 问题二：同时发起两个或者两个以上的请求时，怎么刷新token
+
+当第二个过期的请求进来，`token`正在刷新，我们先将这个请求存到一个数组队列中，想办法让这个请求处于等待中，一直等到刷新`token`后再逐个重试清空请求队列。那么如何做到让这个请求处于等待中呢？为了解决这个问题，我们得借助`Promise`。将请求存进队列中后，同时返回一个`Promise`，让这个`Promise`一直处于`Pending`状态（即不调用`resolve`），此时这个请求就会一直等啊等，只要我们不执行`resolve`，这个请求就会一直在等待。当刷新请求的接口返回来后，我们再调用`resolve`，逐个重试。
+
+```js
+import axios from 'axios';
+
+// 是否刷新的标记
+let isRefreshing = false;
+
+// 重试队列
+let requests = [];
+
+service.interceptors.response.use(
+  response => {
+    // 约定code 409 token 过期
+    if (response.data.code === 401) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        // 调用刷新token的接口
+        return refreshToken(({ refreshToken: localStorage.getItem('refreshToken'), token: getToken() }))
+        .then((res) => {
+          const { tokne } = res.data;
+          setToken(token);
+          response.headers.Authorization = `${token}`;
+          // token 刷新后将数组的方法重新执行
+          requests.forEach((cb) => cb(token));
+          // 重新请求完清空
+          requests = [];
+          return service(response.config);
+        })
+        .catch((err) => {
+          removeToken();
+          router.push('/login');
+          return Promise.reject(err);
+        })
+        .finally(() => {
+          isRefreshing = false;
+        })
+      } else {
+        // 返回未执行 resolve 的 Promise
+        return new Promise((resolve) => {
+          // 用函数形式将resolve存入，等待刷新后再执行
+          requests.push((token) => {
+            response.headers.Authorization = `${token}`
+            resolve(service(response.config))
+          })
+        })
+      }
+    }
+    return response && response.data;
+  },
+  (error) => {
+    Message.error(err.response.data.msg)
+    return Promise.reject(error);
+  }
+)
+```
+

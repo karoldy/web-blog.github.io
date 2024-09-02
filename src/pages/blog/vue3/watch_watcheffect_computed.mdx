@@ -1,0 +1,541 @@
+# Vue3 watch, watchEffect, computed的区别
+
+## watch
+
+### 功能
+
+`watch` 用于监听响应式数据的变化, 并在数据变化时执行特定的回调函数。适合在响应式数据变化时执行异步操作或复杂逻辑
+
+### 主要特点
+
+- **指定数据监听**：可以精确地监听一个或多个响应式数据。
+- **回调函数**：数据变化时调用指定的回调函数, 并传入新值和旧值。
+- **配置项**：支持 `immediate`(是否立即执行回调)和 `deep`(是否深度监听)配置
+
+### 典型应用场景
+
+- 需要执行异步操作(如 API 请求)。
+- 需要执行复杂的副作用操作。
+- 需要监听深层次的对象变化
+
+```js
+import { ref, watch } from 'vue';
+
+const count = ref(0);
+
+watch(count, (newValue, oldValue) => {
+  console.log(`依赖值改变${oldValue} -- ${newValue}`)
+}, { immediate: true, deep: false });
+```
+
+### 参数介绍
+
+- **第一个参数**：需要监听的响应式数据或 getter 函数。
+- **第二个参数**：回调函数, 接受新值和旧值作为参数。
+- **第三个参数**(可选)：配置项, 包括 `immediate` 和 `deep`。
+
+### 基本使用示例(父子组件结合ElementUI)
+
+`父组件`
+
+```vue
+<template>
+  <div>
+    <!-- 使用 ElementUI 的 el-input 组件输入内容 -->
+    <el-input v-model="parentInput" placeholder="Enter something"></el-input>
+    <!-- 将输入内容传递给子组件 -->
+    <ChildComponent :inputValue="parentInput">
+  </div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import ChildComponent from './ChildComponent.vue';
+
+const parentInput = ref('');
+</script>
+```
+
+`子组件`
+
+```vue
+<template>
+  <div>
+    <!-- 显示父组件传递的输入内容 -->
+    <p>父组件输入：{{ inputValue }}</p>
+  </div>
+</template>
+<script setup>
+import { watch, toRefs } from 'vue';
+
+// 定义 props 接收父组件传递的数据
+const props = defineProps({
+  inputValue: String
+});
+
+// 解构 props
+const { inputValue } = toRefs(props);
+
+// 监听 inputValue 的变化, 并在变化时执行回调
+watch(inputValue, (newValue) => {
+  console.log(`父组件输入改变：${newValue}`);
+});
+</script>
+```
+
+### 常见用法
+
+1. 监听单个响应式数据
+
+```js
+import { ref, watch } from 'vue';
+
+const count = ref(0);
+
+watch(count, (newValue, oldValue) => {
+  console.log(`count值改变${oldValue} -- ${newValue}`);
+});
+```
+
+2. 监听多个响应式数据
+
+```js
+import { ref, watch } from 'vue';
+
+const count1 = ref(0);
+const count2 = ref(0);
+
+watch([count1, count2], ([newCount1, newCount2], [oldCount1, oldCount2]) => {
+  console.log(`count1值改变${oldCount1} -- ${newCount1}`);
+  console.log(`count1值改变${oldCount2} -- ${newCount2}`);
+});
+```
+
+3. 深度监听对象`{ deep: true }`
+
+```js
+import { ref, watch } from 'vue';
+
+const person = ref({
+  name: 'Turbo',
+  age: 29
+});
+
+watch(person, (newPerson, oldPerson) => {
+  console.log(`Person改变${oldPerson.name} -- ${newPerson.name}`);
+}, { deep: true });
+```
+
+4. 立即执行回调`{ immediate: true }`
+
+```js
+import { ref, watch } from 'vue';
+
+const count = ref(0);
+
+watch(count, (newValue, oldValue) => {
+  console.log(`count值改变${oldValue} -- ${newValue}`);
+}, { immediate: true });
+```
+
+5. 监听 getter 函数
+
+```js
+import { ref, watch } from 'vue';
+
+const count = ref(0);
+
+// 使用 watch 监听一个 getter 函数
+watch(
+  // 第一个参数是一个 getter 函数, 该函数返回我们要监听的计算值
+  () => count.value + 1,
+  // 第二个参数是回调函数, 当 getter 函数的返回值发生变化时, 该回调函数会被调用
+  (newValue, oldValue) => {
+    console.log(`Computed值改变${oldValue} -- ${newValue}`);
+  }
+);
+```
+
+## watchEffect
+
+### 功能
+
+`watchEffect` 用于自动运行一个副作用函数, 并追踪其依赖。任何依赖变化时都会重新运行该函数。适合用来执行副作用, 但不需要明确指定依赖
+
+### 主要特点
+
+- **自动依赖追踪**：自动追踪副作用函数中的响应式数据依赖。
+- **立即执行**：函数会立即执行一次, 并在依赖变化时重新执行。
+- **简洁性**：不需要手动指定依赖, 代码更简洁。
+
+### 典型应用场景
+
+- 需要自动运行副作用函数, 并自动管理依赖。
+- 界面更新或 DOM 操作。
+
+```js
+import { ref, watchEffect } from 'vue';
+
+const count = ref(0);
+
+watchEffect(() => {
+  console.log(`count: ${count.value}`);
+}, { flush: 'pre' });
+```
+
+### 参数介绍
+
+- 第一个参数：副作用函数。
+- 第二个参数(可选)：配置项, 包括 `flush`
+
+`watchEffect` 的 `flush` 选项用于控制副作用函数的触发时机。`flush` 选项有三种可能的值：
+
+- `pre`：在组件更新前触发(这是默认值)。
+- `post`：在组件更新后触发。
+- `sync`：同步地触发。
+
+**flush: 'pre'**
+
+默认情况下, `watchEffect` 会在组件更新之前运行副作用函数。这意味着当响应式数据变化时, 副作用会在 DOM 更新前执行
+
+**flush: 'post'**
+
+将 `flush` 设置为 `'post'` 可以在组件更新后触发副作用函数。这对于那些需要访问更新后的 DOM 元素的副作用来说很有用。
+
+**flush: 'sync'**
+
+将 `flush` 设置为 `'sync'` 可以使副作用同步触发, 而不是等到下一个微任务队列。这意味着副作用会立即在响应式数据变化时执行。
+
+```js
+import { ref, watchEffect } from 'vue';
+
+const count = ref(0);
+
+// 默认 flush: 'pre'
+watchEffect(() => {
+  console.log(`count(pre): ${count.value}`);
+});
+
+// flush: 'post'
+watchEffect(() => {
+  console.log(`count(post): ${count.value}`);
+}, { flush: 'post' });
+
+// flush: 'sync'
+watchEffect(() => {
+  console.log(`count(sync): ${count.value}`);
+}, { flush: 'sync' });
+
+count.value++;
+```
+
+三个 `watchEffect` 会在不同的时机记录 `count` 的值：
+
+- `flush: 'pre'`  会在 DOM 更新前执行。
+- `flush: 'post'` 会在 DOM 更新后执行。
+- `flush: 'sync'` 会同步执行。
+
+### 基本使用示例(父子组件结合ElementUI)
+
+`父组件`
+
+```vue
+<template>
+  <div>
+    <!-- 使用 ElementUI 的 el-slider 组件输入数值 -->
+    <el-slider v-model="sliderValue"></el-slider>
+    <!-- 将滑动条的值传递给子组件 -->
+    <ChildComponent :sliderValue="sliderValue">
+  </div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import ChildComponent from './ChildComponent.vue';
+
+const sliderValue = ref(50);
+</script>
+```
+
+`子组件`
+
+```vue
+<template>
+  <div>
+    <!-- 显示父组件传递的滑动条的值 -->
+    <p>Slider value: {{ sliderValue }}</p>
+  </div>
+</template>
+<script setup>
+import { watchEffect, toRefs } from 'vue';
+
+// 定义 props 接收父组件传递的数据
+const props = defineProps({
+  sliderValue: Number
+});
+
+// 解构 props
+const { sliderValue } = toRefs(props);
+
+// 监听 sliderValue 的变化, 并在变化时执行副作用函数
+watchEffect(() => {
+  console.log(`Slider: ${sliderValue.value}`);
+});
+</script>
+```
+
+### 常见用法
+
+1. 基本用法
+
+```js
+import { ref, watchEffect } from 'vue';
+
+const count = ref(0);
+
+watchEffect(() => {
+  console.log(`count: ${count.value}`);
+});
+```
+
+2. 取消副作用
+
+```js
+import { ref, watchEffect } from 'vue';
+
+const count = ref(0);
+
+const stop = watchEffect(() => {
+  console.log(`count: ${count.value}`);
+});
+
+// 停止副作用
+stop();
+```
+
+3. 延迟执行`{ flush: 'post' }`
+
+```js
+import { ref, watchEffect } from 'vue';
+
+const count = ref(0);
+
+watchEffect(() => {
+  console.log(`count: ${count.value}`);
+}, { flush: 'post' });
+```
+
+4. 自定义调度
+
+```js
+import { ref, watchEffect } from 'vue';
+
+const count = ref(0);
+
+// 使用watchEffect自动追踪副作用
+watchEffect(
+  () => {
+    // 这个函数在 count 发生变化时会被调用
+    console.log(`count: ${count.value}`);
+  },
+  // 配置项：onTrack 和 onTrigger 是调试钩子
+  // onTrack 会在副作用追踪依赖时调用
+  onTrack(e) {
+    console.log('tracked', e);
+  },
+  // onTrigger 会在依赖变化导致副作用重新执行时调用
+  onTrigger(e) {
+    console.log('triggered', e);
+  }
+);
+```
+
+## computed
+
+### 功能
+
+`computed` 用于声明计算属性, 计算属性会根据其依赖的响应式数据自动更新, 并且具有缓存特性。适合计算派生状态或数据
+
+### 主要特点
+
+- **依赖管理**：计算属性根据依赖的响应式数据自动更新。
+- **缓存**：只有当依赖的数据变化时, 计算属性才会重新计算。
+- **简洁性**：声明式地定义派生数据, 代码简洁且易于维护。
+
+### 典型应用场景
+
+- 需要根据其他响应式数据派生出新的数据。
+- 需要高效的、缓存的计算属性。
+
+```js
+import { ref, computed } from 'vue';
+
+const count = ref(0);
+const doubleCount = computed(() => count.value * 2);
+```
+
+### 参数介绍
+
+- 第一个参数：`getter` 函数, 返回计算属性的值。
+- 第二个参数(可选)：`setter` 函数, 用于设置计算属性的值(可写计算属性)
+
+### 基本使用示例(父子组件结合ElementUI)
+
+`父组件`
+
+```vue
+<template>
+  <div>
+    <!-- 使用 ElementUI 的 el-input 组件输入内容 -->
+    <el-input v-model="inputValue" placeholder="Enter something"></el-input>
+    <!-- 将输入内容传递给子组件 -->
+    <ChildComponent :inputValue="inputValue">
+  </div>
+</template>
+<script setup>
+import { ref } from 'vue';
+import ChildComponent from './ChildComponent.vue';
+
+// 创建一个响应式变量inputValue, 用于存储输入的值
+const inputValue = ref('');
+</script>
+```
+
+`子组件`
+
+```vue
+<template>
+  <div>
+    <!-- 显示父组件传递的数值的平方 -->
+    <p>Squared value: {{ squaredNumber }}</p>
+  </div>
+</template>
+<script setup>
+import { computed, toRefs } from 'vue';
+
+// 定义 props 接收父组件传递的数据
+const props = defineProps({
+  number: Number
+});
+
+// 解构 props
+const { number } = toRefs(props);
+
+// 创建一个计算属性 squaredNumber, 计算 number 的平方
+const squaredNumber = computed(() => number.value * number.value);
+</script>
+```
+
+### 常见用法
+
+1. 基本用法
+
+```js
+import { ref, computed } from 'vue';
+
+const count = ref(0);
+
+const doubleCount = computed(() => count.value * 2);
+```
+
+2. 可计算属性
+
+```js
+import { ref, computed } from 'vue';
+
+const firstName = ref('John');
+const lastName = ref('Doe');
+const fullName = computed({
+  get: () => `${firstName.value} ${lastName.value}`,
+  set: (newValue) => {
+    const names = newValue.split(' ');
+    firstName.value = names[0];
+    lastName.value = names[1];
+  }
+});
+```
+
+3. 依赖其他计算属性
+
+```js
+import { ref, computed } from 'vue';
+
+const count = ref(0);
+
+const doubleCount = computed(() => count.value * 2);
+const tripleCount = computed(() => doubleCount.value * 1.5);
+```
+
+4. 使用模板种
+
+```vue
+<template>
+  <div>{{ doubleCount }}</div>
+</template>
+<script setup>
+import { ref, computed } from 'vue';
+
+const count = ref(0);
+const doubleCount = computed(() => count.value * 2);
+</script>
+```
+
+5. 配合`watch`使用
+
+```js
+import { ref, computed, watch } from 'vue';
+
+const count = ref(0);
+const doubleCount = computed(() => count.value * 2);
+watch(doubleCount, (newValue) => {
+  console.log(`doubleCount: ${newValue}`);
+});
+```
+
+6. 配合`watchEffect`使用
+
+```js
+import { ref, computed, watchEffect } from 'vue';
+
+const count = ref(0);
+const doubleCount = computed(() => count.value * 2);
+watchEffect(() => {
+  console.log(`doubleCount: ${doubleCount.value}`);
+});
+```
+
+## 总结与区别
+
+`watch` 的多种用法
+
+- 监听单个响应式数据。
+- 监听多个响应式数据。
+- 深度监听对象。`{ deep: true }`
+- 立即执行回调。`{ immediate: true }`
+- 监听 getter 函数。
+
+`watchEffect` 的多种用法
+
+- 基本用法。
+- 取消副作用。
+- 延迟执行。`{ flush: ‘post’ }`
+- 自定义调度。
+
+`computed` 的多种用法
+
+- 基本用法。
+- 可写计算属性。 (get set)依赖其他计算属性。使
+- 用在模板中。
+- 配合 `watch` 使用。
+- 配合 `watchEffect` 使用。
+
+**区别**
+
+|特性|`watch`|`watchEffect`|`computed`|
+|:---|:---|:---|:---|
+|功能|监听响应式数据变化并执行回调|自动运行副作用函数并追踪依赖|声明计算属性, 根据依赖自动更新并缓存|
+|依赖管理|手动指定|自动追踪|自动管理|
+|缓存|无|无|有|
+|适用场景|异步操作、复杂副作用、深度监听|界面更新、副作用函数|派生状态、数据计算|
+|优点|精确控制、支持异步操作|自动依赖追踪、代码简洁|声明式、自动更新、缓存|
+|缺点|需要手动指定依赖、代码相对复杂|每次依赖变化时都会重新执行副作用函数|需要在创建时指定依赖, 无法动态改变计算逻辑|
+
+`Watch`、`Watcheffect`、`Computed`三种方法各有优劣, 选择使用哪种方法主要取决于具体的应用场景和需求。`watch` 适合复杂的副作用操作, `watchEffect `适合简单的自动副作用管理, 而 `computed` 适合声明式的派生状态计算。
