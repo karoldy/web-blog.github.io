@@ -6,12 +6,7 @@
     },
     "display": "hidden"
   },
-  "browser": "浏览器",
-  "html": "Html",
-  "css": "Css",
-  "javascript": "JavaScript",
-  "react": "React",
-  "linux": "Linux",
+  "blog": "笔记",
   "library": "工具库",
   "markdown": "Markdown"
 }

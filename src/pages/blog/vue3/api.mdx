@@ -1,0 +1,278 @@
+# Vue3 API
+
+### Vue 3 的主要特性
+
+在深入了解 Vue 3 的 API 之前，我们先来回顾一下 Vue 3 的主要特性。Vue 3 带来了许多新特性和改进，包括但不限于：
+
+- Composition API
+- Teleport
+- Fragments
+- Suspense
+- Improved TypeScript Support
+
+### Composition API
+
+Composition API 是 Vue 3 中引入的一种新的代码组织方式。它可以让我们更好地组织和复用代码，尤其是在大型项目中。主要的 Composition API 包括 `setup` 函数、`ref`、`reactive`、`computed` 和 `watch`。
+
+### setup 函数
+
+`setup` 函数是 Composition API 的入口，它在组件实例创建之前执行，可以用来定义组件的状态和行为。
+
+**示例代码**
+
+```vue
+<template>
+  <div>{{ count }}</div>
+  <button @click="increment">Increment</button>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+
+const count = ref(0);
+
+const increment = () => {
+  count.value++;
+};
+</script>
+```
+
+### ref
+
+`ref` 用来定义一个响应式的引用，它可以是任何类型的值。
+
+**示例代码**
+
+```vue
+<template>
+  <div>{{ message }}</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+
+const message = ref('Hello, Vue 3!');
+</script>
+```
+
+### reactive
+
+`reactive` 用来定义一个响应式的对象，它只能用来定义对象类型的值。
+
+**示例代码**
+
+```vue
+<template>
+  <div>{{ user.name }}</div>
+</template>
+
+<script setup>
+import { reactive } from 'vue';
+
+const user = reactive({
+  name: 'Alice',
+  age: 25
+});
+</script>
+```
+
+### computed
+
+`computed` 用来定义计算属性，它会根据依赖的值自动更新。
+
+**示例代码**
+
+```vue
+<template>
+  <div>{{ fullName }}</div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue';
+
+const firstName = ref('John');
+const lastName = ref('Doe');
+
+const fullName = computed(() => `${firstName.value} ${lastName.value}`);
+</script>
+```
+
+### watch
+
+`watch` 用来监听响应式数据的变化，并执行相应的回调。
+
+**示例代码**
+
+```vue
+<template>
+  <div>{{ count }}</div>
+</template>
+
+<script setup>
+import { ref, watch } from 'vue';
+
+const count = ref(0);
+
+watch(count, (newValue, oldValue) => {
+  console.log(`count changed from ${oldValue} to ${newValue}`);
+});
+
+setInterval(() => {
+  count.value++;
+}, 1000);
+</script>
+```
+
+### Teleport
+
+`Teleport` 是 Vue 3 引入的一种新的组件，它可以将组件的内容渲染到 DOM 树中的指定位置。
+
+**示例代码**
+
+```vue
+<template>
+  <teleport to="body">
+    <div class="modal">This is a modal</div>
+  </teleport>
+</template>
+
+<script setup>
+</script>
+
+<style scoped>
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+</style>
+```
+
+### Fragments
+
+在 Vue 3 中，组件可以返回多个根节点，这就是 Fragments 的概念。它可以减少不必要的 DOM 包装元素。
+
+**示例代码**
+
+```vue
+<template>
+  <>
+    <header>Header</header>
+    <main>Main Content</main>
+    <footer>Footer</footer>
+  </>
+</template>
+
+<script setup>
+</script>
+```
+
+### Suspense
+
+`Suspense` 组件用于处理异步组件加载时的占位符显示，可以极大地提升用户体验。
+
+**示例代码**
+
+```vue
+<template>
+  <Suspense>
+    <template #default>
+      <AsyncComponent />
+    </template>
+    <template #fallback>
+      <div>Loading...</div>
+    </template>
+  </Suspense>
+</template>
+
+<script setup>
+import { defineAsyncComponent } from 'vue';
+
+const AsyncComponent = defineAsyncComponent(() =>
+  import('./AsyncComponent.vue')
+);
+</script>
+```
+
+### Improved TypeScript Support
+
+Vue 3 对 TypeScript 的支持得到了极大改进，使得开发者可以更轻松地在项目中使用 TypeScript。
+
+**示例代码**
+
+```vue
+<template>
+  <div>{{ message }}</div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const message = ref<string>('Hello, TypeScript!');
+</script>
+```
+
+### Vue 3 的其他 API
+
+除了上述主要特性，Vue 3 还引入了许多其他有用的 API，比如 `emits`、`provide` 和 `inject` 等。
+
+### emits
+
+`emits` 选项用于声明组件中可以触发的事件。
+
+**示例代码**
+
+```vue
+<template>
+  <button @click="handleClick">Click me</button>
+</template>
+
+<script setup>
+import { defineEmits } from 'vue';
+
+const emit = defineEmits(['customEvent']);
+
+const handleClick = () => {
+  emit('customEvent', 'Hello, Vue 3!');
+};
+</script>
+```
+
+### provide 和 inject
+
+`provide` 和 `inject` 用于在组件树中传递数据，避免了通过 props 层层传递的麻烦。
+
+**示例代码**
+
+Parent.vue
+
+```vue
+<template>
+  <Child />
+</template>
+
+<script setup>
+import { provide } from 'vue';
+import Child from './Child.vue';
+
+provide('message', 'Hello from Parent!');
+</script>
+```
+
+Child.vue
+
+```vue
+<template>
+  <div>{{ message }}</div>
+</template>
+
+<script setup>
+import { inject } from 'vue';
+
+const message = inject('message');
+</script>
+```

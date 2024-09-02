@@ -1,0 +1,8 @@
+{
+  "design": "说说对设计模式的理解？常见的设计模式有哪些？",
+  "singleton_pattern": "说说你对单例模式的理解？如何实现？",
+  "factory_pattern": "说说你对工厂模式的理解？应用场景？",
+  "strategy_pattern": "说说你对策略模式的理解？应用场景？",
+  "proxy_pattern": "说说你对代理模式的理解？应用场景？",
+  "observer_pattern": "说说你对发布订阅、观察者模式的理解？区别？"
+}
