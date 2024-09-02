@@ -1,0 +1,132 @@
+# Vue3 和 Vue2 v-model的区别
+
+## 回顾 Vue2 中的 `v-model`
+
+在 Vue2 中，`v-model` 主要用于处理输入组件（如 `<input>`、`<textarea>` 和 `<select>`）的双向数据绑定。它实际上是 .sync 修饰符的语法糖，并且隐式创建了事件监听器来更新父组件的数据
+
+示例代码：Vue2 的 v-model
+
+```vue
+<div id="app">
+  <input v-model="message">
+  <p>Message is: {{ message }}</p>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data: {
+    message: ''
+  }
+});
+</script>
+```
+
+在上述代码中，`v-model` 指令绑定了输入框的值和 `Vue` 实例的 `message` 数据属性。双向绑定意味着通过输入框输入的内容会同步更新 `message`，而 `message` 的变化也会立即反映在输入框中
+
+## Vue3 中的 `v-model` 改进
+
+Vue3 对双向数据绑定进行了改进，使`v-model`更灵活和强大。以下是 Vue3 中 `v-model` 的两个主要变化
+
+1. 多个 `v-model` 绑定
+2. 名称自定义(通过 `modelValue`)
+
+### 多个 `v-model` 绑定
+
+在Vue2中，一个组件只能有一个 `v-model` 绑定，这就限制了组件的复用性。Vue 3 解决了这个问题，允许在一个组件中使用多个 `v-model` 绑定
+
+示例代码：Vue3中的多个 `v-model`
+
+```vue
+<div id="app">
+  <custom-component v-model:title="title" v-model:content="content"></custom-component>
+  <p>Title: {{ title }}</p>
+  <p>Content: {{ content }}</p>
+</div>
+
+<script>
+const CustomComponent = {
+  template: `
+    <div>
+      <input :value="title" @input="$emit('update:title', $event.target.value)">
+      <textarea :value="content" @input="$emit('update:content', $event.target.value)"></textarea>
+    </div>
+  `,
+  props: ['modelValue', 'title', 'content']
+};
+
+const app = Vue.createApp({
+  components: {
+    'custom-component': CustomComponent
+  },
+  data() {
+    return {
+      title: '',
+      content: ''
+    }
+  }
+});
+
+app.mount('#app');
+</script>
+```
+
+在这个示例中，我们创建了一个 `custom-component` 组件，并为其定义了两个 `v-model` 绑定属性：`title `和 `content`。通过使用 `@input` 监听器和事件 `$emit`，我们可以分别更新父组件的 `title` 和 `content` 数据属性
+
+### 名称自定义
+
+Vue3还引入了通过 `modelValue` 的方式自定义 `v-model` 绑定的名称。这个特性进一步增强了组件的复用性和灵活性，允许开发者使用具有描述性的名称替代默认的 `value` 和 `input`
+
+示例代码：Vue3 中的自定义 `v-model` 名称
+
+```vue
+<div id="app">
+  <custom-component v-model:title="pageTitle" v-model:description="pageDescription"></custom-component>
+  <p>Page Title: {{ pageTitle }}</p>
+  <p>Page Description: {{ pageDescription }}</p>
+</div>
+
+<script>
+const CustomComponent = {
+  template: `
+    <div>
+      <input :value="title" @input="$emit('update:title', $event.target.value)">
+      <textarea :value="description" @input="$emit('update:description', $event.target.value)"></textarea>
+    </div>
+  `,
+  props: {
+    title: String,
+    description: String
+  }
+};
+
+const app = Vue.createApp({
+  components: {
+    'custom-component': CustomComponent
+  },
+  data() {
+    return {
+      pageTitle: '',
+      pageDescription: ''
+    }
+  }
+});
+
+app.mount('#app');
+</script>
+```
+
+在这个示例中，我们将 `v-model` 属性自定义为了 `title` 和 `description`，并通过 `@input` 监听器和事件 `$emit('update:title')` 与 `$emit('update:description')` 实现了数据更新
+
+## 区别总结：Vue2 vs Vue3
+
+- 单一与多个绑定：在 Vue2 中，一个组件只能有一个 `v-model` 绑定，而在 Vue3 中，开发者可以为一个组件定义多个 `v-model` 绑定属性。
+- 默认与自定义命名：在 Vue2 中，`v-model` 默认为绑定 `value` 属性并监听 `input` 事件。在 Vue3 中，开发者可以自定义绑定属性名称和事件名称，使得组件更具描述性和灵活性
+
+### 使用情境
+
+在实际开发中，Vue3 中的 `v-model` 新特性使得复杂表单组件和复用性更高的组件更加轻松易用。例如，开发一个富文本编辑器时，我们可以通过多个 `v-model` 绑定传递标题、内容、标签等，简化了数据管理的复杂度。而自定义命名特性使得你的代码更易读，可维护性更高
+
+## 总结
+
+Vue3 对 `v-model` 的改进不仅仅是在语法糖上的改进，更赋予了开发者更多的灵活性和控制能力。通过多 `v-model` 绑定和名称自定义，开发者可以创建更复杂和高度复用的组件，从而大幅提升开发效率和代码质量。如果你正在从 Vue2 迁移到 Vue3，一定要充分利用这些新特性

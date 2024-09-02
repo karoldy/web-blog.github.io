@@ -12,6 +12,8 @@ body {
 }
 
 code {
+  color: #c7254e;
+  background-color: #f9f2f4;
   font-family: Monaco, 'Open Monaco', Menlo, Consolas, Inconsolata !important;
 }
 

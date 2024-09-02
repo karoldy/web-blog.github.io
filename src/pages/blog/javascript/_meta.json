@@ -33,6 +33,8 @@
   "pull_up_loading_pull_down_refresh": "如何实现上拉加载, 下拉刷新?",
   "single_sign": "什么是单点登录?如何实现?",
   "security": "web常见的攻击方式有哪些?如何防御?",
+  "mode_thread": "JavaScript模拟实现多线程",
+  "refresh_token": "无感刷新token",
   "js_1": "阻止关闭或刷新浏览器？分享 1 段优质 JS 代码片段！",
   "js_2": "如何终止 Promise 的继续执行呢？",
   "js_3": "同时多次调用同个接口，如何只触发一次而不是触发多次",
