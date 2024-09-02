@@ -8,7 +8,7 @@ const config = {
       <meta name="og:title" content="Nextra: the next docs builder" />
     </>
   ),
-  logo: <span>WEb Blog</span>,
+  logo: <span>Web Blog</span>,
   project: {
     link: "https://github.com/karoldy/web-blog.github.io",
   },

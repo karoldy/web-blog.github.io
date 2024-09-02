@@ -1,0 +1,19 @@
+{
+  "browser": "浏览器",
+  "html": "Html",
+  "css": "Css",
+  "javascript": "JavaScript",
+  "es6": "ES6",
+  "typescript": "TypeScript",
+  "vue2": "Vue2",
+  "vue3": "Vue3",
+  "react": "React",
+  "webpack": "Webpack",
+  "nodejs": "NodeJs",
+  "applet": "微信小程序",
+  "http": "Http",
+  "linux": "Linux",
+  "algorithm": "算法与数据结构系列",
+  "git": "Git代码管理",
+  "design": "设计模式"
+}
