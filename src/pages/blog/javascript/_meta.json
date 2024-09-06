@@ -27,17 +27,5 @@
   "functional_programming": "说说你对函数式编程的理解?优缺点?",
   "function_cache": "Javascript中如何实现函数缓存?函数缓存有哪些应用场景?",
   "loss_accuracy": "说说 Javascript 数字精度丢失的问题, 如何解决?",
-  "debounce_throttle": "什么是防抖和节流?有什么区别?如何实现?",
-  "visible": "如何判断一个元素是否在可视区域中?",
-  "continue_to_upload": "大文件上传如何做断点续传?",
-  "pull_up_loading_pull_down_refresh": "如何实现上拉加载, 下拉刷新?",
-  "single_sign": "什么是单点登录?如何实现?",
-  "security": "web常见的攻击方式有哪些?如何防御?",
-  "mode_thread": "JavaScript模拟实现多线程",
-  "refresh_token": "无感刷新token",
-  "js_1": "阻止关闭或刷新浏览器？分享 1 段优质 JS 代码片段！",
-  "js_2": "如何终止 Promise 的继续执行呢？",
-  "js_3": "同时多次调用同个接口，如何只触发一次而不是触发多次",
-  "js_4": "Js原型和原型链",
-  "js_5": "聊聊 Vue 和 React 的区别，看看你在哪个段位"
+  "mode_thread": "JavaScript模拟实现多线程"
 }

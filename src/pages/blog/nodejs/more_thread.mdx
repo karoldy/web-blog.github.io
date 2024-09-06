@@ -1,0 +1,124 @@
+# 说说NodeJS怎么实现多线程?
+
+>不够详细, 需要优化
+
+`NodeJS`是目前比较流行的后端编程语言之一, 它采用的事件驱动、非阻塞`I/O`的特性让它比其他语言更高效。
+
+尤其在实现高并发时, `NodeJS`的事件驱动和非阻塞`I/O`的优势尤为突出, 可以为我们的程序提供更加高效的运行方式。
+
+但是在某些情况下, 单线程运行模式实际上可能会成为一个难以逾越的瓶颈, 例如在处理`CPU`密集型任务的时候, 虽然`NodeJS`已经采用了异步非阻塞的`I/O`模型来解决`I/O`密集型的问题, 并降低代码复杂度。但是在使用`MPI`这样的多任务库时, 还是需要实现多线程的方案。然而, `NodeJS`的单线程模型并不支持多线程, 因此需要通过其他方式实现多线程的方案。
+
+## Child Process
+
+`NodeJS`中的`Child Process`模块提供了一种创建子进程的方式, 通过子进程实现多线程的方案。每个子进程都可以在自己的线程中执行, 从而避免了主进程中阻塞的问题。
+
+使用`Child Process`模块, 我们可以在子进程中执行一些`CPU`密集型的任务, 可以选择不同的策略来进行任务分配和数据交互。下面是一个使用`Child Process` 实现多线程加法运算的例子：
+
+```js showLineNumbers copy
+const { fork } = require('child_process');
+
+// 创建子进程
+const worker = fork('./worker');
+
+// 向子进程发送数据
+worker.send({ a: 1, b: 2 });
+
+// 接受来自子进程的数据
+worker.on('message', (res) => {
+  console.log('res', res);
+});
+
+// 错误处理
+worker.on('error', (err) => {
+  console.log('err', err);
+});
+```
+
+在这个例子中, 我们首先使用`Child Process`模块创建了一个子进程, 然后通过 `worker.send()`方法发送数据给子进程, 子进程执行完计算后将结果返回给主进程并通过`worker.on('message')`方法来接收返回值。这样就实现了多线程的计算。
+
+## Worker Threads
+
+`NodeJS`提供了另一种实现多线程的方式：`Worker Threads`, 它允许我们启动一个与主线程独立的子线程, 这个子线程可以执行一些耗时的任务, 从而避免了在单线程模型中阻塞主线程的问题。
+
+与`Child Process`不同, `Worker Threads`是完全共享内存的, 它们可以在一个独立的环境中运行 `JavaScript` 代码, 不需要担心数据共享的问题。
+
+下面是一个使用`Worker Threads`实现多线程加法运算的例子：
+
+```js showLineNumbers copy
+const { Worker } = require('worker_threads');
+
+function runService() {
+  // 创建Worker 线程
+  const worker = new Worker(`
+    const add = (a, b) => a + b;
+    const { parentPort } = require('worker_threads');
+
+    // 接收来自主线程的数据
+    parentPort.on('message', (res) => {
+      // 子线程执行加法运算
+      const result = add(res.a, res.b);
+
+      // 将结果发送给主线程
+      parentPort.postMessage(result);
+    });
+  `);
+
+  return worker;
+}
+
+// 启动Worker线程
+const worker = runService();
+
+// 向Worker线程发送数据
+worker.postMessage({ a: 1, b: 2 });
+
+// 接受来自Worker线程的数据
+worker.on('message', (res) => {
+  console.log(res);
+});
+
+// 错误处理
+worker.on('error', (err) => {
+  console.log(err);
+});
+```
+
+在这里, 我们使用了`Worker Threads`创建了一个独立的子线程环境, 该子线程中运行了我们的计算逻辑。通过`worker.postMessage()`方法向子线程发送数据, 通过`worker.on('message')`方法接收子线程返回的计算结果。这样我们就实现了多线程计算。
+
+## Cluster
+
+另一个实现`NodeJS`多线程的方案是使用`NodeJS`的`Cluster`模块。`Cluster `模块通过在多个进程间分发连接来实现负载均衡, 也就是说, 在处理比较耗时的任务时, 使用多进程可以显著提高系统的性能。
+
+在一些情况下`Cluster`模块可能比`Child Process`和`Worker Threads`更适合处理数据并行性的问题。使用`Cluster`模块需要遵循以下几个步骤：
+
+```js showLineNumbers copy
+const cluster = require('cluster');
+const http = require('http');
+
+if (cluster.isMaster) {
+  // 获取CPU的核心数
+  const numCPUs = require('os').cpus().length;
+
+  // fork 子进程
+  for(let i = 0; i < length; i++) {
+    console.info(`Worker ${worker.process.pid} died`);
+  }
+} else {
+  const server = http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end(`hello world from ${process.pid}`);
+  });
+
+  server.listen(8000, () => {
+    console.info(`Server running at https://localhost:8000/ in worker`);
+  });
+}
+```
+
+在这个例子中, 我们首先判断是否是主进程, 如果是则`fork`多个子进程, 并监听每个子进程的退出事件, 便于出现错误时通知主进程处理。否则, 子进程中创建了一个`HTTP`服务并通过`listen`方法中传递的参数指定了当前子进程的`pid`。
+
+## 总结
+
+以上是`NodeJS`实现多线程的三种主要方案, `Child Process`、`Worker Threads`和`Cluster`, 前两者更适合在处理`CPU`密集型任务时使用, 而后者则更适合在处理网络连接方面的任务时使用并实现负载均衡。当然, 还有其他一些方案, 例如使用`Web Worker`或者使用更底层的`C++`库来实现多线程等等。
+
+在使用以上方案时, 需要注意一些细节问题, 例如数据的正确性和共享内存的问题等等, 但借助这些方案, 我们也可以为`NodeJS`应用程序提供高效而可扩展的处理能力, 实现更好的性能。

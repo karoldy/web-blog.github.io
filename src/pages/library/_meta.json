@@ -1,4 +1,6 @@
 {
-  "library_1": "Tauri",
-  "library_2": "React Flow"
+  "ramda": "ramda",
+  "loadsh": "loadsh",
+  "library_1": "tauri",
+  "react_flow": "React Flow"
 }

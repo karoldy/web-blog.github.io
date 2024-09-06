@@ -1,0 +1,143 @@
+# 性能优化-图片处理
+
+前端性能优化-优化大量图片加载&超大图片加载(附懒加载实现方案)
+
+加载的图片太多或者太大导致页面加载完成慢的问题；图片太多导致向服务器请求的次数太多,图片太大导致每次请求的时间过长,导致用户长时间等待。
+
+## 大量图片加载优化方案
+
+### 将图片服务和应用服务分离(从架构师的角度思考)
+
+对于服务器来说,图片始终是最消耗系统资源的,如果将图片服务和应用服务放在同一服务器的话,应用服务器很容易会因为图片的高I/O负载而崩溃,所以当网站存在大量的图片读写操作时,建议使用图片服务器。
+
+浏览器在同一时间对同一域名下的资源的并发请求数目是有限制的,一般在2-6之间,超过限制数目的请求就会被阻塞.一些主流浏览器对 HTTP1.1 和 HTTP 1.0 的最大并发连接数目如图
+
+|浏览器|HTTP/1.1|HTTP/1.0|
+|:---|:---|:---|
+|IE 11|6|6|
+|IE 10|6|6|
+|IE 9|10|10|
+|IE 8|6|6|
+|IE 6 7|2|4|
+|火狐|6|6|
+|Safari 3.4|4|4|
+|Chrome 4+|6|6|
+|Opera 10.51+|8|?|
+|iPhone 2|4|?|
+|iPhone 3|6|?|
+|iPhone 4|4|?|
+|iPhone 5|6|?|
+|Android 2-4|4|?|
+
+### 图片压缩方案
+
+我们可以借助一些第三方软件来进行压缩,压缩后分辨率不变,肉眼看不失真； 我们项目中对使用的图片基本都会进行压缩再上传。
+
+### 图片懒加载
+
+图片懒加载,简单来说就是在页面渲染过程中,图片不会一次性全部加载,会在需要的时候加载,比如当滚动条滚动到某一个位置时触发事件加载图片。 为优化回流，可以先设置占位符
+
+#### 实现方案一
+
+```js
+// 获取屏幕可视区域的高度
+document.documentElement.clientHeight
+
+// 获取浏览器窗口顶部与文档顶部之间的距离，也就是滚动条滚动的距离
+document.documentElement.scrollTop
+
+// 获取元素相对于文档顶部的高度
+element.offsetTop
+```
+
+如果：`clientHeight+scroolTop` > `offsetTop`，则图片进入了可视区内，则被请求。
+
+![](/images/image_visiable.webp)
+
+```js
+var imgs = document.querySelectorAll('img');
+
+// offsetTop是元素与offsetParent的距离，循环获取直到页面顶部
+function getTop(e) {
+  var T = e.offsetTop;
+  while(e = e.offsetParent) {
+    T += e.offsetTop;
+  }
+  return T;
+}
+
+function lazyLoad(imgs) {
+  // 获取可视区域高度
+  var H = document.documentElement.clientHeight;
+  var S = document.documentElement.scrollTop || document.body.scrollTop;
+  for (var i = 0; i < imgs.length; i++) {
+    if (H + S > getTop(imgs[i])) {
+      imgs[i].src = imgs[i].getAttribute('data-src');
+    }
+  }
+}
+
+// onscroll()在滚动条滚动的时候触发
+window.onload = window.onscroll = function () {
+  lazyLoad(imgs);
+}
+```
+
+#### 实现方案二
+
+```js
+// 获取元素的大小及位置
+getBoundingClientRect()
+```
+
+我们滚动条向下滚动的时候，bound.top值会变得越来越小，也就是图片到可视区顶部的距离也越来越小，所以当`bound.top == clientHeight`时，说明土片马上就要进入可视区了，只要我们在滚动，图片就会进入可视区，那么就需要请求资源了。也就是说，在`bound.top<=clientHeight`时，图片是在可视区域内的。
+
+```js
+var imgs = document.querySelectorAll('img');
+
+// 用来判断bound.top<=clientHeight的函数，返回一个bool值
+function isIn(el) {
+  var bound = el.getBoundingClientRect();
+  var clientHeight = window.innerHeight;
+  return bound.top <= clientHeight;
+} 
+
+// 检查图片是否在可视区内，如果不在，则加载
+function check() {
+  Array.from(imgs).forEach(function(el){
+    if(isIn(el)){
+      loadImg(el);
+    }
+  })
+}
+
+function loadImg(el) {
+  if(!el.src){
+    var source = el.dataset.src;
+    el.src = source;
+  }
+}
+
+// onscroll()在滚动条滚动的时候触发
+window.onload = window.onscroll = function () {
+  check();
+}
+```
+
+### 小图片比较多时
+
+可以用雪碧图、字体图标、base64等，这样可以有效减少连接数
+
+### http2解决连接数限制
+
+`http2`一个站点只有一个连接。每个请求为一个流，每个请求被分为多个二进制帧，不同流中的帧可以交错的发送，实现多路复用。这就解决了连接数限制的问题
+
+## 图片过大加载优化方案
+
+传输和渲染比较慢
+
+1. 如果是相册之类的可以预加载，在展示当前图片的时候，就加载它的前一个和后一个图片
+2. 加载的时候可以先加载一个压缩率非常高的缩略图，以提高用户体验,点击再或加载到之后再查看清晰图
+3. 使用渐进式jpeg，会提高用户体验 参考文章 [Baseline JPEG](https://www.biaodianfu.com/progressive-jpeg.html)
+4. 如果展示区域小于图片的真实大小，可以在服务端先压缩到合适的尺寸
+
