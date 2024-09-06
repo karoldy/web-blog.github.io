@@ -1,1 +1,39 @@
 # JavaScript模拟实现多线程
+
+`JavaScript`是一种单线程语言, 它的执行模型决定了同一时间只能有一个任务执行。但是在`Web Workers API`的帮助下, 我们可以在浏览器中实现多线程。
+
+`Web Workers API`允许我们在后台运行一个脚本, 而不影响页面的性能和用户界面。这个脚本运行在与主线程不同的线程中, 可以执行一些计算密集型的操作。在主线程和工作线程之间通信可以通过消息传递来完成。
+
+下面是一个使用`Web Workers API`创建一个工作线程的示例：
+
+```js showLineNumbers copy
+// 创建一个工作线程
+const worker = new Worker('worker.js');
+
+// 向工作线程发送消息
+worker.postMessage({ type: 'add', data: [1, 2] });
+
+// 监听从工作线程返回的消息
+worker.onmessage = function(event) {
+  console.log('Received message from worker:', event.data);
+};
+```
+
+在上面的示例中, 我们创建了一个工作线程, 通过`postMessage`向工作线程发送了一个包含类型为`add`, 数据为`[1, 2]`的消息。工作线程执行加法操作, 然后通过`postMessage`向主线程发送了一个包含结果的消息。主线程通过监听`onmessage`事件来接收从工作线程返回的消息。
+
+下面是一个`worker.js`文件的示例, 它实现了加法操作：
+
+```js showLineNumbers copy
+// 监听从主线程发送的消息
+self.onmessage = function(event) {
+  if (event.data.type === 'add') {
+    const sum = event.data.data.reduce((a, b) => a + b);
+    // 向主线程发送消息
+    self.postMessage(sum);
+  }
+};
+```
+
+需要注意的是, `Web Workers API`只能在浏览器环境中使用, `NodeJS`不支持 `Web Workers API`。此外, 由于工作线程与主线程之间的通信是通过消息传递实现的, 因此在传递大量数据时可能会出现性能问题。
+
+[NodeJS多线程实现](/blog/nodejs/more_thread)

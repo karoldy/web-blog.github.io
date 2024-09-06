@@ -1,0 +1,92 @@
+# Vuex怎么监听数据变化
+
+## 在组件中使用计算属性监听 Vuex 状态
+
+`Vuex` 状态可以通过计算属性映射到组件中, 当 `Vuex` 状态发生变化时, 计算属性也会自动更新。我们可以通过 `Vue` 的 `watch` 选项来监听计算属性的变化, 从而监听 `Vuex` 中状态的变化。
+
+```vue
+<template>
+  <div>{{ count }}</div>
+</template>
+
+<script>
+export default {
+  computed: {
+    // 映射 Vuex 的 state 到计算属性
+    count() {
+      return this.$store.state.count;
+    }
+  },
+  watch: {
+    // 监听计算属性的变化
+    count(newValue, oldValue) {
+      console.log('count 发生变化:', newValue);
+    }
+  }
+};
+</script>
+```
+
+在上述代码中, `count` 是一个计算属性, 映射到 `Vuex` 的 `state.count`。通过 `watch` 选项, 可以监听 `count` 的变化, 从而知道 `Vuex` 状态发生了变化。
+
+## 使用 Vuex 的 watch 方法
+
+`Vuex` 提供了一个 `watch` 方法, 可以直接监听某个状态或 `getter` 的变化。与 `Vue` 的 `watch` 类似, 这个方法也是响应式的。
+
+```js
+// 在 Vue 组件或 Vuex 的 store 中
+this.$store.watch(
+  // 第一个参数是一个函数, 返回要监听的值
+  (state) => state.count,
+  // 第二个参数是回调函数, 当被监听的值发生变化时触发
+  (newValue, oldValue) => {
+    console.log('count 发生变化:', newValue);
+  }
+);
+```
+
+这种方式适用于在 Vuex 状态变化时, 执行一些特定逻辑, 且与具体组件无关的场景。
+
+## 使用 Vue 的 watch 选项监听 Vuex 状态
+
+在 `Vue` 组件中, 可以直接通过 `Vue` 的 `watch` 选项监听 `Vuex` 状态变化, 而无需先将其映射为计算属性。
+
+```vue
+<template>
+  <div>{{ $store.state.count }}</div>
+</template>
+
+<script>
+export default {
+  watch: {
+    // 直接监听 Vuex 的 state
+    '$store.state.count'(newValue, oldValue) {
+      console.log('count 发生变化:', newValue);
+    }
+  }
+};
+</script>
+```
+
+这是一种更加直接的监听方式, 但需要注意路径的正确性。
+
+## 使用 Vuex 的 subscribe 方法
+
+`Vuex` 还提供了 `subscribe` 方法, 允许我们在每次提交 `mutation` 时执行回调函数, 从而监听 `Vuex` 状态的变化。
+
+```js
+// 在 Vuex store 中
+this.$store.subscribe((mutation, state) => {
+  if (mutation.type === 'increment') {
+    console.log('count 增加了:', state.count);
+  }
+});
+```
+
+在这里, 我们可以通过检查 `mutation.type` 来判断具体发生了什么变化。这种方式适合监听某些特定的状态变更(通常通过 `mutation` 实现), 而不是直接监听状态值本身。
+
+## 监听 Vuex 状态变化的最佳实践
+
+1. **组件内的状态监听**：如果监听的是与组件强相关的 `Vuex` 状态(如组件依赖某些 `Vuex` 状态), 建议使用计算属性和 `Vue` 的 `watch` 选项。
+2. **全局状态监听**：如果需要在全局范围内监听 `Vuex` 状态变化, 或者监听的逻辑与具体组件无关, 推荐使用 `Vuex` 的 `watch` 或 `subscribe` 方法。
+3. **性能优化**：对于需要频繁监听的状态, 要注意避免不必要的性能开销。可以在 `watch` 或回调函数中加入条件判断, 确保只在需要时触发相关逻辑。
