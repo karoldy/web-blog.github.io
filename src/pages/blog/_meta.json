@@ -10,7 +10,16 @@
   "typescript": "TypeScript",
   "vue2": "Vue2",
   "vue3": "Vue3",
-  "vuex": "Vuex",
+  "vuex": {
+    "title": "Vuex",
+    "href": "https://vuex.vuejs.org/zh/",
+    "newWindow": true
+  },
+  "vue_router": {
+    "title": "Vue Router",
+    "href": "https://router.vuejs.org/zh/guide/",
+    "newWindow": true
+  },
   "react": "React",
   "webpack": "Webpack",
   "nodejs": "NodeJS",

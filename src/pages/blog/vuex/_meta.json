@@ -1,7 +1,0 @@
-{
-  "vuex": "介绍",
-  "core": "核心概念",
-  "advance": "进阶",
-  "move": "迁移指南",
-  "listen_data": "Vuex怎么监听数据变化"
-}
