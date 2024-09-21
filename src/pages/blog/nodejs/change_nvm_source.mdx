@@ -1,0 +1,42 @@
+# nvm 换源
+
+## 备份原始配置文件
+
+```bash
+cp ~/.nvm/nvm.sh ~/.nvm/nvm.sh.backup
+```
+
+## 编辑 nvm 配置文件：
+
+使用文本编辑器打开 nvm 的配置文件 `nvm.sh`。如果你使用的是默认的 `shell`，该文件通常位于 `~/.nvm` 目录下
+
+```bash
+vim ~/.nvm/nvm.sh
+```
+
+## 修改或添加 NVM 源
+
+在 `nvm.sh` 文件中，找到 `NVM_NODEJS_ORG_MIRROR` 变量并修改其值为你想要使用的源。例如，要使用淘宝的 `Node.js` 镜像源，可以添加或修改以下行：
+
+```bash
+NVM_NODEJS_ORG_MIRROR="https://npmmirror.com/mirrors/node/"
+NVM_IOJS_ORG_MIRROR="https://npmmirror.com/mirrors/iojs/"
+```
+
+## 重新加载 nvm：
+
+为了让更改生效，你需要重新加载 nvm。你可以通过运行以下命令来重新加载 nvm 环境：
+
+```bash
+source ~/.nvm/nvm.sh
+```
+
+## 验证源是否更改：
+
+使用以下命令检查 nvm 是否使用了新的源：
+
+```bash
+nvm ls-remote
+```
+
+这将列出所有可用的 `Node.js` 版本，如果源更改成功，你应该能够看到从新源获取的版本列表。
