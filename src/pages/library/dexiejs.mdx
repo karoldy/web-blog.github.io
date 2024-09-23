@@ -1,0 +1,126 @@
+# Dexie.js
+
+简化 JavaScript 调用浏览器数据库的开源工具库
+
+IndexedDB 是浏览器的大数据量本地储存方式，不过很难用，推荐一个封装好的工具库
+
+## 浏览器 IndexedDB
+
+现在大型的 **Web 应用**功能越来越完善，需要在客户端进行**数据存储、离线访问**以及数据同步等，对本地数据的储存和管理非常重要。`LocalStorage` 已经满足不了这些本地储存的需求了，很多开发者看向了 `IndexedDB` ，这是一种可以本地存储大量数据的方法。
+
+不过我第一次使用时，直接使用 IndexedDB API ，非常麻烦，需要写很多代码，我第一感觉是非常怀念 LocalStorage 的简单直接。后来发现了 Dexie.js ，这是一个强大、简单的 JavaScript 库，它对 IndexedDB 进行了封装，让我可以很轻松地管理浏览器端的数据。
+
+## Dexie.js 技术特性
+
+### 数据更容易管理
+
+Dexie.js 提供简洁的 API，让我们可以轻松创建、打开、查询和管理 IndexedDB 数据库。我们不仅可以定义数据模式，包括表格和索引，而且随着 web 项目的发展迭代，还可以方便地进行数据库版本升级。
+
+### Promise 异步支持
+
+和 IndexedDB 原生 API 一样，Dexie.js 的操作也是异步的，而且是用 Promise 来处理异步操作，可以直接在数据库操作后执行使用 then() 方法处理结果，或者使用 async/await 语法来更清晰地处理异步操作，编写和维护代码非常优雅。
+
+### 数据查询
+
+Dexie.js 支持复杂的查询操作，包括过滤、排序、范围查询等，完全不需要编写那些的低级 IndexedDB 代码，数据检索和处理非常优雅灵活。
+
+### 浏览器兼容性好
+
+Dexie.js 支持主流的现代浏览器，包括 Chrome、Firefox、Edge 和 Safari 等，手机端上也得到了很多的支持，不用担心兼容性问题。
+
+### 轻量级
+
+Dexie.js 是一个轻量级的库，体积小巧，加载速度快，没有其他依赖。
+
+## 开发上手使用
+
+现在让我们来看一下如何使用 Dexie.js 来管理浏览器端的数据。比如创建一个 IndexedDB 数据库、定义一个表格以及插入和查询数据。
+
+### 安装 Dexie.js
+
+```bash
+npm install dexie
+```
+
+### 创建数据库
+
+```js
+// 导入Dexie库
+import Dexie from 'dexie';
+
+// 创建一个数据库实例
+const db = new Dexie('testDatabase');
+```
+
+### 定义数据表格
+
+```js
+db.version(1).stores({
+  friends: '++id, name, age'
+});
+```
+
+在这段代码创建了一个名为 friends 的表格，包含自动生成的 id 字段、name 字段和 age 字段。其中 ++id 表示 id 字段自动递增。
+
+### 插入数据
+
+```js
+db.friends.add({ name: '张三', age: 30 });
+db.friends.add({ name: '李四', age: 25 });
+```
+
+### 查询数据
+
+```js
+db.friends
+  .where('age')
+  .above(28)
+  .toArray()
+  .then(friends => {
+    console.log('超过28岁的朋友:', friends);
+  });
+```
+
+上面这段代码使用 where 方法指定查询条件，然后使用 above 方法指定条件为大于28岁的朋友。最后，通过 toArray 方法获取结果，并将结果打印到控制台。
+
+## 搭配 Vue 等框架使用
+
+怎么样，使用起来很简单吧？由于没有其他依赖，Dexie.js 可以搭配其他框架一起使用，比如可以和 Vue.js 使用。
+
+```vue
+<template>
+  <h2>朋友们</h2>
+  <ul>
+    <li v-for="friend in friends" :key="friend.id">
+      {{ friend.name }}, {{ friend.age }}
+    </li>
+  </ul>  
+</template>
+<script>
+  import { liveQuery } from "dexie";
+  import { db } from "../db";
+  import { useObservable } from "@vueuse/rxjs";
+  
+  export default {
+    name: "FriendList",
+    setup() {
+      return {
+        friends: useObservable(
+          liveQuery(async () => {
+            return await db.friends
+              .where("age")
+              .between(18, 65)
+              .toArray();      
+          })
+        )
+      };
+    }
+  };
+</script>
+```
+
+看到这里，相信你也清楚了，Dexie.js 非常适合哪些 LocalStorage 已经满足不了的项目，如何你也遇到这种情况，是时候考虑它了。
+
+## 免费开源说明
+
+Dexie.js 是一个免费开源的 JS 工具库，源码采用 Apache 2.0 协议托管在 Github 上，任何人都可以免费下载来使用。

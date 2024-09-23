@@ -2,5 +2,8 @@
   "ramda": "Ramda",
   "loadsh": "Loadsh",
   "tauri": "Tauri",
+  "mojs": "Mo.Js",
+  "driverjs": "Driver.js",
+  "dexiejs": "Dexie.js",
   "react_flow": "React Flow"
 }

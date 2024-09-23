@@ -1,0 +1,75 @@
+# Driver.js
+
+`Driver.js`，一个超级好用的 JavaScript 库，专门用来做网页上的用户引导。
+
+[Github地址](https://github.com/kamranahmedse/driver.js)
+
+## 简介
+
+你们有没有遇到过这种情况：辛辛苦苦开发了一个功能强大的网站，结果用户一来就懵圈了，不知道怎么操作？相信很多开发者都有过这种痛苦经历。Driver.js 就是来解决这个问题的！它可以像个耐心温柔的向导一样，带着用户一步一步熟悉网站功能，再也不用担心用户迷路啦！
+
+## 功能特点
+
+Driver.js 之所以好用，是因为它有以下几个优点：
+
+- **轻量简洁**：不依赖任何第三方库，几行代码就能搞定，压缩后才 5KB，对网站性能几乎没有影响，简直是小而美的典范！
+- **兼容性强**：现在市面上的浏览器五花八门，Driver.js 全部兼容！无论用户用的是什么浏览器，都能顺畅地体验引导流程。
+- **高度自定义**：每一步引导的样式、位置、动画效果都可以自由设置，可以根据自己的需求打造独一无二的引导流程。
+
+## 使用步骤
+
+### 引入 Driver.js 库文件
+
+首先要把 Driver.js 引入到你的项目里来。你可以直接下载库文件，或者使用 CDN 引入
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/driver.js/dist/driver.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js/dist/driver.min.css">
+```
+
+### 定义需要引导的元素
+
+告诉 Driver.js 哪些地方是重要信息，需要重点讲解。你可以使用 CSS 选择器或者直接传入 DOM 元素
+
+```js
+onst driver = new Driver();
+
+// 使用 CSS 选择器
+const steps = [
+  {
+    element: '#header', 
+    popover: {
+      title: '欢迎来到我的网站',
+      description: '这里是网站的头部区域',
+    }
+  },
+  // ... 其他步骤
+];
+```
+
+### 配置引导步骤
+
+设置好标题、描述、位置等等，让用户一看就明白。Driver.js 提供了丰富的配置选项，你可以自定义每一步的样式、动画效果等等
+
+```js
+const steps = [
+  {
+    element: '#sidebar', 
+    popover: {
+      title: '侧边栏',
+      description: '这里可以找到各种功能',
+      position: 'right', // 设置弹出框位置
+    },
+    onNext: () => {
+      // 在进入下一步之前执行一些操作
+    }
+  },
+  // ... 其他步骤
+];
+
+driver.defineSteps(steps);
+```
+
+### 启动引导
+
+一切准备就绪，就等游客来参观了！调用 `driver.start()` 方法，就可以开始引导流程了：
