@@ -21,5 +21,6 @@
   "triangle": "CSS如何画一个三角形? 原理是什么? ",
   "less_12": "让Chrome支持小于12px 的文字方式有哪些? 区别? ",
   "sass_less_stylus": "说说对Css预编语言的理解? 有哪些区别?",
-  "css_hack": "说说什么是CSS Hack"
+  "css_hack": "说说什么是CSS Hack",
+  "pulse": "Css 脉冲动画效果"
 }
