@@ -1,0 +1,122 @@
+# React Puck
+
+`Puck` 是一款 `React` 可视化编辑器 ， 使开发人员能够在自己的 `React` 应用程序中构建令人惊叹的可视化编辑体验，为下一代内容工具、无代码构建器和所见即所得 `WYSIWYG` 编辑器提供支持。
+
+因为 `Puck` 只是一个 `React` 组件，所以可以在所有 `React` 环境中很好地运行，包括 `Next`、`Remix`。 `Puck` 还获得了 MIT 的许可，使其适用于内部系统和商业应用程序。
+
+[官网](https://puckeditor.com/)
+
+[Github地址](https://github.com/measuredco/puck)
+
+可以通过下面命令快速安装使用 Puck：
+
+```bash
+npm i @measured/puck --save
+```
+
+Puck 由以下核心部分组成：
+
+- **`Component Configuration`**：通过提供渲染函数和配置映射到 props 字段，将自己的组件与 Puck 集成。
+- **`Root Configuration`**：自定义包装所有其他 Puck 组件的根组件。
+- **`Multi-column Layouts`**：使用 DropZones 通过嵌套组件构建更多的多列布局。
+- **`Categories`**：将侧栏中的组件分组。
+- **`Dynamic Props`**：在用户输入后动态设置 props 并将字段标记为只读
+- **`External Data Sources`**：从第三方 CMS 或其他数据源加载内容
+- **`Server Components`** ：选择加入对 React 服务器组件的支持
+- **`Data Migration`**：在破坏性 Puck 版本和自己的破坏性 props 更改之间迁移
+
+## 如何使用 Puck
+
+首先需要安装相应的依赖：
+
+```bash
+npm i @measured/puck --save # or npx create-puck-app my-app
+```
+
+接着使用 `create-puck-app` 快速启动预配置的应用程序：
+
+```bash
+npx create-puck-app my-app
+```
+
+目前快速启动支持以下两种方式：
+
+- next：Next.js 13 应用示例，使用 App Router 和静态页面生成
+- remix：Remix Run v2 应用程序示例，在根级别使用动态路由
+
+接着通过下面方式渲染编辑器：
+
+```js
+// Editor.jsx
+import {Puck} from "@measured/puck";
+import "@measured/puck/puck.css";
+
+// Puck 组件初始化配置
+const config = {
+  components: {
+    HeadingBlock: {
+      fields: {
+        children: {
+          type: "text",
+        },
+      },
+      render: ({children}) => {
+        return <h1>{children}</h1>;
+      },
+    },
+  },
+};
+
+// 初始化数据
+const initialData = {
+  content: [],
+  root: {},
+};
+
+// 将数据保存到数据库
+const save = (data) => {};
+
+// 渲染 Puck 编辑器
+export function Editor() {
+  return <Puck config={config} data={initialData} onPublish={save} />;
+}
+```
+
+最后通过下面方式渲染页面：
+
+```js
+// Page.jsx
+import {Render} from "@measured/puck";
+import "@measured/puck/puck.css";
+
+export function Page() {
+  return <Render config={config} data={data} />;
+}
+```
+
+## Puck 支持插件
+
+插件 API 使开发人员能够分发插件来定制 Puck 界面，比如官方提供的 `header-analyzer` 可用于分析页面的标题轮廓，并在不遵守 WCAG 2 辅助功能标准时收到警告。开发者还可以在[社区插件页面](https://github.com/measuredco/awesome-puck)寻找更多优质插件。
+
+插件实现与构建自定义接口相同的 overrides API：
+
+```js
+import {Puck} from "@measured/puck";
+
+const MyPlugin = {
+  overrides: {
+    componentItem: ({name}) => (
+      <div style={{ backgroundColor: "hotpink"}}>{name}</div>
+    ),
+  },
+};
+
+export function Editor() {
+  return (
+    <Puck
+      // ...
+      plugins={[MyPlugin]}
+    />
+  );
+}
+```

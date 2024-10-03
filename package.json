@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lint:mdx": "markdownlint  ./src/pages/**/*.mdx"
+    "lint:mdx": "markdownlint ./src/pages/**/*.mdx"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.4.2",

@@ -1,0 +1,205 @@
+# 纯CSS实现3个小球围成三角形旋转的Loading特效
+
+## 实现方法
+
+使用CSS3的`@keyframes`规则, 通过不断改变每个元素的属性, 来实现小球位移的动画效果。同时, 使用了CSS的transform属性来控制元素的渐隐和移动。
+
+## 实现步骤
+
+1. 创建一个HTML文件, 并在文件中添加一个div容器, 用于包含各种`Loading`特效的元素。
+2. 使用CSS对`div`容器进行样式设置。
+3. 根据需要, 创建元素, 并对其进行样式设置, 如设置宽高、边框、圆角等。
+4. 使用CSS3的`@keyframes`规则, 对每个元素设置不同的动画效果。
+5. 使用CSS的`transform`属性, 控制元素的旋转和移动。
+
+## 代码实现
+
+以下是实现该Loading特效的HTML和CSS代码：
+
+```html
+<div class="loading">
+  <div></div>
+  <div></div>
+  <div></div>
+</div>
+```
+
+```css
+.loading,
+.loading > div {
+  position: relative;
+  box-sizing: border-box;
+}
+
+.loading {
+  display: block;
+  font-size: 0;
+  color: #000;
+}
+
+.loading.la-dark {
+  color: #333;
+}
+
+.loading > div {
+  display: inline-block;
+  float: none;
+  background-color: currentColor;
+  border: 0 solid currentColor;
+}
+
+.loading {
+  width: 32px;
+  height: 32px;
+}
+
+.loading > div {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 100%;
+}
+
+.loading > div:nth-child(1) {
+  animation: ball-triangle-path-ball-one 2s 0s ease-in-out infinite;
+}
+
+.loading > div:nth-child(2) {
+  animation: ball-triangle-path-ball-two 2s 0s ease-in-out infinite;
+}
+
+.loading > div:nth-child(3) {
+  animation: ball-triangle-path-ball-tree 2s 0s ease-in-out infinite;
+}
+
+.loading.la-sm {
+  width: 16px;
+  height: 16px;
+}
+
+.loading.la-sm > div {
+  width: 4px;
+  height: 4px;
+}
+
+.loading.la-2x {
+  width: 64px;
+  height: 64px;
+}
+
+.loading.la-2x > div {
+  width: 20px;
+  height: 20px;
+}
+
+.loading.la-3x {
+  width: 96px;
+  height: 96px;
+}
+
+.loading.la-3x > div {
+  width: 30px;
+  height: 30px;
+}
+
+@keyframes ball-triangle-path-ball-one {
+  0% {
+    transform: translate(0, 220%);
+  }
+
+  17% {
+    opacity: 0.25;
+  }
+
+  33% {
+    opacity: 1;
+    transform: translate(110%, 0);
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+
+  66% {
+    opacity: 1;
+    transform: translate(220%, 220%);
+  }
+
+  83% {
+    opacity: 0.25;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(0, 220%);
+  }
+}
+
+@keyframes ball-triangle-path-ball-two {
+  0% {
+    transform: translate(110%, 0);
+  }
+
+  17% {
+    opacity: 0.25;
+  }
+
+  33% {
+    opacity: 1;
+    transform: translate(220%, 220%);
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+
+  66% {
+    opacity: 1;
+    transform: translate(0, 220%);
+  }
+
+  83% {
+    opacity: 0.25;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(110%, 0);
+  }
+}
+
+@keyframes ball-triangle-path-ball-tree {
+  0% {
+    transform: translate(220%, 220%);
+  }
+
+  17% {
+    opacity: 0.25;
+  }
+
+  33% {
+    opacity: 1;
+    transform: translate(0, 220%);
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+
+  66% {
+    opacity: 1;
+    transform: translate(110%, 0);
+  }
+
+  83% {
+    opacity: 0.25;
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(220%, 220%);
+  }
+}
+```
