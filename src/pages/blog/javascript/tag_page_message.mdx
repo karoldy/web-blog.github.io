@@ -1,0 +1,343 @@
+# JavaScript实现跨标签页通信
+
+在 Web 开发中, 有时我们需要实现不同页面之间的数据传递和事件触发, 比如一个页面打开了另一个页面, 然后在新的页面中操作后需要更新原来的页面的内容。这种场景在电商、支付、社交等领域都很常见, 那么如何用js来实现不同页面之间的交互呢？本文提供几种常见的方法供大家学习参考！
+
+## localStorage
+
+在 Web Storage 中, 每一次将一个值存储到本地存储时, 都会触发一个 `storage` 事件, 通过 `localStorage` 结合 `window.addEventListener('storage', cb)` 完成 A、B 标签页间通信。
+
+```js
+// A标签页
+localStorage.setItem('send-msg', JSON.stringify({
+  name: 'hzd',
+  age: '18',
+}))
+
+// B标签页
+window.addEventListener('storage', (data) => {
+  try {
+      console.log(data)
+      const msg = JSON.parse(data.newValue)
+  } catch (err) {
+    // 处理错误
+  }
+})
+```
+
+## BroadcastChannel
+
+`BroadcastChannel` 通信方式的原理就是一个命名管道, 它允许让指定的同源下浏览器不同的窗口来订阅它。
+
+每个 `BroadcastChannel` 对象都需要使用一个唯一的名称来标识通道, 这个名称在同一域名下的不同页面之间必须是唯一的, 它允许同一域名下的不同页面之间进行通信。
+
+通过 `postMessage` 方法, 一个页面可以将消息发送到频道中, 而其他页面则可以监听 `message` 事件来接收这些消息。通过这种方式是短线了一种实时通信的机制, 可以在不同的页面之间传递信息, 实现页面间的即时交流。
+
+```js
+/ A页面
+const bc = new BroadcastChannel("test_channel");
+bc.postMessage("This is a test message.");
+
+
+// B页面
+const bc = new BroadcastChannel("test_channel");
+bc.onmessage = (event) => {
+  console.log(event);
+};
+```
+
+## postMessage
+
+postMessage 是 H5 引入的 API, 该方法允许来自不同源的脚本采用异步方式进行有效的通信, 可以实现跨文本文档、多窗口、跨域消息传递, 多用于窗口间数据通信, 这也使它成为跨域通信的一种有效的解决方案。
+
+下面看两个简单的使用例子：
+
+示例一：
+
+```html
+<!-- 发送端：-->
+
+<button id="btn">发送消息</button>
+
+<script>
+  let device = window.open('http://localhost:63342/signal_communication/postMessage/receive.html')
+
+  document.getElementById('btn').addEventListener('click', event => {
+    device.postMessage('发送一条消息')
+  })
+</script>
+```
+
+```html
+<!-- 接收端：-->
+
+<script>
+  window.addEventListener('message', event => {
+    console.log(event)
+  })
+</script>
+```
+
+示例二：
+
+```html
+<!-- 发送端：-->
+
+<div>
+  <input id="text" type="text" value="Runoob" />
+  <button id="sendMessage" >发送消息</button>
+</div>
+<iframe id="receiver" src="https://c.runoob.com/runoobtest/postMessage_receiver.html" width="300" height="360">
+    <p>你的浏览器不支持 iframe。</p>
+</iframe>
+<script>
+window.onload = function() {
+  let receiver = document.getElementById('receiver').contentWindow;
+  let btn = document.getElementById('sendMessage');
+  btn.addEventListener('click', function (e) {
+    e.preventDefault();
+    let val = document.getElementById('text').value;
+    receiver.postMessage("Hello "+val+"！", "https://c.runoob.com");
+  });
+}
+</script>
+```
+
+```html
+<!-- 接收端：-->
+
+<div id="recMessage">Hello World!</div>
+
+<script>
+window.onload = function() {
+  let messageEle = document.getElementById('recMessage');
+  window.addEventListener('message', function (e) {  // 监听 message 事件
+    alert(e.origin);
+    if (e.origin !== "https://www.runoob.com") {  // 验证消息来源地址
+      return;
+    }
+    messageEle.innerHTML = "从"+ e.origin +"收到消息： " + e.data;
+  });
+}
+</script>
+```
+
+## SharedWorker
+
+`SharedWorker` 是一种在 Web 浏览器中使用的 Web API, 它允许不同的浏览上下文, 如不同的浏览器标签页之间共享数据和执行代码。它可以用于在多个浏览上下文之间建立通信通道, 以便它们可以共享信息和协同工作。
+
+与普通的 Worker 不同, `SharedWorker` 可以在多个浏览上下文中实例化, 而不仅限于一个单独的浏览器标签页或框架。这使得多个浏览上下文可以共享同一个后台线程, 从而更有效地共享数据和资源, 而不必在每个标签页或框架中都创建一个独立的工作线程。
+
+```html
+<!-- a.html -->
+<script>
+  let index = 0;
+  const worker = new SharedWorker("worker.js");
+
+  setInterval(() => {
+    worker.port.postMessage(`moment ${index++}`);
+  }, 1000);
+</script>
+
+<!-- b.html -->
+<script>
+  const worker = new SharedWorker("worker.js");
+
+  worker.port.start();
+  setInterval(() => {
+    worker.port.postMessage("php是世界上最好的语言");
+  }, 1000);
+
+  worker.port.onmessage = function (e) {
+    if (e.data) {
+      console.log(e.data);
+    }
+  };
+</script>
+```
+
+创建一个 worker.js 文件,并编写以下代码：
+
+```js
+let data = "";
+
+self.onconnect = (e) => {
+  const port = e.ports[0];
+
+  port.onmessage = function (e) {
+    if (e.data === "php是世界上最好的语言") {
+      port.postMessage(data);
+      data = "";
+    } else {
+      data = e.data;
+    }
+  };
+};
+```
+
+## Service Worker
+
+Service Worker 它是一种服务工作线程, 是一种在浏览器背后运行的脚本, 用于处理网络请求和缓存等任务。它是一种在浏览器与网络之间的中间层, 允许开发者拦截和控制页面发出的网络请求, 以及管理缓存, 从而实现离线访问、性能优化和推送通知等功能。
+
+它在浏览器背后独立运行与网页分开, 这意味着即使用户关闭了网页, Service Worker 仍然可以运行。可以用于实现推送通知功能。它可以注册为推送消息的接收者, 当服务器有新的通知要发送时, Service Worker 可以显示通知给用户, 即使网页没有打开。
+
+要想使用, 首先我们创建两个不同的 html 文件分别代表不同的页面, 创建一个 Service Worker 文件, 并且使用 live server 开启一个本地服务器：
+
+```html
+<!-- a.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      navigator.serviceWorker.register("worker.js").then(() => {
+        console.log("注册成功");
+      });
+
+      setInterval(() => {
+        navigator.serviceWorker.controller.postMessage({
+          value: `moment ${new Date()}`,
+        });
+      }, 3000);
+
+      navigator.serviceWorker.onmessage = function (e) {
+        console.log(e.data.value);
+      };
+    </script>
+  </body>
+</html>
+
+<!-- b.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      navigator.serviceWorker.register("worker.js").then(() => {
+        console.log("注册成功");
+      });
+
+      setInterval(() => {
+        navigator.serviceWorker.controller.postMessage({
+          value: `moment ${new Date()}`,
+        });
+      }, 3000);
+
+      navigator.serviceWorker.onmessage = function (e) {
+        console.log(e.data.value);
+      };
+    </script>
+  </body>
+</html>
+```
+
+创建一个 worker.js 文件并编写以下代码：
+
+```js
+self.addEventListener("message", function (e) {
+  e.waitUntil(
+    self.clients.matchAll().then(function (clients) {
+      if (!clients || clients.length === 0) {
+        return;
+      }
+      clients.forEach(function (client) {
+        client.postMessage(e.data);
+      });
+    })
+  );
+});
+```
+
+## IndexDB
+
+IndexedDB 是一种在浏览器中用于存储和管理大量结构化数据的 Web API。它提供了一种持久性存储解决方案, 允许 Web 应用程序在客户端存储数据, 以便在不同会话、页面加载或浏览器关闭之间保留数据。
+
+与传统的 cookie 或 localStorage 等存储方式不同, IndexedDB 更适合存储复杂的、结构化的数据, 例如对象、数组、键值对等。这使得它特别适用于应用程序需要存储大量数据、执行高级查询或支持离线工作的情况。
+
+要实现跨标签通信, 如下代码所示:
+
+```html
+<!-- a.html -->
+<script>
+  let index = 0;
+  // 打开或创建 IndexedDB 数据库
+  const request = indexedDB.open("database", 1);
+
+  request.onupgradeneeded = (event) => {
+    const db = event.target.result;
+    const objectStore = db.createObjectStore("dataStore", {
+      keyPath: "key",
+    });
+  };
+
+  request.onsuccess = (event) => {
+    const db = event.target.result;
+    const transaction = db.transaction(["dataStore"], "readwrite");
+    const objectStore = transaction.objectStore("dataStore");
+
+    // 存储数据
+
+    objectStore.put({ key: "supper", value: `moment` });
+
+    transaction.oncomplete = () => {
+      db.close();
+    };
+  };
+</script>
+
+<!-- b.html -->
+<script>
+  // 打开相同的 IndexedDB 数据库
+  const request = indexedDB.open("database", 1);
+
+  request.onsuccess = (event) => {
+    const db = event.target.result;
+    const transaction = db.transaction(["dataStore"], "readonly");
+    const objectStore = transaction.objectStore("dataStore");
+
+    // 获取数据
+    const getRequest = objectStore.get("supper");
+
+    getRequest.onsuccess = (event) => {
+      const data = event.target.result;
+      if (data) {
+        console.log(data.value);
+      }
+    };
+
+    transaction.oncomplete = () => {
+      db.close();
+    };
+  };
+</script>
+```
+
+## cookie
+
+```html
+<!-- a.html -->
+<script>
+  let index = 0;
+  setInterval(() => {
+    document.cookie = `supper=moment ${index++}`;
+  }, 1000);
+</script>
+
+<!-- b.html -->
+<script>
+  console.log("cookie 的值为: ", document.cookie);
+
+  setInterval(() => {
+    console.log("cookie 的值发生了变化: ", document.cookie);
+  }, 1000);
+</script>
+```

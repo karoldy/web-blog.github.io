@@ -1,0 +1,276 @@
+# 5个改变你编写CSS方式的新功能
+
+## `:has()` 选择器
+
+新的选择器在除了Firefox之外的所有浏览器中都可以工作, 但是当标志打开时它是被支持的, 所以我们知道它即将到来。
+
+`:has()`选择器允许我们根据子元素来为父元素设置样式。例如, 我们可以这样做: 
+
+```css
+figure {
+  background: white;
+}
+
+figure:has(img) {
+  background: grey;
+}
+```
+
+如果 `figure` 元素内有 `img`, 则将其背景更改为灰色。当然, 这样做还可以有更多实际的用途, 比如: 
+
+```css
+form:has(input:invalid) { /*there an invalid input*/
+  background: red; 
+}
+
+form:not(:has(input:invalid)) { /*all inputs valid*/
+  background: green 
+}
+```
+
+那个 `:not(:has(input:invalid))` 很酷, 但有点让人困惑。基本上, 如果 `form` 没有无效的 `input`, 它只包含有效的 `inputs` , 所以它是有效的 `form`。
+
+## `:focus-within` 伪类
+
+你可能已经使用了 `:focus` 一段时间了, 但 `:focus` 只能在当前元素上起作用。如果你想知道用户是否聚焦在子元素上怎么办？如果页面上有一个`iframe`或者菜单中的子链接, 这将非常有用。你可以像这样使用它: 
+
+```css
+div:focus-within {
+  background: red;
+}
+```
+
+如果用户关注 `div` 中的任何内容,  `div` 会变成红色。这很方便！你甚至可以在我们之前的例子中也这样做！
+
+```css
+form:has(input:invalid):focus-within {
+  background: red; 
+}
+
+form:not(:has(input:invalid)):focus-within {
+  background: green 
+}
+```
+
+这样, 除非用户与之交互, 否则 `form` 不会变成红色或绿色。从技术上讲, 一个空表单是无效的表单
+
+## 级联层
+
+这个有点独特, 虽然我从未见过它的实际用途, 但肯定有一个。从这个`HTML`开始: 
+
+```html
+<div class="box">
+  <p>Hello, world!</p>
+</div>
+```
+
+选择 `<p>` 标签: 
+
+```css
+p {
+  font-size: 18px;
+}
+```
+
+但是如果我们想要添加更多的样式呢？好吧, CSS是向下级联的, 所以我们只需要在它之后添加一些样式即可。
+
+```css
+p {
+  font-size: 18px;
+}
+
+p {
+  font-weight: bold;
+  font-size: 20px;
+  color: red;
+}
+```
+
+到目前为止, 这只是基本的CSS, 没有什么革命性的东西。但是, 如果我们想要为 `font-weight` 和 `color` 添加样式, 但保留 `font-size` 怎么办？显而易见的解决方案是删除 `font-size: 20px` 这一行, 但现在有一种新的方法, 使用`"Layers"`: 
+
+```css
+p {
+  font-size: 18px;
+}
+
+@layer type {
+  p {
+    font-weight: bold;
+    font-size: 20px;
+    color: red;
+  }
+}
+```
+
+这个CSS的结果将以**粗体**、**红色**和**18像素**的字体大小显示段落。再读一遍。尽管第二个`p`选择器更具体(因为它在更深的位置), 但由于它位于`"type"`层内部, **20像素**的字体大小不会覆盖**18像素**的字体大小
+
+也可以这么认为, `@layer`内的所有内容都写在样式表的顶部, 就像这样: 
+
+```css
+/*How it's written*/
+
+p {
+  font-size: 18px;
+}
+
+@layer type {
+  p {
+    font-weight: bold;
+    font-size: 20px;
+    color: red;
+  }
+}
+
+/*How it's rendered*/
+
+p {
+  font-weight: bold;
+  font-size: 20px;
+  color: red;
+}
+
+p {
+  font-size: 18px;
+}
+```
+
+我们还可以通过这样的方式来组织图层的渲染顺序: 
+
+```css
+@layer template, unique;
+
+p {
+  font-size: 18px;
+}
+
+@layer unique {
+  p {
+    font-size: 12px;
+  }
+}
+
+@layer template {
+  p {
+    font-size: 20px;
+  }
+}
+```
+
+这样呈现是因为在样式表的顶部, `template` 在 `unique` 之前。
+
+```css
+p {
+  font-size: 12px;
+}
+
+p {
+  font-size: 20px;
+}
+
+p {
+  font-size: 18px; 
+}
+```
+
+还可以在样式表中导入特定的图层, 就像导入JS模块或Python库一样: 
+
+```css
+@import "style.css" layer(template);
+```
+
+## 再见 Transforms
+
+我记得当 transforms 首次推出时, 它们真是太棒了。你可以缩放元素、旋转它们、扭曲它们, 甚至可以将它们变成3D形状。
+
+但是他们总是有一个问题。如果你有这样的CSS: 
+
+```css
+div {
+  transform: translate(-50%, -50%) rotate(10deg);
+}
+```
+
+然后你想要添加一个悬停效果来进行缩放, 你就必须再次编写它: 
+
+```css
+div:where(:hover, :focus) { 
+  transform: translate(-50%, -50%) rotate(10deg) scale(1.1)
+}
+```
+
+这个编码真是让人头疼
+
+谢天谢地, 现在我们有了一个新的选择。我们可以完全抛弃 `transforms`, 并且在没有它们的情况下为我们的元素添加样式。
+
+```css
+div {
+  translate: -50%, -50%;
+  rotate: 10deg;
+}
+div:where(:hover, :focus) {
+  scale: 1.1;
+}
+```
+
+## 代码来自用户代理
+
+CSS自定义属性让我们可以在代码中保存样式并在以后重复使用, 就像这样: 
+
+```css
+:root {
+  --color: red;
+}
+
+p {
+  color: var(--color);
+}
+
+img {
+  border: 2px solid var(--red);
+}
+```
+
+但是, 尽管这些由我们程序员定义, 还有其他由用户代理定义的样式。我们可以通过 `env()` 样式来访问它们。目前, 只有八种这样的样式可用: 
+
+```css
+/*the safe-area-inset-* styles */
+
+env(safe-area-inset-top)
+env(safe-area-inset-right)
+env(safe-area-inset-bottom)
+env(safe-area-inset-left)
+
+/*the titlebar-are-* styles */
+
+env(titlebar-area-x)
+env(titlebar-area-y)
+env(titlebar-area-width)
+env(titlebar-area-height)
+```
+
+前四个定义了浏览器窗口顶部、右侧、底部和左侧的填充。这在非方形屏幕上非常方便, 比如智能手表或一些手机的屏幕弯曲到边缘。你可以直接使用这些 `safe-area-inset-*`, 但它们的值是0像素。
+
+这些 `titlebar-area-*` 样式仅适用于渐进式网络应用程序, 并且仅在使用 `window-controls-overlay` `display_override` 值时才有效。它们可以用来防止PWA覆盖最小化、最大化和关闭按钮。
+
+嗯, 我想不出其他情况下用户代理可以与样式表进行通信以确定显示方式的例子。是的, 你可以使用 `@media (prefers-color-scheme: dark)` 检查暗模式, 或者你可以强制打印机打印带有背景图像的内容。
+
+```css
+@media print {
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+```
+
+但这些与实际从用户代理中获取值并将其放入样式表中不同。尽管当前的应用有限, 但我可以想象未来的应用可能是获取默认的操作系统字体或通过类似这样的方式获取浏览器的缩放级别。
+
+```css
+body {
+  font-size: calc(100% * env(browser-zoom-level));
+}
+```
+
+目前我们无法做到这一点, 这对开发人员来说是一个难题。
+
+虽然 `env()` 的适用案例并不多, 但它确实有潜力改变我们编写CSS的方式, 这是我们应该注意的事情。

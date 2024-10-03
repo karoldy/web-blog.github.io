@@ -1,0 +1,207 @@
+# React实现一个简单的虚拟列表
+
+虚拟列表是现在比较常用的前端渲染大数据列表的方案, 目前也有很多组件库和工具库也都有对应的实现, 如`vueuse`和`ahooks`的`useVirtualList`、`element-plus`的`tableV2`等。对于初中级前端而言, 虚拟列表也是面试的常客了, 和面试官聊到性能优化的话题时有时也会涉及到。本文将笔者对虚拟列表的一些认知, 以及基于认知给出的实现做下整理。虽说现在网上写虚拟列表的文章非常多质量也非常高了, 但对于技术人而言, 只有自己进行输出, 才能够有更加深刻的理解。
+
+## 虚拟列表的优势
+
+比如我们现在要渲染一万条数据的列表, 如果直接使用循环进行渲染, 再加上列表项的`dom`结构比较复杂的话, 渲染压力是很大的。而虚拟列表只渲染出现在可视区域的数据, 这大大减少了浏览器的渲染压力。
+
+## 虚拟列表的原理
+
+这边给出的原理仅针对于最简单的情形, 即列表高度和列表项高度都是确定的。记列表高度为`listHeight`, 列表项高度为`listItemHeight`。
+
+## 虚拟滚动的实现
+
+在列表容器内使用一个`div`撑开滚动条, 这个`div`的高度应为`listItemHeight * listItemNum`, 其中`listItemNum`为数据的总量。这一步是为了模拟渲染出全部数据情形下的滚动条。监听滚动条的事件, 我们可以从列表容器的`dom`对象中获取到对应的`scrollTop`属性, 可以通过这个来计算渲染的起始元素索引以及渲染区域偏移量。
+
+## 渲染区域的样式
+
+将列表容器设置为`position:relative`, 渲染数据区域容器设置为绝对定位。我们最终希望渲染数据区域出现到可视区域的正确位置, 所以在我们操作滚动条时要对渲染区域的偏移量进行计算, 在计算过后把渲染区域定位到正确的位置。定位的方式有两种, 一种基于`top`, 一种基于`transform`。后面给出的实现将是基于第二种的。
+
+## 计算渲染在可视区域的数据以及渲染区域的偏移量
+
+列表可视区域中最大允许展示的列表项数量为`Math.ceil(listHeight / listItemHeight)`, 记为`renderDataNum`。
+
+当我们操作滚动条时, 实时获取当前列表容器的`scrollTop`, 可以计算得出渲染区域中的数据是从第几个开始的, 也就是渲染数据的起始位置索引, 为`Math.floor(scrollTop / itemHeight)`, 记为`renderDataStartIndex`。有了`renderDataStartIndex`和`renderDataNum`, 我们就可以对原始数据进行切片, 获取到渲染在可视区域的完整数据。
+
+在这之后, 我们需要调整这个区域相对于列表内顶部的偏移量, 实际上这个偏移量就是`renderDataStartIndex * itemHeight`。（比如现在要渲染`[0,1,2,3,4,5]`, 可视区域只能渲染`3`个元素, 当我们滑动使元素`2`刚好处于列表顶部时, 此时的`renderDataStartIndex`为`2`, 而元素`2`的前面还有两个元素会占用一定的高度, 这个高度就是我们刚才计算的偏移量）
+
+## 缓冲区的预留
+
+当我们实现完以上几点后, 会发现列表在快速滚动时会出现闪动的状况, 即滑动过程中底下区域会变空白。这时候我们只需要在可视区域的上下预留相应的缓冲区数据即可。
+
+## 代码实现
+
+下面是一个比较简单的用React实现的例子
+
+`VirtualList/index.tsx`：
+
+```tsx
+import React, {
+  CSSProperties,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import "./index.css";
+
+interface IProps<T extends { key: React.Key }> {
+  height?: CSSProperties["height"];
+  width?: CSSProperties["width"];
+  dataSource: T[];
+  itemHeight?: number;
+  cacheNumber?: number;
+  listItemRender?: (item: T) => React.ReactNode;
+}
+
+export const VirtualList: <T extends { key: React.Key }>(
+    props: IProps<T>
+) => React.ReactNode = (props) => {
+  const {
+    height = "500px",
+    dataSource = [],
+    width = "400px",
+    itemHeight = 32,
+    cacheNumber = 10,
+    listItemRender,
+  } = props;
+
+  /** 虚拟列表外层容器 */
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  /** 真正用于存放虚拟列表项的容器 */
+  const listItemsContainerRef = useRef<HTMLDivElement>(null);
+
+  /** 用于撑开滚动条的容器高度（数据项个数 * 每个数据项高度） */
+  const [scrollerContainerHeight, setScrollerContainerHeight] = useState<number>(0);
+
+  /** 虚拟列表渲染的真实数据 */
+  const [renderData, setRenderData] = useState<(typeof dataSource)[number][]>([]);
+
+  /** 渲染数据区域偏移量 */
+  const [renderAreaOffset, setRenderAreaOffset] = useState<number>(0);
+
+  /** 监听滚动条变化, 触发计算渲染数据以及渲染区域偏移量 */
+  const handleScroll = useCallback(() => {
+    /** 渲染元素个数（可视区域可容纳最大元素数量 + 缓冲区元素数量） */
+    const renderDataNum = Math.ceil((containerRef.current?.clientHeight || 0) / itemHeight) + cacheNumber;
+
+    /** 渲染元素起始索引 */
+    let renderDataStartIndex = Math.floor((containerRef.current?.scrollTop || 0) / itemHeight) - cacheNumber;
+
+    if (renderDataStartIndex < 0) {
+      renderDataStartIndex = 0;
+    }
+
+    setRenderData(
+      dataSource.slice(
+        renderDataStartIndex,
+        renderDataStartIndex + renderDataNum
+      )
+    );
+
+    setRenderAreaOffset(renderDataStartIndex * itemHeight);
+  }, [cacheNumber, dataSource, itemHeight]);
+
+  useEffect(() => {
+    setScrollerContainerHeight(dataSource.length * itemHeight);
+    handleScroll();
+  }, [dataSource, handleScroll, itemHeight]);
+
+  return (
+    <div
+      className="virtual-list-container"
+      ref={containerRef}
+      style={{ height, width }}
+      onScroll={handleScroll}
+    >
+      <div style={{ height: `${scrollerContainerHeight}px` }}></div>
+      <div
+        className="virtual-list-items-container"
+        ref={listItemsContainerRef}
+        style={{
+          width: "100%",
+          transform: `translate(0,${renderAreaOffset}px)`,
+        }}
+      >
+        {renderData.map((item) => (
+          <div style={{ height: `${itemHeight}px` }} key={item.key}>
+            {listItemRender
+                ? listItemRender(item)
+                : typeof item === "object"
+                  ? JSON.stringify(item)
+                  : (item as string)}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+`VirtualList/index.css`
+
+```css
+.virtual-list-container {
+  overflow: auto;
+  position: relative;
+}
+
+.virtual-list-items-container {
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+}
+```
+
+对应的使用例如下：
+
+```tsx
+import './App.css'
+
+import { VirtualList } from './components/VirtualList'
+
+interface ListItemData {
+  key: React.Key,
+  id: string | number
+  title: string
+  imgSrc: string
+  desc: string
+}
+
+
+const ListItem = (item: ListItemData) => {
+  return (
+    <div style={{ padding: '5px', width: '100%', boxSizing: 'border-box' }}>
+      <div
+        style={{ border: '1px solid #f0f0f0', boxShadow: '0 1px 2px -2px rgba(0,0,0,.16), 0 3px 6px 0 rgba(0,0,0,.12), 0 5px 12px 4px rgba(0,0,0,.09)', display: 'flex', alignItems: 'center', columnGap: 10 }}>
+
+        <img src={item.imgSrc} style={{ height: 100 }} />
+        <div style={{ display: 'flex', flexDirection: 'column',rowGap: 10  }}>
+          <div style={{ fontWeight: 'bold' }}>{item.title}</div>
+          <div>{item.desc}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function App() {
+  return (
+    <div>
+      <VirtualList<ListItemData> listItemRender={ListItem} itemHeight={120} dataSource={new Array(200).fill(0).map((_, index) => ({
+        key: index,
+        id: index,
+        title: `标题_${index}`,
+        imgSrc: 'https://img14.360buyimg.com/n1/jfs/t1/83129/30/18124/355324/626b8c95Ea76bb2d9/b7c73d677df0c57d.jpg',
+        desc: 'fumofumo'
+      }))}
+      />
+    </div>
+  )
+}
+
+export default App
+```

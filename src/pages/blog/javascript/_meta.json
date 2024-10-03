@@ -27,5 +27,7 @@
   "functional_programming": "说说你对函数式编程的理解?优缺点?",
   "function_cache": "Javascript中如何实现函数缓存?函数缓存有哪些应用场景?",
   "loss_accuracy": "说说 Javascript 数字精度丢失的问题, 如何解决?",
-  "mode_thread": "JavaScript模拟实现多线程"
+  "mode_thread": "JavaScript模拟实现多线程",
+  "function_reload": "JavaScript实现函数重载",
+  "tag_page_message": "JavaScript实现跨标签页通信"
 }

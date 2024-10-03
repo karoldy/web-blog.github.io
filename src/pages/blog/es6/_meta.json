@@ -9,5 +9,6 @@
   "generator": "你是怎么理解ES6中 Generator的?使用场景?",
   "proxy": "你是怎么理解ES6中Proxy的?使用场景?",
   "module": "你是怎么理解ES6中Module的?使用场景?",
-  "decorator": "你是怎么理解ES6中 Decorator 的?使用场景?"
+  "decorator": "你是怎么理解ES6中 Decorator 的?使用场景?",
+  "hand_write_promise": "手写Promise，30行代码理解Promise核心原理和发布订阅模式"
 }

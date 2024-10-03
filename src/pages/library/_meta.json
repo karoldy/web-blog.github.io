@@ -5,5 +5,9 @@
   "mojs": "Mo.Js",
   "driverjs": "Driver.js",
   "dexiejs": "Dexie.js",
-  "react_flow": "React Flow"
+  "page_spy": "PageSpy",
+  "vue_use": "VueUse",
+  "react_puck": "React Puck",
+  "react_flow": "React Flow",
+  "loading": "最全的Loading动画合集网站"
 }

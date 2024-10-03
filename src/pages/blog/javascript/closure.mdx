@@ -126,6 +126,193 @@ console.log(Counter2.value()); /* logs 0 */
 
 两个计数器 `Counter1` 和 `Counter2` 是维护它们各自的独立性的, 每次调用其中一个计数器时, 通过改变这个变量的值, 会改变这个闭包的词法环境, 不会影响另一个闭包中的变量
 
+### 封装变量
+
+闭包可以用来封装变量, 使其不受外界的干扰, 同时又可以通过返回的函数来访问和操作这些变量。这在 JavaScript 中非常常见, 例如：
+
+```js showLineNumbers copy
+function createCounter() {
+  let count = 0;
+
+  return function() {
+    return ++count;
+  };
+}
+
+const counter = createCounter();
+console.log(counter()); // 输出: 1
+console.log(counter()); // 输出: 2
+```
+
+在上述例子中, 我们通过 createCounter 函数创建了一个计数器, 并返回了一个闭包函数。这个闭包函数可以访问和操作 count 变量, 而 count 变量是被封装的, 外界无法直接访问。
+
+### 模块化开发
+
+闭包在模块化开发中发挥了重要的作用。通过闭包, 我们可以创建私有变量和方法, 避免全局命名冲突和变量污染。下面是一个简单的示例：
+
+```js showLineNumbers copy
+const module = (function() {
+  let privateVariable = 1;
+
+  function privateMethod() {
+    console.log('私有方法');
+  }
+
+  return {
+    publicMethod: function() {
+      console.log('公开方法');
+    }
+  };
+})();
+
+module.publicMethod(); // 输出: 公开方法
+module.privateMethod(); // 输出: Uncaught TypeError: module.privateMethod is not a function
+```
+
+在这个例子中, 我们使用立即执行函数创建了一个匿名的函数作用域, 并返回了一个具有公开方法的对象。在函数作用域内定义的 `privateVariable` 和 `privateMethod` 是私有的, 外界无法直接访问。
+
+### 实现缓存
+
+闭包可以用于实现数据缓存, 特别是在频繁调用的情况下提高性能。下面是一个简单的示例：
+
+```js showLineNumbers copy
+function createCache() {
+  const cache = {};
+
+  return function(key, value) {
+    if (typeof value !== 'undefined') { // 设置缓存
+      cache[key] = value;
+    } else { // 获取缓存
+      return cache[key];
+    }
+  };
+}
+
+const cache = createCache();
+cache('name', 'Tom'); // 设置缓存
+console.log(cache('name')); // 输出: Tom
+```
+
+在这个例子中, 我们通过 createCache 函数创建了一个用于缓存数据的闭包函数。当使用闭包函数设置缓存时, 将数据存储在 cache 对象中。当使用闭包函数获取缓存时, 从 cache 对象中查找并返回数据。
+
+### 实现迭代器
+
+迭代器可以帮助我们遍历集合或序列, 并对其中的元素进行操作。闭包可以用于实现迭代器, 例如：
+
+```js showLineNumbers copy
+function createIterator(arr) {
+  let index = 0;
+
+  return function() {
+    if (index < arr.length) {
+      return arr[index++];
+    } else {
+      return undefined;
+    }
+  };
+}
+
+const iterator = createIterator([1, 2, 3]);
+console.log(iterator()); // 输出: 1
+console.log(iterator()); // 输出: 2
+console.log(iterator()); // 输出: 3
+console.log(iterator()); // 输出: undefined
+```
+
+在这个例子中, 我们通过 createIterator 函数创建了一个闭包函数, 用于遍历给定的数组。每次调用闭包函数时, 它会返回数组中的下一个元素, 直到遍历完全部元素。
+
+### 事件处理
+
+闭包在事件处理中非常常见, 特别是在循环或定时器等异步操作中。使用闭包可以保存循环变量或定时器的参数, 并确保在回调函数执行时以正确的值进行处理。例如：
+
+```js showLineNumbers copy
+for (var i = 0; i < 5; i++) {
+  (function(index) {
+    setTimeout(function() {
+      console.log(index);
+    }, 1000);
+  })(i);
+}
+```
+
+在这个例子中, 我们使用立即执行函数创建了一个新的函数作用域, 每次循环都将 i 的值传递给立即执行函数的参数 index, 从而在定时器回调函数执行时正确地打印每次循环的值。
+
+### 实现回调函数
+
+闭包在处理回调函数时非常有用, 特别是在处理异步操作的结果或处理事件的响应时。闭包能够保存局部变量和状态, 并在回调函数被调用时使用。例如：
+
+```js showLineNumbers copy
+function fetchData(url, callback) {
+  // 发送网络请求获取数据
+  setTimeout(function() {
+    const data = 'Some data';
+    callback(data);
+  }, 2000);
+}
+
+fetchData('https://example.com', function(data) {
+  console.log(data);
+});
+```
+
+在这个例子中, 我们定义了一个 fetchData 函数用于异步获取数据。在获取到数据后, 通过闭包将数据传递给回调函数并执行回调函数, 从而实现对数据的处理和使用。
+
+### 实现递归
+
+闭包在递归算法中经常被使用, 可以保存递归中的状态和结果, 并确保在每次递归调用时使用正确的值。例如：
+
+```js showLineNumbers copy
+function factorial(n) {
+  if (n === 1) {
+    return 1;
+  } else {
+    return n * factorial(n - 1);
+  }
+}
+
+console.log(factorial(5)); // 输出: 120
+```
+
+在这个例子中, factorial 函数使用递归的方式计算阶乘。在每次递归调用时, 通过闭包保存当前的状态和结果, 并随着递归的进行传递给下一次的递归调用。
+
+### 链式调用
+
+当使用闭包实现链式调用时, 每个函数都返回一个包含其他函数的对象, 以便可以通过点操作符连续调用多个函数。以下是一个示例：
+
+```js showLineNumbers copy
+function Calculator() {
+  let result = 0;
+
+  return {
+    add: function(num) {
+      result += num;
+      return this;
+    },
+    subtract: function(num) {
+      result -= num;
+      return this;
+    },
+    multiply: function(num) {
+      result *= num;
+      return this;
+    },
+    divide: function(num) {
+      result /= num;
+      return this;
+    },
+    getResult: function() {
+      return result;
+    }
+  };
+}
+
+const calculator = new Calculator();
+const result = calculator.add(5).multiply(2).subtract(3).divide(4).getResult();
+console.log(result); // 输出: 2.5
+```
+
+在这个例子中, 我们通过 Calculator 工厂函数创建了一个对象, 其中包含了四个方法 add、subtract、multiply 和 divide。每个方法都会对内部的 result 变量进行相应的计算, 并返回包含其他方法的对象, 以实现链式调用。最后, 通过调用 getResult 方法获取最终的计算结果。
+
 ### 其他
 
 例如计数器、延迟调用、回调等闭包的应用, 其核心思想还是创建私有变量和延长变量的生命周期

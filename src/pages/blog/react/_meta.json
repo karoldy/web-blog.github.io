@@ -31,5 +31,6 @@
   "improve_performance": "说说 React 性能优化的手段有哪些?",
   "capture_error": "说说你在React项目是如何捕获错误的?",
   "server_side_rendering": "说说React服务端渲染怎么做?原理是什么?",
-  "summary": "说说你在使用React 过程中遇到的常见问题?如何解决?"
+  "summary": "说说你在使用React 过程中遇到的常见问题?如何解决?",
+  "virtual_list": "React实现一个简单的虚拟列表"
 }
