@@ -1,0 +1,503 @@
+# 用electron+vite+vue3搭建桌面端项目，electron基础配置一
+
+「Electron 是基于 Chromium 和 Node.js 实现的」，前端程序员可以使用 JavaScript、HTML 和 CSS 知识快速构建跨平台的桌面应用。不需要本地开发原生的经验就在能在各PC端平台上运行的跨平台应用 windows、 macOS和Linux
+
+笔者最近在学习Electron并且在用它工作，遇到了一些问题积累了一些浅薄的经验，在这里做一下记录，并且准备做一个桌面端的工具，打包运行到windows、 macOS和Linux上
+
+## 创建项目
+
+使用vue3和vite创建vue的项目然后引入electron
+
+```bash
+npm create vite@latest electron-desktop-tool
+```
+
+## 安装electron
+
+在安装 electron之前需要先配置一下 安装源
+
+在根目录下新建一个 .npmrc文件
+
+```
+strict-ssl=false
+registry=https://registry.npmmirror.com/
+electron_mirror=https://registry.npmmirror.com/-/binary/electron/
+electron_builder_binaries_mirror=https://registry.npmmirror.com/-/binary/electron-builder-binaries/
+# ELECTRON_BUILDER_BINARIES_MIRROR=https://mirrors.huaweicloud.com/electron-builder-binaries/ 
+```
+
+- `strict-ssl=false`：这个设置表示在进行 SSL 连接时不强制验证证书的有效性。这在一些情况下可能会用于避免 SSL 证书验证失败的问题
+- `registry=https://registry.npmmirror.com/`：这是指定了 npm 的镜像源，用于下载 npm 包
+
+## 安装electron相关插件
+
+接下来就可以进行安装electron和它相关的插件了
+
+```bash
+// 进入到项目中安装 electron
+npm install -D electron
+```
+
+安装electron-builder 用于打包可安装exe程序和绿色版免安装exe程序
+
+```bash
+npm install -D electron-builder
+```
+
+安装electron-devtools-installer 用于开发调试electron
+
+```bash
+npm install -D electron-devtools-installer
+```
+
+用vite构建electron应用程序需要一个vite插件
+
+```bash
+npm install -D vite-plugin-electron
+```
+
+## 创建项目入口——主进程
+
+electron引入成功了，可以开始写electron的相关代码了，新建一个src-electron 文件用来写electron的代码，在它下面创建一个 main.ts文件 用来写主进程代码
+
+`main.ts`
+
+```js
+// src-electron/main.js
+const { app, BrowserWindow } = require('electron')
+const { join } = require('path')
+
+// 屏蔽安全警告
+// ectron Security Warning (Insecure Content-Security-Policy)
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
+
+// 创建浏览器窗口时，调用这个函数。
+const createWindow = () => {
+  const win = new BrowserWindow({
+    width: 800,
+    height: 600,
+  })
+
+  // win.loadURL('http://localhost:3000')
+  // development模式
+  if(process.env.VITE_DEV_SERVER_URL) {
+    win.loadURL(process.env.VITE_DEV_SERVER_URL)
+    // 开启调试台
+    win.webContents.openDevTools()
+  }else {
+    win.loadFile(join(__dirname, '../dist/index.html'))
+  }
+}
+
+// Electron 会在初始化后并准备
+app.whenReady().then(() => {
+  createWindow()
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+
+```
+
+## 配置插件入口
+
+在「vite.config.ts」中配置vite-plugin-electron 插件入口
+
+```js
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import electron from 'vite-plugin-electron'
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [
+    vue(),
+    electron({
+      // 主进程入口文件
+      entry: './src-electron/main.js'
+    })
+  ],
+  /*开发服务器选项*/
+  server: {
+    // 端口
+    port: 3000,
+  }
+})
+```
+
+## 配置package.json
+
+在package.json把"type": "module", 删除掉并且配置main字段
+
+```json
+// main字段配置为 electron主进程文件路径
+"main": "./src-electron/main.js",
+```
+
+## electron 启动
+
+运行 npm run dev 启动项目
+
+可以看到弹出一个 electron窗口，这样一个最基本的electron应用就写好了
+
+## 修改标题和logo
+
+「修改标题」
+
+electron窗口左上角的标题，首先读取的是 index.html 的title标签值
+
+此时把他注释掉
+
+如果在主进程中没有配title属性，就会读取package.json 文件里的 name属性
+
+在主进程 new BrowserWindow时，可以自定义窗口标题
+
+```js
+const win = new BrowserWindow({
+  width: 800,
+  height: 600,
+  title:'董员外'
+})
+```
+
+修改图标」
+
+窗口图标和任务栏图标默认是electron 的logo
+
+窗口图标是在 new BrowserWindow 初始化窗口实例时配置，和标题是一起的
+
+```js
+const { join } = require('path')
+
+const win = new BrowserWindow({
+  width: 800,
+  height: 600,
+  title:'董员外',
+  icon: join(__dirname, '../public/logo.ico'),
+})
+```
+
+- join是引入的path路径方法
+- `__dirname`是当前文件的路径，我们的main.js是在 src-electron文件夹下，所以找图片是需要返回到上一级目录../public/logo.ico
+
+## 打包
+
+打包插件和用到的包我们在第一步都已经安装了，但是还要配置一些打包的参数
+
+配置package.json
+
+首先配置一下打包的命令,在"scripts"里面配置这个打包命令
+
+```json
+"electron:build": "vite build && electron-builder"
+```
+
+添加一个 build属性对象,里面主要配置打包的信息
+
+```json
+"build": {
+    "productName": "ElectronDeskTopTool",
+    "appId": "dyy.dongyuanwai",
+    "copyright": "dyy.dongyuanwai © 2024",
+    "compression": "maximum",
+    "asar": true, 
+    "directories": {
+      "output": "release/" // 输出目录
+    },
+    "nsis": {
+      "oneClick": false,// 是否一键安装
+      "allowToChangeInstallationDirectory": true,// 允许修改安装目录
+      "perMachine": true,
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,// 创建桌面图标
+      "createStartMenuShortcut": true,// 创建开始菜单图标
+      "shortcutName": "ElectronDeskTopTool"
+    },
+    "win": {
+      "icon": "./public/logo.ico",// 安装图标
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}",//安装包名称
+      "target": [
+        {
+          "target": "nsis"
+        }
+      ]
+    },
+    "mac": {
+      "icon": "./public/logo.ico",
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}"
+    },
+    "linux": {
+      "icon": "./public/logo.ico",
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}"
+    }
+  },
+```
+
+配置主线程打包加载文件
+
+用process.env.VITE_DEV_SERVER_URL来判断是否是开发模式
+
+打完包之后就会加载index.html文件
+
+这是完整的package.json文件内容
+
+```json
+{
+  "name": "electron-desktop-tool",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./src-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "electron:build": "vite build && electron-builder"
+  },
+  "build": {
+    "productName": "ElectronDeskTopTool",
+    "appId": "dyy.dongyuanwai",
+    "copyright": "dyy.dongyuanwai © 2024",
+    "compression": "maximum",
+    "asar": true, 
+    "directories": {
+      "output": "release/" 
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "deleteAppDataOnUninstall": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ElectronDeskTopTool"
+    },
+    "win": {
+      "icon": "./public/logo.ico",
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}",
+      "target": [
+        {
+          "target": "nsis"
+        }
+      ]
+    },
+    "mac": {
+      "icon": "./public/logo.ico",
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}"
+    },
+    "linux": {
+      "icon": "./public/logo.ico",
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}"
+    }
+  },
+  "dependencies": {
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-devtools-installer": "^3.2.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "vite-plugin-electron": "^0.28.4",
+    "vue-tsc": "^2.0.6"
+  }
+}
+```
+
+## win打包
+
+```bash
+npm run electron:build
+```
+
+可以看到打包成功，并且生成了一个 指定的打包文件输出目录
+
+设置了allowToChangeInstallationDirectory就可以自定义安装目录
+
+设置createDesktopShortcut安装成功后就可以看到，在桌面上生成了快捷方式
+
+到这里已经算成功了，接下来大概了解一下build打包配置，可以详细的了解一下打包结果的设置
+
+```json
+// 打包的配置都放到 build里
+"build": {  
+    "productName":"ElectronDeskTopTool",//项目名 这也是生成的exe文件的前缀名，也可以在每个环境中自行配置
+    "appId": "com.dyy.dongyuanwai",//应用程序的唯一标识符，通常是反转的域名格式 
+    "copyright":"dyy.dongyuanwai © 2024",//版权信息，显示在应用程序中说明版权归属的地方
+    "compression": "maximum", //压缩级别，指定打包时使用的压缩级别。这里设置为"maximum"表示最大压缩
+    "asar": true, // 是否启用 asar 打包，asar 是 Electron 提供的一种文件打包方式，能够提高应用程序的性能和安全性。
+    "directories": { //指定输出目录，打包完成后的文件会放置在该目录下。
+      "output": "release"
+    }, 
+    // windows相关的配置
+    "win": {  
+      "icon": "xxx/icon.ico", //图标路径 
+      "artifactName": "${productName}-v${version}-${platform}-setup.${ext}" // 安装包名称
+    }，
+     // 这个意思是打出来32 bit + 64 bit的包，但是要注意：这样打包出来的安装包体积比较大，所以建议直接打32的安装包。
+      "arch": [
+          "x64",
+          "ia32"
+        ]
+  }
+```
+
+## nsis配置
+
+NSIS(Nullsoft Scriptable Install System)打包是为了生成 Windows 平台的安装程序。
+
+```json
+"nsis": {
+  "oneClick": false, // 是否一键安装
+  "perMachine": true, //设置为 true 时，将在计算机上所有用户账户中安装应用程序；false 则只会在当前用户账户下安装
+  "allowElevation": true, // 允许提升权限进行安装，设置为 true 时，安装过程可能会请求管理员权限
+  "allowToChangeInstallationDirectory": true, // 允许修改安装目录
+  "installerIcon": "xxx/xxxx.ico",// 安装图标
+  "uninstallerIcon": "xxx/xxxx.ico",//卸载图标
+  "installerHeaderIcon": "xxx/xxxx.ico", // 安装时头部图标
+  "deleteAppDataOnUninstall": true, // 设置为 true 时，卸载应用程序时会删除应用程序的数据文件
+  "createDesktopShortcut": true, // 创建桌面图标
+  "createStartMenuShortcut": true,// 创建开始菜单图标
+  "shortcutName": "xxxx", // 图标名称
+},
+```
+
+## linux 打包
+
+electron-builder 打包会自动识别环境，所以我在linux环境也可以直接运行 npm run electron:build,他就会打成linux的包
+
+linux环境会打成.deb格式，所以要在package.json 的linux里面配置
+
+```json
+"linux": {
+    "icon": "./public/logo.ico",
+    "artifactName": "${productName}-v${version}-${platform}-setup.${ext}",
+    "target": [ "deb" ]
+  }
+```
+
+解决linux打包报错
+
+>❝
+
+⨯ Please specify project homepage, see https://electron.build/configuration/configuration#Metadata-homepa
+
+Please specify author 'email' in the application package.json
+
+❞
+
+这是因为package.json文件内容 homepage、auth、email这些字段没有配置
+
+## 配置路由
+
+虽然是electron客户端里的路由，但是配置还是和vue的路由一样
+
+```bash
+npm install vue-router@4
+```
+
+添加路由页面：在src目录下新建一个 page文件夹 里面存放页面
+
+```vue
+/page/first/index.vue
+<template>
+  <h1>
+    这是 first 页面
+  </h1>
+  <button @click="go">去second页面</button>
+</template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+const router = useRouter()
+const go = () => {
+  router.push('/second');
+};
+
+
+</script>
+
+<style scoped>
+
+</style>
+```
+
+```vue
+/page/second/index.vue
+<template>
+  <h1>
+    这是 second 页面
+  </h1>
+  <button @click="go">去first页面</button>
+</template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+const router = useRouter()
+const go = () => {
+  router.push('/');
+};
+
+
+</script>
+
+<style scoped>
+
+</style>
+
+```
+
+在src下新建一个router目录，然后在里面添加一个index.ts文件，在里面配置路由
+
+```js
+// src\router\index.ts
+import { createRouter, createWebHashHistory } from 'vue-router'
+
+const router = createRouter({
+  //  hash 模式。
+  history: createWebHashHistory(),
+  routes: [
+    // 设置首页
+    {
+      path: '/',
+      component: () => import('../page/first/index.vue')
+    },
+    { 
+      path: '/second', 
+      component: () => import('../page/second/index.vue') 
+    },
+  ],
+})
+
+export default router
+```
+
+`src/main.ts`
+
+```js
+import { createApp } from 'vue'
+import './style.css'
+import App from './App.vue'
+import router from './router'
+
+createApp(App).use(router).mount('#app')
+```
+
+「5、在App.vue文件删除原来的内容，添加router-view」
+
+```vue
+<script setup lang="ts">
+</script>
+
+<template>
+  <router-view></router-view>
+</template>
+
+<style scoped>
+</style>
+```

@@ -1,0 +1,99 @@
+# wsl 安装 ubuntu
+
+## WSL安装ubuntu
+
+检查系统是否启用「适用于 Linux 的 Windows 子系统」功能，具体位置在：控制面板->程序->启用或关闭 Windows 功能。
+
+开启该功能后，即可开始使用以下命令安装我们所需的Linux发行版本。
+
+- 设置Linux发行版的WSL默认版本为2
+
+```bash
+wsl --set-default-version 2
+```
+
+- 查看可安装的Linux发行版
+
+```bash
+wsl --list --online
+```
+
+- 安装指定Linux发行版
+
+```bash
+wsl --install -d Ubuntu-22.04
+```
+
+- 设置Linux发行版本WSL版本
+
+```bash
+wsl --set-version Ubuntu-22.04 2
+```
+
+- 设置默认Linux发行版
+
+```bash
+wsl --set-default Ubuntu-22.04
+```
+
+- 查看系统状态
+
+```bash
+wsl --status
+```
+
+- 查看已安装Linux发行版的列表状态
+
+```bash
+wsl -l -v
+```
+
+## WSL存储位置迁移
+
+- 关闭已安装的Linux发行版
+
+```bash
+wsl --shutdown
+```
+
+- 创建迁移的目标文件夹目录
+
+```bash
+mkdir e:wsl\ubuntu2204
+```
+
+- 将对应Linux发行版压缩导出到目标目录
+
+```bash
+wsl --export Ubuntu-22.04 E:\wsl\ubuntu2204\ubuntu-22.04.tar
+```
+
+- 注销对应Linux发行版
+
+```bash
+wsl --unregister Ubuntu-22.04
+```
+
+- 将压缩后的Linux发行版解压导入到目标文件夹
+
+```bash
+wsl --import Ubuntu-22.04 E:\wsl\ubuntu2204 E:\wsl\ubuntu2204\ubuntu-22.04.tar
+```
+
+- 设置默认登录用户
+
+```bash
+ubuntu2204 config --default-user yusher
+```
+
+- 启动并进入对应Linux发行版系统
+
+```bash
+ubuntu2204
+```
+
+- 查看Linux版本信息
+
+```bash
+lsb_release -a
+```

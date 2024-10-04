@@ -38,3 +38,7 @@ code {
     white-space: break-spaces !important;
   }
 }
+
+.summary {
+  margin-top: 20px;
+}

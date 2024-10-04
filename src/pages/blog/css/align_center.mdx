@@ -1,0 +1,156 @@
+# 2024年 CSS 终于增加了垂直居中
+
+各位前端开发者们，你们还在为CSS中的垂直居中问题而头疼吗？好消息来了！2024年，CSS终于在默认布局中实现了简单的垂直居中。让我们一起来看看这个激动人心的变革，以及它将如何改变我们的开发方式。
+
+## 2024年的重大突破：一行代码搞定垂直居中
+
+在2024年之前，垂直居中一直是前端开发中的一个痛点。但现在，我们只需要一个CSS属性就能轻松实现：
+
+```html
+<div style="align-content: center; height: 100px;">
+  <code>align-content</code> 就是这么简单!
+</div>
+```
+
+这个简单的`align-content: center;`属性在默认布局中就能工作，无需切换到`flexbox`或`grid布局`。这意味着我们可以在不改变现有布局结构的情况下，轻松实现垂直居中。
+
+新方法的优势
+
+- 不需要使用 flexbox 或grid布局
+- 不需要额外的包装div
+- 适用于多个子元素的情况
+- 代码简洁，易于理解和维护
+
+这个变化看似简单，却是CSS发展史上的一个重要里程碑。它大大简化了我们的工作流程，使得页面布局更加直观和高效。
+
+## 回顾：垂直居中的历史方法
+
+### 方法1：表格单元格法(Table Cell)
+
+理智度：★★★☆☆
+
+在Flexbox和Grid出现之前，表格布局是最早能实现垂直居中的方法之一。
+
+```html
+<div style="display: table;">
+  <div style="display: table-cell; vertical-align: middle;">
+    内容
+  </div>
+</div>
+```
+
+这种方法的优点是兼容性好，但需要额外的HTML结构，不够直观。
+
+### 方法2：绝对定位法(Absolute Positioning)
+
+理智度：☆☆☆☆☆
+
+这种方法使用绝对定位和变换来实现居中：
+
+```html
+<div style="position: relative;">
+  <div style="position: absolute; top: 50%; transform: translateY(-50%);">
+    内容
+  </div>
+</div>
+```
+
+虽然这种方法可以工作，但它绕过了正常的布局流，使用起来较为复杂。
+
+### 方法3：行内内容法(Inline Content)
+
+理智度：☆☆☆☆☆
+
+这种方法利用了行内元素的垂直对齐特性：
+
+```html
+<div class="container">
+  ::before
+  <div class="content">内容</div>
+</div>
+```
+
+```css
+.container::before {
+  content: '';
+  height: 100%;
+  display: inline-block;
+  vertical-align: middle;
+}
+.content {
+  display: inline-block;
+  vertical-align: middle;
+}
+```
+
+这种方法的缺点是需要使用伪元素，并且可能会产生意外的空白字符。
+
+### 方法4：单行Flexbox
+
+理智度：★★★☆☆
+
+Flexbox的出现大大简化了垂直居中的实现：
+
+```html
+<div style="display: flex; align-items: center;">
+  <div>内容</div>
+</div>
+```
+
+或者使用列方向的flex：
+
+```html
+<div style="display: flex; flex-flow: column; justify-content: center;">
+  <div>内容</div>
+</div>
+```
+
+### 方法5：多行Flexbox
+
+理智度：★★★☆☆
+
+在多行Flexbox中，我们可以使用`align-content`来居中内容：
+
+```html
+<div style="display: flex; flex-flow: row wrap; align-content: center;">
+  <div>内容</div>
+</div>
+```
+
+### 方法6：Grid内容对齐
+
+理智度：★★★★☆
+
+Grid布局让对齐变得更加简单：
+
+```html
+<div style="display: grid; align-content: center;">
+  <div>内容</div>
+</div>
+```
+
+### 方法7：Grid单元格对齐
+
+理智度：★★★★☆
+
+与前一种方法略有不同，这种方法是对单元格内的内容进行居中：
+
+```html
+<div style="display: grid; align-items: center;">
+  <div>内容</div>
+</div>
+```
+
+### 方法8：自动外边距（Auto Margin）
+
+理智度：★★★☆☆
+
+在Grid和Flexbox布局中，使用自动外边距可以实现居中：
+
+```html
+<div style="display: grid;">
+  <div style="margin-block: auto;">
+    内容
+  </div>
+</div>
+```

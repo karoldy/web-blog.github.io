@@ -7,7 +7,10 @@
   "dexiejs": "Dexie.js",
   "page_spy": "PageSpy",
   "vue_use": "VueUse",
+  "varlet": "Varlet",
   "react_puck": "React Puck",
   "react_flow": "React Flow",
-  "loading": "最全的Loading动画合集网站"
+  "web_site": "前端常用的几个工具网站",
+  "loading_site": "最全的Loading动画合集网站",
+  "eolink": "Eolink——前后端联调+自动化测试神器"
 }
