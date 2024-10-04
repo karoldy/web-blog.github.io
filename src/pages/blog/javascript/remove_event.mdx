@@ -1,0 +1,151 @@
+# JavaScript移除事件的4种技术, AbortController最惊艳！
+
+## 前言
+
+在运行时清理代码是构建高效、可预测的应用程序不可或缺的一部分, 比如事件监听器。
+
+有多种方法可以移除事件监听器, 每种方法都有一定的权衡。 本文将介绍一些最常用的清除策略, 以及当在决策哪种策略最适合工作时需要记住的一些注意事项。
+
+下面示例展示了一个附加了单击事件侦听器的按钮：
+
+```html
+<button id="button">Do Something</button>
+<script>
+  document.getElementById('button').addEventListener('click', () => {
+    console.log('clicked!');
+  });
+</script>
+```
+
+使用 `Chrome` 的 `getEventListeners()` 函数, 此时会看到一个附加到该元素的侦听器：
+
+## 使用 `.removeEventListener()`
+
+`.removeEventListener()` 方法接受三个参数：**要删除的侦听器的类型**、**该侦听器的回调函数**以及 `options` 对象。
+
+但可能存在一些棘手的部分, 即这些确切的参数必须与设置侦听器时使用的参数完全匹配, 包括对内存中回调的相同引用。 否则, `.removeEventListener()` 不执行任何操作。
+
+比如下面的移除示例将是完全无效的：
+
+```js
+document.getElementById('button').addEventListener('click', () => {
+  console.log('clicked!');
+});
+
+document.getElementById('button').removeEventListener('click', () => {
+  console.log('clicked!');
+});
+```
+
+尽管该回调看起来与最初附加的回调相同, 但它不是相同的引用。解决方案是将回调设置为变量并在 `.addEventListener()` 和 `.removeEventListener()` 中引用。
+
+```js
+const myCallback = () => {
+  console.log('clicked!');
+};
+
+document.getElementById('button').addEventListener('click', myCallback);
+document.getElementById('button').removeEventListener('click', myCallback);
+```
+
+对于特定用例, 开发者还可以通过从函数本身引用伪匿名函数来删除侦听器：
+
+```js
+document
+  .getElementById('button')
+  .addEventListener('click', function myCallback() {
+    console.log('clicked!');
+
+    this.removeEventListener('click', myCallback);
+  });
+```
+
+尽管有其特殊性, `.removeEventListener()` 的优点是其用途非常明确。
+
+## 使用`.addEventListener()`的 `once` 选项
+
+`.addEventListener()` 方法附带了一个工具, 如果打算一次性使用, 可以帮助清理自身的 `once` 选项。 如果设置为 `true`, 侦听器将在首次调用后自动删除自身：
+
+```js
+const button = document.getElementById('button');
+
+button.addEventListener(
+  'click',
+  () => {
+    console.log('clicked!');
+  },
+  { once: true }
+);
+
+// 提示'clicked!'
+button.click();
+
+// 没有更多的事件监听器
+getEventListeners(button); // {}
+```
+
+如果热衷于使用匿名函数, 那么这种方法比较合适。
+
+>`getEventListeners(object)`: 返回在指定对象上注册的事件侦听器,  返回值是一个对象, 其中包含每个注册事件类型(例如单击或按键)的数组。 每个数组的成员都是描述为每种类型注册的侦听器的对象。
+
+## 克隆和替换节点
+
+有时, 开发者可能不知道给定节点上所有活动的侦听器。 在这种情况下, 可以克隆整个节点并用该克隆替换自身。
+
+因为使用 `.cloneNode()` 方法, 通过 `.addEventListener()` 附加的侦听器都不会被保留。
+
+```js
+button.parentNode.replaceChild(button.cloneNode(true), button);
+```
+
+但在现代浏览器中, 可以使用 `.replaceWith()` 来简化操作：
+
+```js
+button.replaceWith(button.cloneNode(true));
+```
+
+但是值得注意的是, 该方法依然会保留内部侦听器, 这意味着具有 `onclick` 属性的按钮仍会按定义触发：
+
+```js
+<button id="button" onclick="console.log('clicked!')">
+  Do Something
+</button>
+```
+
+总而言之, 如果需要用暴力无差别地删除任何类型的 `listener`, 那么这是一个不错的选择。然而, 缺点就是目的不太明显。
+
+## 使用 `AbortController()`
+
+`AbortController` 接口表示一个控制器对象, 允许开发者根据需要中止一个或多个 Web 请求。比如：使用
+`AbortController.AbortController()` 构造函数创建一个新的 `AbortController`。使用 `AbortSignal` 对象可以完成与 DOM 请求的通信。甚至, `AbortController` 还可以用于移除事件监听器。
+
+截至最近, `.addEventListener()` 可以配置一个信号来强制中止/删除侦听器。 当相应的控制器调用 `.abort()` 时, 该信号将触发侦听器被删除, 比如下面的代码示例：
+
+```js
+const button = document.getElementById('button');
+const controller = new AbortController();
+// 构造一个AbortController实例
+const { signal } = controller;
+
+button.addEventListener('click', () => console.log('clicked!'), { signal });
+
+// 移除事件监听器
+controller.abort();
+```
+
+`AbortController` 是一种更清晰的删除侦听器的方法, 并且没有处理 `.removeEventListener()` 的潜在问题。同时, 开发者甚至可以使用一个信号一次性删除任何类型的多个监听器, 即使使用匿名函数也完全没问题：
+
+```js
+const button = document.getElementById('button');
+const controller = new AbortController();
+const { signal } = controller;
+
+button.addEventListener('click', () => console.log('clicked!'), { signal });
+window.addEventListener('resize', () => console.log('resized!'), { signal });
+document.addEventListener('keyup', () => console.log('pressed!'), { signal });
+
+// 一次性移除所有事件监听器
+controller.abort();
+```
+
+唯一的遗憾是, 该方法自 `2021` 年 `(v90)` 起 `Chrome` 才提供全面支持。因此, 如果需要考虑浏览器兼容性, 还是建议试试其他的方案。

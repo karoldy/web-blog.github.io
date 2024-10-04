@@ -1,149 +1,310 @@
-# 无感刷新token
+# 前端无感知刷新token & 超时自动退出
 
-## 前言
+## token的作用
 
-通常，对于一些需要记录用户行为的系统，在进行网络请求的时候都会要求传递一下登录的token。不过，为了接口数据的安全，服务器的token一般不会设置太长，根据需要一般是1-7天的样子，token过期后就需要重新登录。不过，频繁的登录会造成体验不好的问题，因此，需要体验好的话，就需要定时去刷新token，并替换之前的token。
+因为http请求是无状态的，是一次性的，请求之间没有任何关系，服务端无法知道请求者的身份，所以需要鉴权，来验证当前用户是否有访问系统的权限。
 
-要做到token的无感刷新，主要有3种方案：
+每次请求资源服务器时都会在请求头中添加 `Authorization: Bearer access_token` 资源服务器会先判断`token`是否有效，如果无效或过期则响应 `401 Unauthorize`。此时用户处于操作状态，应该自动刷新`token`保证用户的行为正常进行。
 
-## 方案一
+刷新`token`：使用`refresh_token`获取新的`access_token`，使用新的`access_token`重新发起失败的请求。
 
-后端返回过期时间，前端每次请求就判断token的过期时间，如果快到过期时间，就去调用刷新token接口。
+## 无感知刷新token方案
 
-**缺点**：需要后端额外提供一个token过期时间的字段；使用了本地时间判断，若本地时间被篡改，特别是本地时间比服务器时间慢时，拦截会失败。
+### 刷新方案
 
-## 方案二
+当请求出现状态码为 401 时表明token失效或过期，拦截响应，刷新token，使用新的token重新发起该请求。
 
-写个定时器，然后定时刷新token接口。
+如果刷新token的过程中，还有其他的请求，则应该将其他请求也保存下来，等token刷新完成，按顺序重新发起所有请求。
 
-**缺点**：浪费资源，消耗性能,不建议采用。
+### 原生AJAX请求
 
-## 方案三
-
-在请求响应拦截器中拦截，判断token 返回过期后，调用刷新token接口。
-
-综合上面的三个方法，最好的是第三个，因为它不需要占用额外的资源。接下来，我们看一下使用`axios`进行网络请求，然后响应`service.interceptors.response`的拦截。
+#### http工厂函数
 
 ```js
-import axios from 'axios';
+function httpFactory({ method, url, body, headers, readAs, timeout }) {
+  const xhr = new XMLHttpRequest()
+  xhr.open(method, url)
+  xhr.timeout = isNumber(timeout) ? timeout : 1000 * 60
 
-service.interceptors.response.use(
-  response => {
-    if (response.data.code === 401) {
-      return refreshToken(({ refreshToken: localStorage.getItem('refreshToken'), token: getToken() }))
-        .then((res) => {
-          const { tokne } = res.data;
-          setToken(token);
-          response.headers.Authorization = `${token}`;
-        })
-        .catch((err) => {
-          removeToken();
-          router.push('/login');
-          return Promise.reject(err);
-        })
-    }
-    return response && response.data;
-  },
-  (error) => {
-    Message.error(err.response.data.msg)
-    return Promise.reject(error);
+  if(headers){
+    forEach(headers, (value, name) => value && xhr.setRequestHeader(name, value))
   }
-)
-```
-
-## 问题一：如何防止多次刷新token
-
-为了防止多次刷新token，可以通过一个变量isRefreshing 去控制是否在刷新token的状态
-
-```js
-import axios from 'axios';
-
-// 是否刷新的标记
-let isRefreshing = false;
-
-service.interceptors.response.use(
-  response => {
-    if (response.data.code === 401) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        return refreshToken(({ refreshToken: localStorage.getItem('refreshToken'), token: getToken() }))
-        .then((res) => {
-          const { tokne } = res.data;
-          setToken(token);
-          response.headers.Authorization = `${token}`;
-        })
-        .catch((err) => {
-          removeToken();
-          router.push('/login');
-          return Promise.reject(err);
-        })
-      }
-    }
-    return response && response.data;
-  },
-  (error) => {
-    Message.error(err.response.data.msg)
-    return Promise.reject(error);
-  }
-)
-```
-
-## 问题二：同时发起两个或者两个以上的请求时，怎么刷新token
-
-当第二个过期的请求进来，`token`正在刷新，我们先将这个请求存到一个数组队列中，想办法让这个请求处于等待中，一直等到刷新`token`后再逐个重试清空请求队列。那么如何做到让这个请求处于等待中呢？为了解决这个问题，我们得借助`Promise`。将请求存进队列中后，同时返回一个`Promise`，让这个`Promise`一直处于`Pending`状态（即不调用`resolve`），此时这个请求就会一直等啊等，只要我们不执行`resolve`，这个请求就会一直在等待。当刷新请求的接口返回来后，我们再调用`resolve`，逐个重试。
-
-```js
-import axios from 'axios';
-
-// 是否刷新的标记
-let isRefreshing = false;
-
-// 重试队列
-let requests = [];
-
-service.interceptors.response.use(
-  response => {
-    // 约定code 409 token 过期
-    if (response.data.code === 401) {
-      if (!isRefreshing) {
-        isRefreshing = true;
-        // 调用刷新token的接口
-        return refreshToken(({ refreshToken: localStorage.getItem('refreshToken'), token: getToken() }))
-        .then((res) => {
-          const { tokne } = res.data;
-          setToken(token);
-          response.headers.Authorization = `${token}`;
-          // token 刷新后将数组的方法重新执行
-          requests.forEach((cb) => cb(token));
-          // 重新请求完清空
-          requests = [];
-          return service(response.config);
-        })
-        .catch((err) => {
-          removeToken();
-          router.push('/login');
-          return Promise.reject(err);
-        })
-        .finally(() => {
-          isRefreshing = false;
-        })
+  
+  const HTTPPromise = new Promise((resolve, reject) => {
+    xhr.onload = function () {
+      let response;
+​
+      if (readAs === 'json') {
+          try {
+            response = JSONbig.parse(this.responseText || null);
+          } catch {
+            response = this.responseText || null;
+          }
+      } else if (readAs === 'xml') {
+        response = this.responseXML
       } else {
-        // 返回未执行 resolve 的 Promise
-        return new Promise((resolve) => {
-          // 用函数形式将resolve存入，等待刷新后再执行
-          requests.push((token) => {
-            response.headers.Authorization = `${token}`
-            resolve(service(response.config))
-          })
-        })
+        response = this.responseText
+      }
+​
+      resolve({ status: xhr.status, response, getResponseHeader: (name) => xhr.getResponseHeader(name) })
+    }
+​
+    xhr.onerror = function () {
+      reject(xhr)
+    }
+    xhr.ontimeout = function () {
+      reject({ ...xhr, isTimeout: true })
+    }
+​
+    beforeSend(xhr)
+​
+    body ? xhr.send(body) : xhr.send()
+​
+    xhr.onreadystatechange = function () {
+      if (xhr.status === 502) {
+        reject(xhr)
       }
     }
-    return response && response.data;
-  },
-  (error) => {
-    Message.error(err.response.data.msg)
-    return Promise.reject(error);
-  }
-)
+  })
+​
+  // 允许HTTP请求中断
+  HTTPPromise.abort = () => xhr.abort()
+​
+  return HTTPPromise;
+}
 ```
 
+#### 无感知刷新token
+
+```js
+// 是否正在刷新token的标记
+let isRefreshing = false
+​
+// 存放因token过期而失败的请求
+let requests = []
+​
+function httpRequest(config) {
+  let abort
+  let process = new Promise(async (resolve, reject) => {
+    const request = httpFactory({...config, headers: { Authorization: 'Bearer ' + cookie.load('access_token'), ...configs.headers }})
+    abort = request.abort
+      
+    try {                        
+      const { status, response, getResponseHeader } = await request
+​
+      if(status === 401) {
+        try {
+          if (!isRefreshing) {
+            isRefreshing = true
+            
+            // 刷新token
+            await refreshToken()
+​
+            // 按顺序重新发起所有失败的请求
+            const allRequests = [() => resolve(httpRequest(config)), ...requests]
+            allRequests.forEach((cb) => cb())
+          } else {
+            // 正在刷新token，将请求暂存
+            requests = [
+                ...requests,
+                () => resolve(httpRequest(config)),
+            ]
+          }
+        } catch(err) {
+          reject(err)
+        } finally {
+          isRefreshing = false
+          requests = []
+        }
+      }                        
+    } catch(ex) {
+      reject(ex)
+    }
+  })
+  
+  process.abort = abort
+  return process
+}
+​
+// 发起请求
+httpRequest({ method: 'get', url: 'http://127.0.0.1:8000/api/v1/getlist' })
+```
+
+### Axios 无感知刷新token
+
+```ts
+// 是否正在刷新token的标记
+let isRefreshing = false
+​
+let requests: ReadonlyArray<(config: any) => void> = []
+​
+// 错误响应拦截
+axiosInstance.interceptors.response.use((res) => res, async (err) => {
+  if (err.response && err.response.status === 401) {
+    try {
+      if (!isRefreshing) {
+        isRefreshing = true
+        // 刷新token
+        const { access_token } = await refreshToken()
+​
+        if (access_token) {
+          axiosInstance.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+​
+          requests.forEach((cb) => cb(access_token))
+          requests = []
+​
+          return axiosInstance.request({
+            ...err.config,
+            headers: {
+              ...(err.config.headers || {}),
+              Authorization: `Bearer ${access_token}`,
+            },
+          })
+        }
+​
+        throw err
+      }
+​
+      return new Promise((resolve) => {
+        // 将resolve放进队列，用一个函数形式来保存，等token刷新后直接执行
+        requests = [
+          ...requests,
+          (token) => resolve(axiosInstance.request({
+            ...err.config,
+            headers: {
+              ...(err.config.headers || {}),
+              Authorization: `Bearer ${token}`,
+            },
+          })),
+        ]
+      })
+    } catch (e) {
+      isRefreshing = false
+      throw err
+    } finally {
+      if (!requests.length) {
+        isRefreshing = false
+      }
+    }
+  } else {
+    throw err
+  }
+})
+```
+
+## 长时间无操作超时自动退出
+
+当用户登录之后，长时间不操作应该做自动退出功能，提高用户数据的安全性。
+
+### 操作事件
+
+操作事件：用户操作事件主要包含鼠标点击、移动、滚动事件和键盘事件等。
+
+特殊事件：某些耗时的功能，比如上传、下载等。
+
+### 方案
+
+用户在登录页面之后，可以复制成多个标签，在某一个标签有操作，其他标签也不应该自动退出。所以需要标签页之间共享操作信息。这里我们使用 localStorage 来实现跨标签页共享数据。
+
+在 localStorage 存入两个字段：
+
+|名称|类型说明|说明|
+|:---|:---|:---|
+|lastActiveTime|string|最后一次触发操作事件的时间戳
+|activeEvents|string[]|特殊事件名称数组|
+
+有操作事件时，将当前时间戳存入 `lastActiveTime`。
+
+当有特殊事件时，将特殊事件名称存入 `activeEvents`，等特殊事件结束后，将该事件移除。
+
+设置定时器，每1分钟获取一次 `localStorage` 这两个字段，优先判断 `activeEvents` 是否为空，若不为空则更新 `lastActiveTime` 为当前时间，若为空，则使用当前时间减去 `lastActiveTime `得到的值与规定值(假设为`1h`)做比较，大于 `1h` 则退出登录。
+
+### 代码实现
+
+```js
+const LastTimeKey = 'lastActiveTime'
+const activeEventsKey = 'activeEvents'
+const debounceWaitTime = 2 * 1000
+const IntervalTimeOut = 1 * 60 * 1000
+​
+export const updateActivityStatus = debounce(() => {
+  localStorage.set(LastTimeKey, new Date().getTime())
+}, debounceWaitTime)
+​
+/**
+ * 页面超时未有操作事件退出登录
+ */
+export function timeout(keepTime = 60) {
+  document.addEventListener('mousedown', updateActivityStatus)
+  document.addEventListener('mouseover', updateActivityStatus)
+  document.addEventListener('wheel', updateActivityStatus)
+  document.addEventListener('keydown', updateActivityStatus)
+​
+  // 定时器
+  let timer;
+​
+  const doTimeout = () => {
+    timer && clearTimeout(timer)
+    localStorage.remove(LastTimeKey)
+    document.removeEventListener('mousedown', updateActivityStatus)
+    document.removeEventListener('mouseover', updateActivityStatus)
+    document.removeEventListener('wheel', updateActivityStatus)
+    document.removeEventListener('keydown', updateActivityStatus)
+​
+    // 注销token，清空session，回到登录页
+    logout()
+  }
+​
+  /**
+   * 重置定时器
+   */
+  function resetTimer() {
+    localStorage.set(LastTimeKey, new Date().getTime())
+​
+    if (timer) {
+      clearInterval(timer)
+    }
+​
+    timer = setInterval(() => {
+      const isSignin = document.cookie.includes('access_token')
+      if (!isSignin) {
+        doTimeout()
+        return
+      }
+​
+      const activeEvents = localStorage.get(activeEventsKey)
+      if(!isEmpty(activeEvents)) {
+        localStorage.set(LastTimeKey, new Date().getTime())
+        return
+      }
+      
+      const lastTime = Number(localStorage.get(LastTimeKey))
+​
+      if (!lastTime || Number.isNaN(lastTime)) {
+        localStorage.set(LastTimeKey, new Date().getTime())
+        return
+      }
+​
+      const now = new Date().getTime()
+      const time = now - lastTime
+​
+      if (time >= keepTime) {
+        doTimeout()
+      }
+    }, IntervalTimeOut)
+  }
+​
+  resetTimer()
+}
+​
+// 上传操作
+function upload() {
+  const current = JSON.parse(localStorage.get(activeEventsKey))
+  localStorage.set(activeEventsKey, [...current, 'upload'])
+  ...
+  // do upload request
+  ...
+  const current = JSON.parse(localStorage.get(activeEventsKey))
+  localStorage.set(activeEventsKey, Array.isArray(current) ? current.filter((item) => itme !== 'upload'))
+}
+```

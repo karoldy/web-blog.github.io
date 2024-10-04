@@ -13,5 +13,6 @@
   "jwt": "如何实现jwt鉴权机制? 说说你的思路",
   "file_upload": "如何实现文件上传? 说说你的思路",
   "paging": "如果让你来设计一个分页功能, 你会怎么设计? 前后端如何交互?",
-  "performance": "NodeJs性能如何进行监控以及优化? "
+  "performance": "NodeJs性能如何进行监控以及优化? ",
+  "five_hight_node": "5种高级NodeJs技术"
 }

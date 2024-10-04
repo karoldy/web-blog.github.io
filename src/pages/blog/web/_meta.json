@@ -1,5 +1,7 @@
 {
-  "refresh_token": "前端无感刷新token",
+  "wsl": "wsl 安装 ubuntu",
+  "axios": "Axios二次封装，集取消重复请求、超时重发等强大功能",
+  "refresh_token": "前端无感知刷新token & 超时自动退出",
   "max_request_retry": "使用 axios 实现前端并发限制和重试机制",
   "single_sign": "什么是单点登录?如何实现?",
   "security": "web常见的攻击方式有哪些?如何防御?",
