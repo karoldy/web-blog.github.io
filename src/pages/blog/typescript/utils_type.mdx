@@ -1,0 +1,258 @@
+# 说说你对 TypeScript 中实用的工具类型的理解? 有哪些?
+
+除了 Omit、Record 和 Pick 外，TypeScript 提供了许多实用的工具类型，用于简化类型定义和处理复杂类型。这些工具类型大多可以在 TypeScript 的内置库中找到，例如 utility-types，以下是常用的一些类型：
+
+## Partial
+
+将类型的所有属性变为可选：
+
+```ts
+type User = {
+  name: string;
+  age: number;
+};
+
+type PartialUser = Partial<User>;
+// 等效于
+// {
+//   name?: string;
+//   age?: number;
+// }
+```
+
+## Required
+
+将类型的所有属性变为必填：
+
+```ts
+type User = {
+  name?: string;
+  age?: number;
+};
+
+type RequiredUser = Required<User>;
+// 等效于
+// {
+//   name: string;
+//   age: number;
+// }
+```
+
+## Readonly
+
+将类型的所有属性变为只读：
+
+```ts
+type User = {
+  name: string;
+  age: number;
+};
+
+type ReadonlyUser = Readonly<User>;
+// 等效于
+// {
+//   readonly name: string;
+//   readonly age: number;
+// }
+```
+
+## Exclude
+
+从联合类型中排除某些类型：
+
+```ts
+type AllKeys = 'name' | 'age' | 'gender';
+type ExcludeGender = Exclude<AllKeys, 'gender'>;
+// 等效于 "name" | "age"
+```
+
+## Extract
+
+从联合类型中提取某些类型：
+
+```ts
+type AllKeys = 'name' | 'age' | 'gender';
+type ExtractName = Extract<AllKeys, 'name' | 'age'>;
+// 等效于 "name" | "age"
+```
+
+## NonNullable
+
+从类型中移除 null 和 undefined：
+
+```ts
+type NullableType = string | null | undefined;
+type NonNullableType = NonNullable<NullableType>;
+// 等效于 string
+```
+
+## ReturnType
+
+获取函数的返回值类型：
+
+```ts
+function getUser() {
+  return { name: 'Alice', age: 30 };
+}
+
+type User = ReturnType<typeof getUser>;
+// 等效于 { name: string; age: number; }
+```
+
+## Parameters
+
+获取函数的参数类型（以元组形式）：
+
+```ts
+function getUser(id: number, name: string) {
+  return { id, name };
+}
+
+type Params = Parameters<typeof getUser>;
+// 等效于 [id: number, name: string]
+```
+
+## ConstructorParameters
+
+获取构造函数的参数类型：
+
+```ts
+class User {
+  constructor(public name: string, public age: number) {}
+}
+
+type ConstructorParams = ConstructorParameters<typeof User>;
+// 等效于 [name: string, age: number]
+```
+
+## InstanceType
+
+获取构造函数返回的实例类型：
+
+```ts
+class User {
+  constructor(public name: string, public age: number) {}
+}
+
+type UserInstance = InstanceType<typeof User>;
+// 等效于 User
+```
+
+## ThisType
+
+指定对象上下文中的 this 类型：
+
+```ts
+type ObjectWithThis = {
+  count: number;
+  increment(this: ObjectWithThis): void;
+};
+
+const obj: ObjectWithThis = {
+  count: 0,
+  increment() {
+    this.count++;
+  },
+};
+```
+
+## Awaited （TS 4.5+）
+
+获取 Promise 的返回值类型：
+
+```ts
+type Data = Promise<string>;
+
+type ResolvedData = Awaited<Data>;
+// 等效于 string
+```
+
+## keyof
+
+获取对象类型的所有键：
+
+```ts
+type User = {
+  name: string;
+  age: number;
+};
+
+type Keys = keyof User;
+// 等效于 "name" | "age"
+```
+
+## Record<Keys, Type>
+
+创建一个键值对类型，键是 Keys，值是 Type：
+
+```ts
+type UserRoles = Record<'admin' | 'user' | 'guest', string>;
+// 等效于
+// {
+//   admin: string;
+//   user: string;
+//   guest: string;
+// }
+```
+
+## Mapped Types
+
+基于原有类型创建映射类型：
+
+```ts
+type User = {
+  name: string;
+  age: number;
+};
+
+// 将所有属性转为可选
+type OptionalUser = {
+  [K in keyof User]?: User[K];
+};
+```
+
+## WritableDeep
+
+使用 TypeScript 的递归类型，我们可以定义 WritableDeep 来移除所有嵌套属性的 readonly 修饰符
+
+```ts
+type WritableDeep<T> = {
+  -readonly [K in keyof T]: T[K] extends object
+    ? WritableDeep<T[K]>
+    : T[K];
+};
+```
+
+假设我们有以下接口：
+
+```ts
+interface IProduct {
+  readonly id: string;
+  readonly details: {
+    readonly name: string;
+    readonly price: number;
+  };
+}
+```
+
+使用 WritableDeep<IProduct> 后，所有字段都会变为可写：
+
+```ts
+type WritableProduct = WritableDeep<IProduct>;
+
+// 等价于：
+type WritableProduct = {
+  id: string;
+  details: {
+    name: string;
+    price: number;
+  };
+};
+```
+
+注意事项
+
+1. 性能问题：
+  - WritableDeep 是递归定义的类型，如果对象层级太深，可能会增加编译时间。
+2. 循环引用问题：
+  - 如果类型中有循环引用，可能导致递归无限循环，需小心处理。

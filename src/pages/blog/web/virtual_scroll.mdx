@@ -1,0 +1,191 @@
+# 水平虚拟滚动和垂直虚拟滚动结合
+
+结合水平和垂直虚拟滚动主要用于优化大数据量表格的性能，通过动态渲染**可见区域的行和列**，避免渲染整个数据集。
+
+---
+
+## 核心原理
+
+1. **分方向计算：**
+   - **垂直滚动：** 计算可见的行并渲染对应的数据。
+   - **水平滚动：** 计算可见的列并渲染对应的数据。
+
+2. **滚动监听：**
+   - 根据滚动位置，动态调整起始行和列的索引。
+
+3. **占位符：**
+   - 使用占位区域（`div` 的高度和宽度）模拟表格的总尺寸，维持滚动条正常显示。
+
+4. **动态渲染：**
+   - 可见数据范围根据起始行列索引动态计算，并通过 CSS 偏移实现滚动效果。
+
+---
+
+## 实现步骤
+
+### 1. 假设条件
+
+- **总行数**：`rows`，**总列数**：`cols`  
+- **行高**：`rowHeight`，**列宽**：`colWidth`  
+- **容器高度**：`containerHeight`，**容器宽度**：`containerWidth`  
+
+### 2. 计算可见行和列数
+
+```text
+可见行数：visibleRows = Math.ceil(containerHeight / rowHeight) + 1  
+可见列数：visibleCols = Math.ceil(containerWidth / colWidth) + 1
+```
+
+### 3.计算起始索引
+
+```
+起始行索引：startRowIndex = Math.floor(scrollTop / rowHeight)  
+起始列索引：startColIndex = Math.floor(scrollLeft / colWidth)
+```
+
+### 4.动态渲染可见数据
+
+```
+结束行索引：endRowIndex = Math.min(startRowIndex + visibleRows, rows)  
+结束列索引：endColIndex = Math.min(startColIndex + visibleCols, cols)
+```
+
+### 5.偏移计算
+
+```
+垂直偏移量：offsetTop = startRowIndex * rowHeight  
+水平偏移量：offsetLeft = startColIndex * colWidth
+```
+
+---
+
+## vue代码实现
+
+```vue
+<template>
+  <div class="table-container">
+    <div class="table-scrollable" ref="scrollable" @scroll="onScroll">
+      <!-- 占位符 -->
+      <div class="spacer" :style="{ width: totalWidth + 'px', height: totalHeight + 'px' }"></div>
+      <!-- 可见区域 -->
+      <div class="content" :style="{ transform: `translate(${offsetLeft}px, ${offsetTop}px)` }">
+        <div class="row" v-for="row in visibleRows" :key="row.rowIndex">
+          <div class="cell" v-for="col in row.visibleCols" :key="col.colIndex">
+            Row {{ row.rowIndex + 1 }}, Col {{ col.colIndex + 1 }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+export default {
+  name: "VirtualTable",
+  data() {
+    return {
+      rows: 1000, // 总行数
+      cols: 1000, // 总列数
+      rowHeight: 40, // 行高
+      colWidth: 100, // 列宽
+      containerHeight: 0, // 容器高度
+      containerWidth: 0, // 容器宽度
+      startRowIndex: 0, // 起始行索引
+      startColIndex: 0, // 起始列索引
+      visibleRowCount: 0, // 可见行数
+      visibleColCount: 0, // 可见列数
+    };
+  },
+  computed: {
+    totalHeight() {
+      return this.rows * this.rowHeight;
+    },
+    totalWidth() {
+      return this.cols * this.colWidth;
+    },
+    offsetTop() {
+      return this.startRowIndex * this.rowHeight;
+    },
+    offsetLeft() {
+      return this.startColIndex * this.colWidth;
+    },
+    visibleRows() {
+      const endRowIndex = Math.min(this.startRowIndex + this.visibleRowCount, this.rows);
+      return Array.from({ length: endRowIndex - this.startRowIndex }, (_, i) => ({
+        rowIndex: this.startRowIndex + i,
+        visibleCols: this.visibleCols,
+      }));
+    },
+    visibleCols() {
+      const endColIndex = Math.min(this.startColIndex + this.visibleColCount, this.cols);
+      return Array.from({ length: endColIndex - this.startColIndex }, (_, i) => ({
+        colIndex: this.startColIndex + i,
+      }));
+    },
+  },
+  methods: {
+    onScroll() {
+      const scrollTop = this.$refs.scrollable.scrollTop;
+      const scrollLeft = this.$refs.scrollable.scrollLeft;
+      this.startRowIndex = Math.floor(scrollTop / this.rowHeight);
+      this.startColIndex = Math.floor(scrollLeft / this.colWidth);
+    },
+  },
+  mounted() {
+    this.containerHeight = this.$refs.scrollable.clientHeight;
+    this.containerWidth = this.$refs.scrollable.clientWidth;
+    this.visibleRowCount = Math.ceil(this.containerHeight / this.rowHeight) + 1;
+    this.visibleColCount = Math.ceil(this.containerWidth / this.colWidth) + 1;
+  },
+};
+</script>
+<style>
+.table-container {
+  width: 800px;
+  height: 400px;
+  overflow: hidden;
+}
+
+.table-scrollable {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: relative;
+}
+
+.spacer {
+  position: absolute;
+}
+
+.content {
+  position: absolute;
+}
+
+.row {
+  display: flex;
+}
+
+.cell {
+  width: 100px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+</style>
+```
+
+---
+
+## 优化方向
+
+1. **动态行高和列宽**
+   - 支持不规则行高或列宽时，需要提前计算累计偏移量
+
+2. **性能优化：**
+   - 合并滚动事件，使用 requestAnimationFrame 减少 DOM 更新频率。
+
+3. **固定表头和列**
+   - 添加固定区域的 DOM 元素，并同步虚拟滚动区域的偏移量。

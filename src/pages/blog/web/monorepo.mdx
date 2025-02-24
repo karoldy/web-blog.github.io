@@ -1,0 +1,192 @@
+# Monorepo 多包管理模式
+
+**Monorepo(单一代码库)多包管理模式** 是一种将多个相互关联的软件包存储在同一个代码库中的方式。它适用于管理复杂项目，尤其是有多个独立模块(如 npm 包、微服务或工具)的场景。Monorepo 通常结合工具(如 `pnpm`、`Yarn Workspaces` 或 `Lerna`)来简化依赖管理、构建和发布。
+
+## Monorepo 的优点
+
+1. **共享代码**：多个包可以轻松共享工具、配置和逻辑代码。
+2. **统一管理**：所有包共用一个版本控制和 CI/CD 流程。
+3. **依赖一致性**：通过工作区工具锁定和统一依赖版本，避免不同包间的冲突。
+4. **开发便利**：可以在本地快速调试跨包依赖的改动，无需发布到 npm。
+5. **版本控制**：单一仓库使得对包的变更历史更加透明。
+
+## Monorepo 的工具选择
+
+1. **pnpm(推荐)**
+  - 优点：高效的依赖管理、内置工作区支持、节省磁盘空间。
+  - 配置简单，适合现代 JavaScript/TypeScript 项目。
+2. **Yarn Workspaces**
+  - 优点：内置工作区支持、与 Yarn 配合良好。
+  - 缺点：对大规模项目的构建支持较弱。
+3. **Lerna**
+  - 优点：专注于多包管理，适合需要复杂发布流程的项目。
+  - 通常结合 Yarn 或 pnpm 使用。
+
+## 目录结构示例
+
+以下是一个典型的 Monorepo 项目目录：
+
+[参考vue-virtual-scroller](https://github.com/Akryum/vue-virtual-scroller)
+
+```bash
+project/
+├── packages/                  # 多个子包的目录
+│   ├── core/                  # 核心包
+│   │   ├── src/               # 核心包的源码
+│   │   ├── package.json       # 核心包的配置
+│   │   └── ...                
+│   ├── utils/                 # 工具包
+│   │   ├── src/               # 工具包的源码
+│   │   ├── package.json       # 工具包的配置
+│   │   └── ...                
+│   └── demo/                  # 演示或测试项目
+│       ├── src/               # 演示项目源码
+│       ├── package.json       # 演示项目的配置
+│       └── ...                
+├── package.json               # 根目录的配置
+├── pnpm-workspace.yaml        # pnpm 工作区配置
+├── .gitignore                 # Git 忽略文件
+├── README.md                  # 项目说明
+└── ...                        # 其他配置文件(如 ESLint、Prettier 等)
+```
+
+## 使用 pnpm 管理 Monorepo
+
+### 1. 初始化项目
+
+1.创建根目录：
+
+```bash
+mkdir project && cd project
+pnpm init
+```
+
+2.添加工作区配置文件： 在项目根目录创建 `pnpm-workspace.yaml`：
+
+```yaml
+packages:
+  - "packages/*"   # 匹配 packages 下的所有子包
+```
+
+3.配置根 package.json：
+
+```json
+{
+  "name": "monorepo-project",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^4.0.0",
+    "eslint": "^8.0.0"
+  }
+}
+```
+
+### 2. 创建子包
+
+在 packages/ 下创建子包 core 和 utils：
+
+```bash
+mkdir -p packages/core packages/utils
+```
+
+配置子包 package.json：
+
+`packages/core/package.json`：
+
+```json
+{
+  "name": "@project/core",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "files": ["dist"],
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^4.0.0"
+  }
+}
+```
+
+`packages/utils/package.json`：
+
+```json
+{
+  "name": "@project/utils",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "files": ["dist"],
+  "dependencies": {
+    "@project/core": "workspace:*"  // 使用本地核心包
+  },
+  "devDependencies": {
+    "typescript": "^4.0.0"
+  }
+}
+```
+
+### 3. 安装依赖
+
+在项目根目录运行：
+
+```bash
+pnpm install
+```
+
+2. 子包会自动链接到 node_modules，`utils `中依赖的 `@project/core` 会指向本地 `core` 包。
+
+### 4. 开发和构建
+
+**添加脚本**：
+
+在根目录的 package.json 中添加以下脚本：
+
+```json
+{
+  "scripts": {
+    "build": "pnpm -r build",  // 构建所有子包
+    "lint": "pnpm -r lint",    // Lint 所有子包
+    "test": "pnpm -r test"     // 测试所有子包
+  }
+}
+```
+
+**子包的构建脚本**：
+
+```json
+{
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src",
+    "test": "jest"
+  }
+}
+```
+
+运行构建：
+
+```bash
+pnpm build
+```
+
+### 5. 发布到 npm
+
+- 确保所有包已正确构建，并在 `dist/` 目录下生成了产物。
+- 发布某个包(如 `core`)：
+  ```bash
+  cd packages/core
+  npm publish
+  ```
+- 或者使用 `lerna` 或 `changesets` 自动发布多包。
+
+## Monorepo 的最佳实践
+
+1. 统一工具链：
+  - 使用共享的 ESLint、Prettier 配置，保持代码风格一致。
+  - 根目录配置 TypeScript 基础 `tsconfig.json`，子包通过继承扩展。
+2. 独立版本管理：
+  - 使用工具(如 `changesets`)管理包的独立版本和变更记录。
+3. 依赖优化：
+  - 使用 `pnpm` 或 `Yarn Workspaces` 实现依赖共享和本地包链接。
+4. 自动化构建和测试：
+  - 配置 `CI/CD` 流程，自动测试和发布。
+
+这种 Monorepo 模式非常适合管理多个互相关联的包(如组件库、工具库)，同时提供独立的演示和测试环境，能够显著提高开发效率和代码一致性。
