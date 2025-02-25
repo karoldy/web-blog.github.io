@@ -1,0 +1,12 @@
+# Color 函数
+
+```sass
+@use "sass:color";
+
+$base-color: black;
+$alpha: 0.1;
+
+.example {
+  background-color: color.change($base-color, $alpha: $alpha);
+}
+```

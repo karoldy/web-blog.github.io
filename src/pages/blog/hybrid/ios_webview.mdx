@@ -1,0 +1,111 @@
+# IOS应用 打开webview
+
+## 创建一个 iOS 项目
+
+1. 打开 Xcode，选择 File > New > Project...。
+2. 选择 App 模板（iOS），然后点击 Next。
+3. 填写项目的基本信息（如项目名称、组织标识符等），然后点击 Create。
+
+## 添加 WKWebView
+
+1. 打开项目的主界面文件（通常是 `ViewController.swift`）。
+2. 导入 WebKit 框架：
+  ```swift
+  import WebKit
+  ```
+3. 在 `ViewController` 中声明一个 `WKWebView` 实例：
+  ```swift
+  class ViewController: UIViewController {
+    var webView: WKWebView!
+    
+    override func viewDidLoad() {
+      super.viewDidLoad()
+      
+      // 初始化 WKWebView
+      webView = WKWebView(frame: self.view.bounds)
+      self.view.addSubview(webView)
+      
+      // 加载网页
+      if let url = URL(string: "https://your-web-app-url.com") {
+        let request = URLRequest(url: url)
+        webView.load(request)
+      }
+    }
+  }
+  ```
+
+## 添加权限配置
+
+1. 如果网页需要访问相机、定位等设备功能，你需要在 `Info.plist` 中添加权限：
+  - 访问相机
+    ```xml
+    <key>NSCameraUsageDescription</key>
+    <string>需要使用相机</string>
+    ```
+  - 访问位置：
+  ```xml
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>需要访问您的位置</string>
+  ```
+2. 如果需要加载非 HTTPS 地址，在 `Info.plist` 中添加以下配置（不推荐）：
+  ```xml
+  <key>NSAppTransportSecurity</key>
+  <dict>
+      <key>NSAllowsArbitraryLoads</key>
+      <true/>
+  </dict>
+  ```
+
+## 添加导航控件（可选）
+
+如果需要为 WebView 添加导航控件（如返回、前进等），可以扩展功能：
+
+```swift
+override func viewDidLoad() {
+  super.viewDidLoad()
+  
+  webView = WKWebView(frame: self.view.bounds)
+  webView.navigationDelegate = self
+  self.view.addSubview(webView)
+  
+  // 加载网页
+  if let url = URL(string: "https://your-web-app-url.com") {
+      let request = URLRequest(url: url)
+      webView.load(request)
+  }
+  
+  // 添加工具栏
+  let toolbar = UIToolbar()
+  toolbar.translatesAutoresizingMaskIntoConstraints = false
+  self.view.addSubview(toolbar)
+  
+  // 配置工具栏按钮
+  let backButton = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(goBack))
+  let forwardButton = UIBarButtonItem(title: "Forward", style: .plain, target: self, action: #selector(goForward))
+  toolbar.setItems([backButton, forwardButton], animated: false)
+  
+  // 布局工具栏
+  NSLayoutConstraint.activate([
+      toolbar.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
+      toolbar.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
+      toolbar.trailingAnchor.constraint(equalTo: self.view.trailingAnchor)
+  ])
+}
+
+@objc func goBack() {
+  if webView.canGoBack {
+    webView.goBack()
+  }
+}
+
+@objc func goForward() {
+  if webView.canGoForward {
+    webView.goForward()
+  }
+}
+```
+
+## 测试应用
+
+1. 选择 Xcode 顶部工具栏的模拟器（如 iPhone 15 Pro），然后点击 Run。
+2. 应用启动后会显示一个 WebView，加载指定的网页应用。

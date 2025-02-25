@@ -1,6 +1,7 @@
 {
   "t_javascript": "说说你对 TypeScript 的理解? 与 JavaScript 的区别?",
   "data_type": "说说你对 TypeScript 中数据类型的理解?有哪些?",
+  "utils_type": "说说你对 TypeScript 中实用的工具类型的理解? 有哪些?",
   "enum": "说说你对 TypeScript 中枚举类型的理解?应用场景?",
   "interface": "说说你对 TypeScript 中接口的理解?应用场景?",
   "class": "说说你对 TypeScript 中类的理解?应用场景?",

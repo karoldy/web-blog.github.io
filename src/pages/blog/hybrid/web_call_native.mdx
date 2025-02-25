@@ -1,0 +1,126 @@
+# Webview与App通信
+
+## demo
+
+```html
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Native Message Sender</title>
+
+    <style>
+         
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .big_button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .big_button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2 id="memberCodeDisplay"> </h5>
+        <hr>
+        <h2>发送消息给 Native</h1>
+        <button class='big_button' onClick='callNativeSendMessageToSalesWebForLogin("CTF_CRM_LOGIN")'>登陆</button> &nbsp;&nbsp;
+        <button class='big_button' onClick='callNativeSendMessageToSalesWebForLogin("CTF_CRM_LOGOUT")'>登出</button>
+    </div>
+</body>
+<script>
+    // 处理 NativeFN的callback消息
+    const cbMap = new Map();
+    if (!window.insert) {
+        window.insert = input => {
+            console.info('window.insert', input);
+            const nativeResp = JSON.parse(input);
+            if (cbMap.get(nativeResp.reqId)) {
+                console.log('insert nativeResp', nativeResp); //[Log] insert nativeResp {reqId: "9671", result: false}  or insert nativeResp {reqId: "9671", result: true}
+                const cb = cbMap.get(nativeResp.reqId);
+                if (nativeResp.result) {
+                    cb && cb.cb(nativeResp.result);
+                } else {
+                    cb && cb.cb(false);
+                }
+                cbMap.delete(nativeResp.reqId);
+            }
+        };
+    }
+
+    // Feature1:  {Domain}?memberCode=XXXX, 可以从URL上获取会員編號, 若会员编号存在,则证明SaleWeb 已经login
+    const urlParams = new URLSearchParams(window.location.search);
+    // 获取 memberCode 参数
+    const memberCode = urlParams.get('memberCode');
+    document.getElementById('memberCodeDisplay').innerText += memberCode ? `已登陆会员编号:${memberCode}` : '未登陆';
+
+
+    // Feature2: 登入传递memberData给Native 或者 登出,
+    const memberData = { "Customer_Name": "贝", "Customer_ID": 1100343296, "Card_No": 1100343296 }
+
+    function callNativeSendMessageToSalesWebForLogin(type) { // type的类型 1: CTF_CRM_LOGIN, 2: CTF_CRM_LOGOUT
+        let result = new Object();
+        result.functionName = "sendMessage";
+        let reqId = Math.floor(Math.random() * 10000)+"";
+
+        // 处理回调,  true为成功, false为失败
+        cbMap.set(reqId, { cb: (result)=>{ 
+            console.log('result:', result)  // log: result:true 
+        }});
+
+        let messageBody = new Object();
+        messageBody.data = type === "CTF_CRM_LOGIN" ? JSON.stringify(memberData) : ""
+        messageBody.type = type
+        messageBody.reqId = reqId
+        result.messageBody = messageBody
+
+        
+
+        var jsonString = JSON.stringify(result);
+      
+        try {
+            var msg = { "message": jsonString }
+            if (window.webkit != undefined) {
+                if (window.webkit.messageHandlers.appInterface != undefined) {
+                    window.webkit.messageHandlers.appInterface.postMessage(msg);
+                }
+            }
+            if (window.appInterface != undefined) {
+                console.log(msg)
+                window.appInterface.executeFunction(JSON.stringify(msg))
+            }
+        } catch (err) {
+            console.log("Error")
+        }
+    }
+</script>
+
+</html>
+```

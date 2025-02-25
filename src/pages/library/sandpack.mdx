@@ -1,0 +1,106 @@
+# Sandpack
+
+**Sandpack** 是由 **CodeSandbox** 团队开发的一个轻量级的在线代码编辑器和沙盒环境，允许开发者将可交互的代码示例嵌入到网站或应用中。它支持 JavaScript、TypeScript、React 等多种语言和框架，并提供了可嵌入的代码编辑器和实时预览功能。
+
+[官网](https://sandpack.codesandbox.io/)
+
+[Giuhub](https://github.com/codesandbox/sandpack)
+
+## Sandpack 的主要特点
+
+1. **嵌入式代码编辑器**：你可以将 Sandpack 嵌入到网页中，创建和展示交互式代码示例，用户可以编辑代码并实时查看效果。
+2. **支持多种框架**：Sandpack 支持 `React`、`Vue`、`Svelte`、`Vanilla JS` 等常见的前端框架。
+3. **即用即开的沙盒环境**：无需配置，直接提供预设的环境支持，适合用来展示 API、组件或其他可交互示例。
+4. **可扩展性**：开发者可以根据自己的需求扩展或自定义 Sandpack 的配置，例如修改默认设置或自定义样式。
+5. **集成到文档中**：对于文档作者或教程提供者来说，Sandpack 是一个非常方便的工具，它允许将动态代码片段嵌入到页面中，让用户可以直接在页面上编辑和测试代码。
+
+## 如何使用 Sandpack
+
+### 1.在 React 项目中使用 Sandpack
+
+你可以通过 `@codesandbox/sandpack-react` 库来将 Sandpack 集成到你的 React 应用中。通过这个库，你可以轻松地创建嵌入式代码编辑器和实时预览的组件。
+
+```bash
+npm install @codesandbox/sandpack-react
+```
+
+然后，你可以在你的 React 组件中使用 `Sandpack` 来展示代码示例：
+
+```tsx
+import { SandpackProvider, SandpackCodeEditor, SandpackPreview } from '@codesandbox/sandpack-react';
+
+const App = () => {
+  return (
+    <SandpackProvider template="react" theme="dark">
+      <div style={{ display: 'flex', height: '100vh' }}>
+        <div style={{ width: '50%' }}>
+          <SandpackCodeEditor />
+        </div>
+        <div style={{ width: '50%' }}>
+          <SandpackPreview />
+        </div>
+      </div>
+    </SandpackProvider>
+  );
+};
+
+export default App;
+```
+
+### 2.配置 Sandpack
+
+你可以通过 `SandpackProvider` 组件来配置你的沙盒环境，例如选择你想要的模板、主题，或者传入代码示例：
+
+- **模板**：template 可以是 `react`、`vanilla`、`vue` 等
+- 主题：theme 可以设置为 `light` 或 `dark`。
+
+以下是一个简单的展示代码编辑和实时预览的 Sandpack 示例：
+
+```tsx
+import { SandpackProvider, SandpackCodeEditor, SandpackPreview } from '@codesandbox/sandpack-react';
+
+const App = () => {
+  const code = `
+import React from 'react';
+
+function App() {
+  return <div>Hello, world!</div>;
+}
+
+export default App;
+  `;
+  
+  return (
+    <SandpackProvider template="react" theme="light" files={{ '/App.js': code }}>
+      <div style={{ display: 'flex', height: '100vh' }}>
+        <div style={{ width: '50%' }}>
+          <SandpackCodeEditor />
+        </div>
+        <div style={{ width: '50%' }}>
+          <SandpackPreview />
+        </div>
+      </div>
+    </SandpackProvider>
+  );
+};
+
+export default App;
+```
+
+在这个示例中，我们指定了 `template="react"`，所以 Sandpack 会自动设置为一个 React 项目模板。同时，我们也传入了一个默认的 App.js 文件。
+
+## 用途和场景
+
+- **文档和教程**：在文档或教程中展示动态代码片段，让用户可以直接与代码互动。
+- **代码示例**：在技术博客或技术网站上嵌入可编辑的代码示例。
+- **在线编程环境**：Sandpack 适合做为在线编程沙盒，帮助开发者快速原型化或演示某个功能。
+
+## 其他相关库和工具
+
+1. **CodeSandbox**：CodeSandbox 提供了一个功能更强大的在线开发环境，支持更复杂的项目。
+2. **CodePen**：CodePen 是另一个非常流行的在线代码编辑平台，适合快速展示前端代码和互动示例。
+3. **StackBlitz**：类似于 CodeSandbox，StackBlitz 提供了一个基于浏览器的 IDE，可以直接在浏览器中创建和运行项目。
+
+## 总结
+
+Sandpack 是一个轻量级、易于集成的工具，适合用来展示和分享交互式代码示例。它特别适合那些需要在文档、博客或教程中插入可编辑代码片段的场景。如果你的目标是快速创建一个在线代码沙盒环境，Sandpack 是一个非常不错的选择。
