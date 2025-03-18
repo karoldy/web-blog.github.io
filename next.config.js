@@ -11,13 +11,13 @@ const config = {
   reactStrictMode: true ,
 };
 
-// const isGithubActions = process.env.GITHUB_ACTIONS || false;
-// if (isGithubActions) {
-//   const repo = process.env.GITHUB_REPOSITORY.replace(/.*?\//, '');
-//   config.assetPrefix = `/${repo}/`
-//   config.basePath = `/${repo}`
-// }
+const isGithubActions = process.env.GITHUB_ACTIONS || false;
+if (isGithubActions) {
+  const repo = process.env.GITHUB_REPOSITORY.replace(/.*?\//, '');
+  config.assetPrefix = `/${repo}/`
+  config.basePath = `/${repo}`
+}
 
-// console.log(config);
+console.log(config);
 
 module.exports = withNextra(config);
