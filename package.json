@@ -4,51 +4,15 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "lint:mdx": "markdownlint ./src/pages/**/*.mdx"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.13.3",
-    "@emotion/styled": "^11.13.0",
-    "@fortawesome/fontawesome-free": "^6.4.2",
-    "@fortawesome/fontawesome-svg-core": "^6.4.2",
-    "@fortawesome/free-solid-svg-icons": "^6.4.2",
-    "@fortawesome/react-fontawesome": "^0.2.0",
-    "@mui/icons-material": "^6.1.2",
-    "@mui/material": "^6.1.2",
-    "next": "latest",
-    "nextra": "latest",
-    "nextra-theme-docs": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "sharp": "^0.33.5"
-  },
-  "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "autoprefixer": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
-    "husky": "latest",
-    "lint-staged": "latest",
-    "markdownlint-cli": "latest",
-    "postcss": "latest",
-    "tailwindcss": "latest",
-    "typescript": "latest"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "link-staged"
-    }
-  },
-  "lint-staged": {
-    "src/pages/**/*.mdx": [
-      "yarn lind:mdx ",
-      "git add"
-    ]
-  }
+		"dev": "next --turbopack",
+		"build": "next build",
+		"start": "next start"
+	},
+	"dependencies": {
+		"next": "^15.4.6",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
+		"nextra": "^4.3.0",
+		"nextra-theme-docs": "^4.3.0"
+	}
 }
