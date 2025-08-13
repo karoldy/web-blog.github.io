@@ -10,7 +10,7 @@
 - 服务器收到请求后, 优先根据 Etag 的值判断被请求的文件有没有做修改, Etag 值一致则没有修改, 命中协商缓存, 返回 304;如果不一致则有改动, 直接返回新的资源文件带上新的 Etag 值并返回 200;
 - 如果服务器收到的请求没有 Etag 值, 则将 If-Modified-Since 和被请求文件的最后修改时间做比对, 一致则命中协商缓存, 返回 304;不一致则返回新的 last-modified 和文件并返回 200;
 
-```
+```mermaid
 flowchart
   classDef a fill:#b392f0
   classDef b fill:#79b8ff
