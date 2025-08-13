@@ -283,10 +283,8 @@ Markdown Preview Enhanced使用[KaTex](https://katex.org/)或者[MathJax](https:
 
 KaTeX 拥有比 MathJax 更快的性能，但是它却少了很多 MathJax 拥有的特性。你可以查看 KaTeX supported functions/symbols 来了解 KaTeX 支持那些符号和函数。
 
-```tex
-$$
-  f(x) = sin(x) + 12
-$$
+```math
+\int x^2
 ```
 
 ---
@@ -305,7 +303,7 @@ flowchart LR
 ```
 ````
 
-```
+```mermaid
 flowchart LR
   A[Hard] -->|Text| B(Round)
   B --> C{Decision}
@@ -337,7 +335,7 @@ gantt
 ```
 ````
 
-```
+```mermaid
 gantt
   dateFormat  YYYY-MM-DD
   title 软件开发甘特图
@@ -368,7 +366,7 @@ pie
 ```
 ````
 
-```
+```mermaid
 pie
   "React" : 200
   "Vue" : 85

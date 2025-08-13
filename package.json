@@ -1,18 +1,19 @@
 {
-  "name": "web-blog.github.io",
-  "version": "2.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "scripts": {
+	"name": "web-blog.github.io",
+	"version": "2.0.0",
+	"main": "index.js",
+	"license": "MIT",
+	"scripts": {
 		"dev": "next --turbopack",
 		"build": "next build",
 		"start": "next start"
 	},
 	"dependencies": {
+		"@theguild/remark-mermaid": "^0.3.0",
 		"next": "^15.4.6",
-		"react": "^19.1.1",
-		"react-dom": "^19.1.1",
 		"nextra": "^4.3.0",
-		"nextra-theme-docs": "^4.3.0"
+		"nextra-theme-docs": "^4.3.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1"
 	}
 }

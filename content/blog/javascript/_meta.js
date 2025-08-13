@@ -1,4 +1,4 @@
-{
+export default {
   "thirty_three": "33 个 JavaScript 概念",
   "data_type": "说说JavaScript中的数据类型?存储上的差别?",
   "array_api": "JavaScript数组的常用方法有哪些?",
@@ -33,5 +33,6 @@
   "function_reload": "JavaScript实现函数重载",
   "tag_page_message": "JavaScript实现跨标签页通信",
   "web_time_out": "JavaScript检测网页空闲状态(一定时间内无操作)",
-  "fuzzy_search": "JavaScript实现字符串数组模糊搜索"
+  "fuzzy_search": "JavaScript实现字符串数组模糊搜索",
+  "page_1": "void 0 和 undefined 哪个更好？一个奇怪但有用的知识点"
 }

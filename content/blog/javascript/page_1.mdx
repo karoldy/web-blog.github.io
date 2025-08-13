@@ -1,0 +1,101 @@
+# void 0 和 undefined 哪个更好？一个奇怪但有用的知识点
+
+在 JavaScript 的世界里，undefined 是一个我们再熟悉不过的原始值。它代表着“未定义”，无论是声明了但未赋值的变量，还是函数没有返回值，我们都能看到它的身影。
+
+```js
+let a;
+console.log(a); // undefined
+
+function doNothing() {}
+console.log(doNothing()); // undefined
+```
+
+然而，你可能在一些高质量的库（如 React, Vue, Lodash）或者一些代码压缩工具的产物中，看到一个奇怪的写法：`void 0`。
+
+```js
+// 某个库的源码片段
+function A(props) {
+  return props.foo === void 0 ? 'default' : props.foo;
+}
+```
+
+这段代码里的 `void 0` 到底是什么？它和 `undefined` 有什么区别？为什么这些大神级的项目会选择用它来代替我们熟悉的 `undefined` 呢？
+
+这不仅仅是一个“茴香豆有四种写法”的无聊问题，其背后揭示了 JavaScript 早期设计的一个“历史遗留问题”，理解它能让你对这门语言有更深刻的认识。
+
+## undefined的“黑历史”：它不是一个关键字
+
+在 JavaScript 中，像 `true`, `false`, `null` 都是关键字（Keywords），你不能把它们当作变量名来赋值。不信你试试：
+
+```js
+true = 1; // Uncaught SyntaxError: Invalid left-hand side in assignment
+```
+
+但 `undefined` 在设计之初，却**不是一个关键字**，而是一个挂载在全局对象（浏览器中是 `window`）上的一个普通属性。
+
+这意味着什么？`undefined` **可以被重写**！
+
+在早期的 JavaScript（非严格模式下）或者一些古老的浏览器环境中，你可以写出下面这种让人匪夷所思的代码：
+
+```js
+// 在非严格模式下
+var undefined = 'Hello, I am a bug!';
+
+let a;
+if (a === undefined) {
+  // 这段代码将不会执行！
+  console.log('a is undefined');
+} else {
+  console.log('a is not undefined, it is:', a);
+  console.log('And the "undefined" is:', undefined);
+}
+
+// 输出：
+// a is not undefined, it is: undefined
+// And the "undefined" is: Hello, I am a bug!
+```
+
+想象一下，如果你的项目中不小心（或者被恶意地）引入了一段重写了 `undefined` 的代码，那么所有依赖 `undefined` 进行的判断都将失效，这将是一场灾难！
+
+虽然在现代 JavaScript 的 `ES5` 之后，全局的 `undefined` 属性被设定为只读（writable: false），你无法再给它赋值。
+
+```js
+// 现代浏览器控制台
+undefined = 123;
+console.log(undefined); // 仍然是 undefined
+```
+
+但是，这并不能阻止你在局部作用域中声明一个名为 `undefined` 的变量：
+
+```js
+function aDangerousFunction() {
+  let undefined = 'oops'; // 局部变量 undefined
+
+  let value;
+  if (value === undefined) { // 这里的比较将是 value === 'oops'
+    console.log('判断出错！');
+  }
+}
+
+aDangerousFunction();
+```
+
+这种可能性虽然微乎其微，但对于一个需要保证绝对健壮性的库来说，任何潜在的风险都必须被规避。
+
+## void操作符：永远返回 undefined的安全选择
+
+
+现在，让我们来看看 `void`。
+
+`void` 是 JavaScript 中的一个一元操作符，**它的作用是执行它后面的表达式，然后永远返回 `undefined`**。
+
+```js
+console.log(void 1);         // undefined
+console.log(void 'hello');     // undefined
+console.log(void (1 + 1));     // undefined
+console.log(void (alert('hi'))); // 先弹窗 'hi'，然后返回 undefined
+```
+
+因为 `void` 是一个操作符（就像 `+`, `-`, `typeof` 一样），而不是一个可以被重写的变量，所以它具有绝对的安全性。无论在什么环境下，`void` 后面跟上任何表达式，其结果永远是纯正、可靠的 `undefined`。
+
+而 `void 0` 只是众多写法中最简洁的一种（相比于 `void(0)` 或 `void 'any'`）。数字 0 是最短的表达式之一，所以大家约定俗成地使用它。
