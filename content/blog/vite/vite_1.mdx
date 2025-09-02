@@ -1,0 +1,192 @@
+# 自定义vite插件
+
+## 自定义svg转换成mui组件
+
+```ts
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import type { Plugin, ViteDevServer } from 'vite';
+import fg from 'fast-glob';
+import chokidar, { FSWatcher } from 'chokidar';
+import { optimize, type Config as SvgoConfig } from 'svgo';
+import { transform } from '@svgr/core';
+
+export interface SvgToMuiOptions {
+  src?: string | string[];
+  outDir?: string;
+  prefix?: string;
+  barrel?: boolean;
+  svgo?: boolean | SvgoConfig;
+  watch?: boolean;
+}
+
+const defaultOptions: Required<Omit<SvgToMuiOptions, 'svgo'>> & { svgo: boolean | SvgoConfig } = {
+  src: 'src/assets/icons/**/*.svg',
+  outDir: 'src/components/icons',
+  prefix: '',
+  barrel: true,
+  svgo: true,
+  watch: true,
+};
+
+function toPascalCase(name: string) {
+  return name
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/[^a-zA-Z\d]+/g, ' ')
+    .trim()
+    .split(' ')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ''))
+    .join('');
+}
+
+async function ensureDir(dir: string) {
+  if (!existsSync(dir)) {
+    await fs.mkdir(dir, { recursive: true });
+  }
+}
+
+async function writeFileIfChanged(file: string, content: string) {
+  const prev = existsSync(file) ? await fs.readFile(file, 'utf8') : '';
+  if (prev !== content) await fs.writeFile(file, content, 'utf8');
+}
+
+async function svgFileToMuiComponent(
+  svgPath: string,
+  outDirAbs: string,
+  root: string,
+  prefix: string,
+  svgoOpt: boolean | SvgoConfig
+) {
+  console.log(root)
+  const svgRaw = await fs.readFile(svgPath, 'utf8');
+  const base = path.basename(svgPath, path.extname(svgPath));
+  const compName = `${prefix}${toPascalCase(base)}`;
+
+  const finalSvg = svgoOpt
+    ? optimize(svgRaw, typeof svgoOpt === 'object' ? svgoOpt : undefined).data
+    : svgRaw;
+
+  const jsCode = await transform(
+    finalSvg,
+    {
+      icon: true,
+      typescript: true,
+      jsxRuntime: 'automatic',
+      svgo: true,
+      prettier: true,
+      plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx', '@svgr/plugin-prettier'],
+      prettierConfig: { semi: true, singleQuote: true },
+      template: (variables, { tpl }) => {
+        return tpl`
+          import * as React from 'react';
+          import SvgIcon, { type SvgIconProps } from '@mui/material/SvgIcon';
+
+          const ${variables.componentName}: React.FC<SvgIconProps> = (props) => {
+            return (
+              ${variables.jsx}
+            );
+          }
+          
+          ${variables.componentName}.displayName = '${variables.componentName}'
+          export default ${variables.componentName}
+        `;
+      },
+    },
+    { componentName: compName }
+  );
+
+  const outFile = path.join(outDirAbs, `${compName}.tsx`);
+  const code = jsCode
+    .replace(
+      /<svg[^>]*?(?:xmlns=\"[^\"]*\"|width=\{[^}]*\}|height=\{[^}]*\}|fill=\"[^\"]*\")[^>]*({\.\.\.props}[^>]*)?>/m,
+      '<SvgIcon inheritViewBox {...props}>'
+    )
+    .replace(/<\/svg>/g, '</SvgIcon>');
+  await writeFileIfChanged(outFile, code);
+  return { compName, outFile };
+}
+
+async function buildBarrel(outDirAbs: string) {
+  const files = await fg('*.tsx', { cwd: outDirAbs, onlyFiles: true });
+  const exports = files
+    .map((f) => path.basename(f, '.tsx'))
+    .sort()
+    .map((name) => `export const ${name}Icon = React.lazy(() => import('./${name}'));`)
+    .join('\n');
+  await writeFileIfChanged(path.join(outDirAbs, 'index.ts'), `import * as React from 'react';\n\n` + exports + (exports ? '\n' : ''));
+}
+
+async function generateAll(options: SvgToMuiOptions, root: string) {
+  const opt = { ...defaultOptions, ...options };
+  const outDirAbs = path.resolve(root, opt.outDir);
+  await ensureDir(outDirAbs);
+
+  const entries = await fg(opt.src, { cwd: root, absolute: true, onlyFiles: true });
+  const results: { compName: string; outFile: string }[] = [];
+  for (const file of entries) {
+    const r = await svgFileToMuiComponent(file, outDirAbs, root, opt.prefix, opt.svgo);
+    results.push(r);
+  }
+  if (opt.barrel) await buildBarrel(outDirAbs);
+  return results;
+}
+
+function setupWatcher(server: ViteDevServer, options: SvgToMuiOptions, root: string): FSWatcher {
+  const opt = { ...defaultOptions, ...options };
+  const watcher = chokidar.watch(opt.src!, { cwd: root, ignoreInitial: true });
+  const outDirAbs = path.resolve(root, opt.outDir);
+
+  watcher
+    .on('add', async (filePath) => {
+      const abs = path.resolve(root, filePath);
+      await ensureDir(outDirAbs);
+      await svgFileToMuiComponent(abs, outDirAbs, root, opt.prefix, opt.svgo);
+      if (opt.barrel) await buildBarrel(outDirAbs);
+      server.ws.send({ type: 'full-reload' });
+    })
+    .on('change', async (filePath) => {
+      const abs = path.resolve(root, filePath);
+      await svgFileToMuiComponent(abs, outDirAbs, root, opt.prefix, opt.svgo);
+      server.ws.send({ type: 'full-reload' });
+    })
+    .on('unlink', async () => {
+      if (opt.barrel) await buildBarrel(outDirAbs);
+      server.ws.send({ type: 'full-reload' });
+    });
+
+  return watcher;
+}
+
+export default function svgToMui(options: SvgToMuiOptions = {}): Plugin {
+  let root = process.cwd();
+  let devWatcher: FSWatcher | null = null;
+
+  return {
+    name: 'vite-plugin-svg-to-mui',
+    enforce: 'pre',
+    configResolved(cfg) {
+      root = cfg.root;
+    },
+    async buildStart() {
+      await generateAll(options, root);
+    },
+    configureServer(server) {
+      const opt = { ...defaultOptions, ...options };
+      if (opt.watch) {
+        devWatcher = setupWatcher(server, options, root);
+      }
+      return () => {
+        devWatcher?.close();
+      };
+    },
+    async closeBundle() {
+      const opt = { ...defaultOptions, ...options };
+      if (opt.barrel) {
+        const outDirAbs = path.resolve(root, opt.outDir);
+        await buildBarrel(outDirAbs);
+      }
+    },
+  };
+}
+```
