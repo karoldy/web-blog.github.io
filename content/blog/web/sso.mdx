@@ -1,0 +1,51 @@
+```js
+import * as oauth from 'oauth4webapi';
+import { isDevelopment } from '@/constants/config';
+
+export const ADFS_SSO_HOST = `${import.meta.env.VITE_ADFS_SSO_HOST!}/adfs`;
+
+export const redirectURI = isDevelopment()
+  ? 'http://localhost:5173/login'
+  : import.meta.env.VITE_ZWIS_HOST! + '/login';
+
+export const client: oauth.Client = {
+  client_id: import.meta.env.VITE_ADFS_SSO_CLIENT_ID!,
+  // client_secret: import.meta.env.VITE_ADFS_SSO_CLIENT_SECRET!,
+  token_endpoint_auth_method: 'none'
+};
+
+export const authorizationServer: oauth.AuthorizationServer = {
+  issuer: ADFS_SSO_HOST,
+  authorization_endpoint: ADFS_SSO_HOST + '/oauth2/authorize',
+  token_endpoint: ADFS_SSO_HOST + '/oauth2/token',
+  scopes_supported: ['openid'],
+  response_types_supported: ['code'],
+  response_modes_supported: ['query'],
+  grant_types_supported: ['authorization_code'],
+  code_challenge_methods_supported: ['S256']
+};
+
+export const getAuthorizationURL = async (params?: Record<string, string>) => {
+  const codeVerifier = oauth.generateRandomCodeVerifier();
+  const codeChallenge = await oauth.calculatePKCECodeChallenge(codeVerifier);
+  const authorizationURL = new URL(authorizationServer.authorization_endpoint!);
+  const searchParams = new URLSearchParams(params);
+  searchParams.set('client_id', client.client_id);
+  searchParams.set('redirect_uri', redirectURI);
+  searchParams.set('response_type', 'code');
+  // searchParams.set('scope', 'openid');
+  searchParams.set('scope', 'openid profile email');
+  searchParams.set('code_challenge', codeChallenge);
+  searchParams.set('code_challenge_method', 'S256');
+  searchParams.set('resource', import.meta.env.VITE_ADFS_SSO_CLIENT_RESOURCE!);
+  const nonce = oauth.generateRandomNonce();
+  searchParams.set('nonce', nonce);
+  localStorage.setItem("nonce", nonce);
+  const state = oauth.generateRandomState();
+  searchParams.set("state", state);
+  localStorage.setItem("state", state);
+
+  authorizationURL.search = searchParams.toString();
+  return [authorizationURL.toString(), codeVerifier, nonce] as const;
+};
+```

@@ -1,0 +1,39 @@
+# ZWIS
+
+## 前端
+**AAHK ZWIS 前端 | 独立开发**
+2025-09 - 至今
+
+- 独立交付 基于 Vite + React + TypeScript + Redux Toolkit + MUI 的企业级 SPA，覆盖任务、报表、人员、地点、排班、系统设置等业务模块；完成路由懒加载、权限与国际化、复杂表单与数据表格等实现。
+- 工程化：本地 ESLint、TypeScript 严格构建、Husky + Commitlint 提交规范；独自搭建并维护 GitLab CI。
+- CI/CD：按 Git 标签 驱动 DEV / SIT / UAT / PPD / PROD 多环境流水线；Docker 构建 并推送至 AWS ECR；流水线集成 Dependency-Track（Syft 生成 CycloneDX SBOM、依赖与漏洞治理）及 SonarQube 代码质量扫描阶段设计。
+
+# 简历 bullet 精简版（3 条）
+
+1. 作为唯一前端，独立完成 ZWIS Web 端技术选型、架构与全模块开发（Vite / React / Redux / MUI 等）。
+2. 自建 GitLab CI/CD：多环境发布、Docker 镜像构建与 AWS ECR 推送，并接入 SBOM 安全扫描（Dependency-Track） 与 SonarQube 质量门禁相关流程。
+3. 保证可维护性与协作基础：TypeScript、代码规范、提交约定与构建前静态检查。
+
+# 表述提示
+
+- 面试时可强调：需求对接、排期、前后端联调、上线与线上问题 若也是你一人跟进，可补一句「端到端交付」。
+- 若不想写云厂商细节，可把「AWS ECR」写成「容器镜像仓库与多环境自动发布」，把 Dependency-Track 写成「供应链安全 / SBOM 扫描」即可。
+
+## 全栈
+
+**AAHK ZWIS**
+时间 2025-09 - 至今
+角色: 全栈开发
+
+项目简介： 面向业务侧的 Web 门户与配套后端；前端单页应用对接多个后端服务，后端为 Node 微服务架构，支持 Docker 与多环境发布。
+
+技术栈
+  - 前端： Vite、React、TypeScript、Redux Toolkit（redux-persist）、Material UI、React Router、Alova + Axios、react-hook-form + Zod、i18next、Chart.js、Tailwind 等。
+  - 后端： Express 多服务、npm workspaces 单体仓库、共享包（shared）、Docker / ECR、Git Tag 或脚本化多服务部署。
+
+职责与成果（按真实经历删减）
+  1. 全栈需求落地： 从接口设计与联调到页面实现，独立完成或主导功能模块在前后端的端到端交付。
+  2. 前端： 基于 MUI 与工程化规范搭建/维护门户界面；表单校验、表格与图表、国际化；与 Redux 状态及请求层（Alova）协作。
+  3. 后端： 在 Express 微服务中实现业务接口与领域逻辑；参与 shared 公共类型/工具复用；本地多服务联调。
+  4. 工程与发布： 参与 Docker 镜像构建、多环境（dev/uat/prod）发布流程与问题排查，保证前后端版本协同上线。
+

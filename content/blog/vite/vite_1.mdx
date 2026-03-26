@@ -11,7 +11,7 @@ import fg from 'fast-glob';
 import chokidar, { FSWatcher } from 'chokidar';
 import { optimize, type Config as SvgoConfig } from 'svgo';
 import { transform } from '@svgr/core';
-
+ 
 export interface SvgToMuiOptions {
   src?: string | string[];
   outDir?: string;
@@ -20,7 +20,7 @@ export interface SvgToMuiOptions {
   svgo?: boolean | SvgoConfig;
   watch?: boolean;
 }
-
+ 
 const defaultOptions: Required<Omit<SvgToMuiOptions, 'svgo'>> & { svgo: boolean | SvgoConfig } = {
   src: 'src/assets/icons/**/*.svg',
   outDir: 'src/components/icons',
@@ -29,7 +29,7 @@ const defaultOptions: Required<Omit<SvgToMuiOptions, 'svgo'>> & { svgo: boolean 
   svgo: true,
   watch: true,
 };
-
+ 
 function toPascalCase(name: string) {
   return name
     .replace(/([a-z\d])([A-Z])/g, '$1 $2')
@@ -58,15 +58,15 @@ async function svgFileToMuiComponent(
   prefix: string,
   svgoOpt: boolean | SvgoConfig
 ) {
-  console.log(root)
+  // console.log(root)
   const svgRaw = await fs.readFile(svgPath, 'utf8');
   const base = path.basename(svgPath, path.extname(svgPath));
   const compName = `${prefix}${toPascalCase(base)}`;
-
+ 
   const finalSvg = svgoOpt
     ? optimize(svgRaw, typeof svgoOpt === 'object' ? svgoOpt : undefined).data
     : svgRaw;
-
+ 
   const jsCode = await transform(
     finalSvg,
     {
@@ -75,38 +75,30 @@ async function svgFileToMuiComponent(
       jsxRuntime: 'automatic',
       svgo: true,
       prettier: true,
+      expandProps: false,
       plugins: ['@svgr/plugin-svgo', '@svgr/plugin-jsx', '@svgr/plugin-prettier'],
       prettierConfig: { semi: true, singleQuote: true },
       template: (variables, { tpl }) => {
         return tpl`
-          import * as React from 'react';
-          import SvgIcon, { type SvgIconProps } from '@mui/material/SvgIcon';
-
-          const ${variables.componentName}: React.FC<SvgIconProps> = (props) => {
-            return (
-              ${variables.jsx}
-            );
-          }
+          import { createSvgIcon } from '@mui/material/utils';\n
           
-          ${variables.componentName}.displayName = '${variables.componentName}'
-          export default ${variables.componentName}
+          export default createSvgIcon(
+            ${variables.jsx},
+            '${variables.componentName}'
+          )
         `;
       },
     },
     { componentName: compName }
   );
-
+ 
   const outFile = path.join(outDirAbs, `${compName}.tsx`);
-  const code = jsCode
-    .replace(
-      /<svg[^>]*?(?:xmlns=\"[^\"]*\"|width=\{[^}]*\}|height=\{[^}]*\}|fill=\"[^\"]*\")[^>]*({\.\.\.props}[^>]*)?>/m,
-      '<SvgIcon inheritViewBox {...props}>'
-    )
-    .replace(/<\/svg>/g, '</SvgIcon>');
-  await writeFileIfChanged(outFile, code);
+  // console.log('compName', compName);
+  // console.log('jsCode', jsCode);
+  await writeFileIfChanged(outFile, jsCode);
   return { compName, outFile };
 }
-
+ 
 async function buildBarrel(outDirAbs: string) {
   const files = await fg('*.tsx', { cwd: outDirAbs, onlyFiles: true });
   const exports = files
@@ -116,12 +108,12 @@ async function buildBarrel(outDirAbs: string) {
     .join('\n');
   await writeFileIfChanged(path.join(outDirAbs, 'index.ts'), `import * as React from 'react';\n\n` + exports + (exports ? '\n' : ''));
 }
-
+ 
 async function generateAll(options: SvgToMuiOptions, root: string) {
   const opt = { ...defaultOptions, ...options };
   const outDirAbs = path.resolve(root, opt.outDir);
   await ensureDir(outDirAbs);
-
+ 
   const entries = await fg(opt.src, { cwd: root, absolute: true, onlyFiles: true });
   const results: { compName: string; outFile: string }[] = [];
   for (const file of entries) {
@@ -131,12 +123,12 @@ async function generateAll(options: SvgToMuiOptions, root: string) {
   if (opt.barrel) await buildBarrel(outDirAbs);
   return results;
 }
-
+ 
 function setupWatcher(server: ViteDevServer, options: SvgToMuiOptions, root: string): FSWatcher {
   const opt = { ...defaultOptions, ...options };
   const watcher = chokidar.watch(opt.src!, { cwd: root, ignoreInitial: true });
   const outDirAbs = path.resolve(root, opt.outDir);
-
+ 
   watcher
     .on('add', async (filePath) => {
       const abs = path.resolve(root, filePath);
@@ -154,14 +146,14 @@ function setupWatcher(server: ViteDevServer, options: SvgToMuiOptions, root: str
       if (opt.barrel) await buildBarrel(outDirAbs);
       server.ws.send({ type: 'full-reload' });
     });
-
+ 
   return watcher;
 }
-
+ 
 export default function svgToMui(options: SvgToMuiOptions = {}): Plugin {
   let root = process.cwd();
   let devWatcher: FSWatcher | null = null;
-
+ 
   return {
     name: 'vite-plugin-svg-to-mui',
     enforce: 'pre',

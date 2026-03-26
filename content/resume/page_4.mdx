@@ -1,0 +1,18 @@
+# YF(某某保险)
+
+**企业招聘 / 电子招聘 H5 前端（yf-erecruit-web）**
+
+项目描述
+面向 iPad 内嵌 WebView 的 H5 招聘业务前端：采用 Vue 3 + Vite + TypeScript 构建，配合 Pinia、Vue Router、vue-i18n 做多状态与多语言；与 原生壳通过 postMessage / 注入 JS 双向通信，实现语言同步、版本获取、登出与返回首页等能力；集成 MSAL 静默登录 与 自动登出，并在应用层提供全局消息、离线提示与加载态，适配 离线、弱网 等终端场景。
+
+技术栈
+Vue 3、Vite、TypeScript、Pinia、Vue Router、vue-i18n、Axios、Tailwind CSS、MSAL（Azure AD）、WebView JS Bridge。
+
+独立负责 Vue3+TS 招聘 H5，在 iPad WebView 内交付，含桥接、多语言、MSAL 登录与全局反馈。
+
+职责 / 亮点
+
+1. H5 在 iPad WebView 内嵌交付：处理与原生容器的生命周期与导航配合（如返回主页、版本检查）。
+2. WebView 桥接：通过 ReactNativeWebView.postMessage 与 window 上的全局方法/自定义事件，完成 语言切换、登出、版本号、加载与离线弹窗 等与壳层协作。
+3. 工程化：多环境构建（dev / uat / prod），TypeScript 类型约束与组件化插件注册。
+4. 体验与合规：全局 Message / Loading / 离线对话框；可选禁用右键与文本选择（代码中已预留）以贴合 展厅或管控设备 使用场景。
