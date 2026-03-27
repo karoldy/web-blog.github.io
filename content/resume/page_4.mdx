@@ -1,4 +1,4 @@
-# YF(某某保险)
+# 万通保险(HK)
 
 **企业招聘 / 电子招聘 H5 前端（yf-erecruit-web）**
 
@@ -16,3 +16,27 @@ Vue 3、Vite、TypeScript、Pinia、Vue Router、vue-i18n、Axios、Tailwind CSS
 2. WebView 桥接：通过 ReactNativeWebView.postMessage 与 window 上的全局方法/自定义事件，完成 语言切换、登出、版本号、加载与离线弹窗 等与壳层协作。
 3. 工程化：多环境构建（dev / uat / prod），TypeScript 类型约束与组件化插件注册。
 4. 体验与合规：全局 Message / Loading / 离线对话框；可选禁用右键与文本选择（代码中已预留）以贴合 展厅或管控设备 使用场景。
+
+
+# Claude版本
+
+万通保险(HK)企业招聘平台（YF eRecruit）
+
+**项目描述**
+面向保险代理人的 H5 企业招聘管理平台，以混合开发形式嵌入 iPad WebView（React Native + iOS 原生双端支持）。系统覆盖人脉管理、团队绩效、日历排期、数据看板等核心业务模块。
+
+**技术栈**
+Vue 3 + TypeScript + Vite + Pinia + Vue Router + Tailwind CSS + Naive UI + ECharts + Axios + Azure B2C
+
+**核心职责与技术亮点**
+
+- H5 ↔ Native 双向通信桥接： 设计并实现 Web 与 React Native / iOS 原生层的完整双向通信机制
+  - Web → Native： 通过 ReactNativeWebView.postMessage 向 RN 层发送指令（获取 Token、版本检查、登出等）；通过 webkit.messageHandlers 调用 iOS 原生方法（关闭弹窗等）
+  - Native → Web： Native 层直接调用 H5 注入的全局函数（window.setLanguage、window.logout、window.returnUserToken、window.returnPushToken、window.backToRoot 等），H5 内部通过 CustomEvent 解耦事件分发与业务处理
+  - 监听 App 前后台切换（APP_STATE_CHANGE）实现 WebView 生命周期感知，结合自动登出定时器防止 Token 泄露
+- 基于 Azure B2C / OpenID Connect 实现企业级 SSO，支持静默登录与重定向登录双模式，JWT Token 解析、安全存储与会话自动续期
+- 封装双套 HTTP Client，统一处理 Token 注入、并发 Loading、断网检测弹窗及 401/403 错误
+- 使用 ECharts 构建可视化数据看板（招聘进度、个人业绩等多维图表）
+- 实现 Vue I18n 三语言国际化，语言偏好从 Azure B2C 用户属性自动识别，支持 Native 端实时下发语言切换指令
+- Atomic Design 组件体系，沉淀 18+ 可复用公共组件
+- Docker 多阶段构建 + OpenResty，配置 CSP / HSTS 安全响应头，部署至 Azure Container Apps

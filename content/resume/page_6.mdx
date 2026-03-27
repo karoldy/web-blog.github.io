@@ -1,0 +1,23 @@
+# HK 周大福 Sale App
+
+**项目背景**
+面向香港周大福珠宝门店导购员的 iPad 混合 App，以 WebView 内嵌于原生 iOS App 中运行，覆盖门店完整销售流程。
+
+**技术栈**
+
+React 18 · TypeScript · Zustand · React Router v6 · Tailwind CSS · Axios · qiankun · i18next · Formik/Yup · Framer Motion · OAuth 2.0/OIDC · Docker · Nginx · AWS ECR
+
+**主要职责与技术亮点**
+
+- 微前端架构：基于 qiankun 搭建主子应用隔离体系，将珠宝专项销售流程以独立子应用（sales-jewelry-web）接入主 Shell，实现业务解耦与独立部署
+- Native Bridge 通信：封装 BrowserBridge 模块，通过 window.webkit.messageHandlers 与 iOS 原生层进行双向通信，实现条形码扫描枪调用、WebView 跳转等设备能力桥接
+- 复杂业务流程实现：完成从商品扫码 → 购物车管理 → 多方式支付（银联/Visa/支付宝/微信/章鱼卡等）→ 电子发票生成的完整 POS 销售链路；支持优惠券叠加、黄金换购（GoldAuto）、外币兑换、经理审批等复杂场景
+- 多 Axios 实例管理：针对主后台、CRM、ICS、Adobe CDP、STARPi 等 5 个不同域名的后端服务，分别封装独立 Axios 实例，统一处理认证 Token 注入与错误拦截
+- SSO 统一认证：基于 oauth4webapi 实现 OAuth 2.0 PKCE 授权码流程，集成 CTF 内部 SSO 系统，支持扫码（iTongbao）免密登录
+- 多语言国际化：使用 i18next 支持英文、简体中文、繁体中文三语切换，通过自研 xlsx2json 脚本自动将运营提供的 Excel 文案表转换为 JSON 语言包
+- 组件库体系建设：遵循 Atomic Design 分层规范（Atoms / Molecules / Templates），结合 Tailwind CSS 自定义设计 Token（品牌色、阴影层级等）构建统一 UI 组件库
+- 工程化体系：配置 Husky + Commitlint 规范提交信息，接入 release-it 实现语义化版本管理与 CHANGELOG 自动生成；Docker 多阶段构建 + Nginx 部署至 AWS（HK 区域 ap-east-1），覆盖 SIT / UAT / 生产三环境
+- 基于 Strapi 搭建内容管理系统（CMS）：使用 Strapi 作为无头 CMS 后台，管理门店区域配置、通知公告、黄金换购白名单及汇丰银行终端参数等运营内容；前端通过独立 Axios 实例对接 Strapi REST API，实现运营数据与业务逻辑解耦，支持非技术人员自助配置内容，无需发版上线
+
+**项目成果**
+系统在香港周大福门店 iPad 设备上稳定运行，支撑门店日常零售、VIP 会员管理及高端珠宝销售业务，有效提升导购员操作效率与客户服务体验。

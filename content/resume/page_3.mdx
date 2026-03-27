@@ -8,13 +8,13 @@
 - 工程化：本地 ESLint、TypeScript 严格构建、Husky + Commitlint 提交规范；独自搭建并维护 GitLab CI。
 - CI/CD：按 Git 标签 驱动 DEV / SIT / UAT / PPD / PROD 多环境流水线；Docker 构建 并推送至 AWS ECR；流水线集成 Dependency-Track（Syft 生成 CycloneDX SBOM、依赖与漏洞治理）及 SonarQube 代码质量扫描阶段设计。
 
-# 简历 bullet 精简版（3 条）
+## 简历 bullet 精简版（3 条）
 
 1. 作为唯一前端，独立完成 ZWIS Web 端技术选型、架构与全模块开发（Vite / React / Redux / MUI 等）。
 2. 自建 GitLab CI/CD：多环境发布、Docker 镜像构建与 AWS ECR 推送，并接入 SBOM 安全扫描（Dependency-Track） 与 SonarQube 质量门禁相关流程。
 3. 保证可维护性与协作基础：TypeScript、代码规范、提交约定与构建前静态检查。
 
-# 表述提示
+## 表述提示
 
 - 面试时可强调：需求对接、排期、前后端联调、上线与线上问题 若也是你一人跟进，可补一句「端到端交付」。
 - 若不想写云厂商细节，可把「AWS ECR」写成「容器镜像仓库与多环境自动发布」，把 Dependency-Track 写成「供应链安全 / SBOM 扫描」即可。
@@ -37,3 +37,42 @@
   3. 后端： 在 Express 微服务中实现业务接口与领域逻辑；参与 shared 公共类型/工具复用；本地多服务联调。
   4. 工程与发布： 参与 Docker 镜像构建、多环境（dev/uat/prod）发布流程与问题排查，保证前后端版本协同上线。
 
+# Cladue版本
+
+## 香港机场管理局区域工人信息管理系统（AAHK ZWIS）
+
+**角色**
+
+全栈开发
+
+**项目描述**
+
+为香港国际机场管理局（HKIA）设计并交付的企业级区域工人信息管理平台，服务对象涵盖机场运营管理人员与承包商，核心业务覆盖任务全生命周期调度、GIS 实时位置监控、智能排班考勤及多维报表分析。系统采用微服务架构落地，通过 AI 语音指令与向量检索提升操作效率，为机场高密度作业场景下的人员调度与安全管控提供数字化支撑。
+
+**技术栈**
+
+- 前端
+  React 19 / TypeScript / React Router v7 / Redux Toolkit / MUI v7 / Tailwind CSS v4 / Vite 7
+- 后端
+  Node.js / TypeScript / Monorepo 微服务（×10）/ TypeORM / PostgreSQL
+- AI
+  Google Gemini（语音指令）/ Embedding 向量检索 / Claude Code AI 辅助开发
+- GIS
+  ArcGIS / EGIS 机场室内地图 / Turf.js 地理围栏计算
+- 消息通信
+  AWS SQS / AWS SNS / Socket.io 实时推送
+- 云基础设施
+  AWS EKS（K8s）/ ECR / Secrets Manager / Lambda / EventBridge
+- 工程质量
+  GitLab CI/CD / SonarQube / Syft SBOM / Dependency-Track / Commitlint / Husky
+
+**核心职责与亮点**
+
+1. 主导微服务架构设计与落地，将系统拆分为 10 个职责单一的 TypeScript 微服务（auth / task / staff / schedule / location / document / notification 等），各服务持有独立 PostgreSQL 库，通过 AWS SQS 异步解耦，有效隔离故障域、支撑独立扩缩容。
+2. 沉淀跨服务共享包 @aazwis/shared，统一封装 JWT 鉴权中间件、S3/SQS 工具、声明式 FeignClient HTTP 客户端、Excel 导入 ValidationPipeline 及 Turf.js 地理计算模块，显著降低各微服务重复开发成本，提升团队整体交付效率。
+3. 构建实时位置与 GIS 监控体系，集成 ArcGIS/EGIS 机场室内地图与 Turf.js 地理围栏越界告警；结合 Socket.io + SNS 推送链路，将人员实时位置呈现于监控大盘，满足机场高密度作业场景的安全管控需求。
+4. 研发 AI 语音指令与智能检索能力，接入 Google Gemini 处理语音指令并完成意图解析，结合 Embedding 向量检索实现自然语言任务查询，降低一线操作人员的系统使用门槛。
+5. 交付高复杂度前端核心模块，实现含 6 种状态流转的任务管理工作流（侧拉抽屉 + 证据上传 + Checkpoint 打卡 + 操作历史）、dnd-kit 拖拽式排班周视图日历、Dashboard 图表截图导出（html-to-image）及 5 类报表中心，落地 35+ 路由页面与英/繁中/简中三语言国际化。
+6. 设计前端工程化与性能优化方案，通过路由懒加载、Vite manualChunks 代码分割及虚拟列表优化大数据渲染；Alova 请求层实现 JWT 到期前 5 秒无感刷新，结合 4 级角色权限矩阵与功能级权限拦截保障安全。
+7. 搭建覆盖全链路的 CI/CD 与安全质检体系，基于 GitLab CI 打通 dev / sit / uat / ppd / prod 5 套环境的自动化流水线与 AWS EKS 部署；集成 Syft SBOM 软件物料清单扫描、Dependency-Track 依赖风险追踪及 SonarQube 代码质量门禁，满足机场管理局软件供应链安全合规要求。
+8. 引入 Claude Code 作为 AI 编程助手深度融入日常研发流程，覆盖代码生成、重构、Code Review 等环节，在保障代码质量的前提下有效提升个人与团队迭代交付速度。
