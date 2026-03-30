@@ -2,6 +2,37 @@
 
 ### 简述JavaScript中map和foreach的区别？
 
+**返回值**
+- `map()` 返回一个新数组，包含每次回调函数的返回值
+- `forEach()` 返回 `undefined`，无返回值
+
+**用途**
+- `map()` 用于转换数组，生成新数组
+- `forEach()` 用于遍历数组执行副作用操作（如打印、修改外部变量）
+
+**链式调用**
+- `map()` 可以链式调用其他数组方法
+- `forEach()` 不支持链式调用
+
+**示例**
+```javascript
+const arr = [1, 2, 3];
+
+// map 返回新数组
+const doubled = arr.map(x => x * 2); // [2, 4, 6]
+
+// forEach 无返回值
+const result = arr.forEach(x => console.log(x)); // undefined
+```
+
+**性能**
+- `forEach()` 略快，因为不需要创建新数组
+- `map()` 需要额外内存存储新数组
+
+**中断循环**
+- 两者都不能使用 `break` 或 `continue`
+- 需要中断循环应使用 `for`、`for...of` 或 `some()`/`every()`
+
 
 ### 解释下JavaScript中this是如何工作的？
 
@@ -263,10 +294,6 @@
 
 
 ### JavaScript 创建“原生”（native）方法 ?
-
-给字符串对象定义一个repeatify功能。当传入一个整数n时，它会返回重复n次字符串的结果。例如：
-console.log('hello'.repeatify(3));
-应打印 hellohellohello
 
 
 ### 请问什么是JavaScript箭头函数以及特性 ？
