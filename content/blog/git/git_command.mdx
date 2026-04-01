@@ -1,0 +1,51 @@
+# Git 常用命令
+
+## tag
+
+打标签 & 推送远端
+
+```bash
+git tag {version}
+
+git push origin {version}
+```
+
+批量删除本地tag & 远端tag
+
+```bash
+git tag -l "v1*" | xargs -n 1 git push --delete origin
+
+git tag -l "v1*" | xargs git tag -d
+```
+
+## 查看某行代码的提交记录
+
+```bash
+git blame 文件路径
+```
+
+## 查看指定某一行
+
+```bash
+git blame -L 15,15 src/App.tsx
+```
+
+## 查看某个范围
+
+比如第 15 到 20 行：
+
+```bash
+git blame -L 15,20 src/App.tsx
+```
+
+## 查看 commit 的详细记录
+
+```bash
+git show a1b2c3d4
+```
+
+## 查看这一行的历史变更过程（强烈推荐
+
+```bash
+git log -L 15,15:src/App.tsx
+```
