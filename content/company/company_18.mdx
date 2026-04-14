@@ -2,25 +2,494 @@
 
 ## ES6的箭头函数和普通函数的区别, 为什么不能用作构造函数?
 
+| 特性 | 箭头函数 | 普通函数 |
+|------|---------|---------|
+| **this** | 继承外层 | 动态绑定 |
+| **arguments** | 无 | 有 |
+| **prototype** | 无 | 有 |
+| **new 调用** | ❌ 不行 | ✅ 可以 |
+| **super** | ❌ 不能 | ✅ 可以 |
+
+**区别示例：**
+
+```js
+// this 绑定
+const obj = {
+  name: 'obj',
+  arrowFunc: () => {
+    console.log(this.name); // undefined（this 是全局对象或 undefined）
+  },
+  normalFunc() {
+    console.log(this.name); // 'obj'
+  }
+};
+
+obj.arrowFunc();  
+obj.normalFunc(); 
+
+// arguments
+const arrowFn = (...args) => {
+  // console.log(arguments); // ❌ ReferenceError
+  console.log(args);         // ✅ [1, 2, 3]
+};
+
+function normalFn() {
+  console.log(arguments);     // [1, 2, 3]
+}
+
+// 不能作为构造函数
+// new (() => {});           // ❌ TypeError
+// new function() {};         // ✅ 可以
+
+// 为什么不能？
+// 1. 没有 prototype 属性
+// 2. this 已绑定
+// 3. ES6 设计目的：箭头函数用于短函数、不需要构造对象
+```
+
+---
+
 ## ES6的class是真实的类吗?
+
+**答案：不是真正的类，是语法糖**
+
+**本质：** class 是基于原型的面向对象模式的语法糖
+
+```js
+// class 写法
+class Animal {
+  constructor(name) {
+    this.name = name;
+  }
+  
+  greet() {
+    return `Hello, ${this.name}`;
+  }
+}
+
+// 等价于：
+function Animal(name) {
+  this.name = name;
+}
+Animal.prototype.greet = function() {
+  return `Hello, ${this.name}`;
+};
+
+// 验证：class 仍使用原型
+console.log(typeof Animal);           // function
+console.log(Animal.prototype);        // { greet: ... }
+```
+
+**class 的实际行为：**
+
+```js
+class Parent {
+  constructor() {
+    this.x = 1;
+  }
+}
+
+class Child extends Parent {
+  constructor() {
+    super();
+    this.y = 2;
+  }
+}
+
+const child = new Child();
+console.log(Object.getPrototypeOf(Child) === Parent); // true
+console.log(child instanceof Child);                    // true
+console.log(child instanceof Parent);                   // true
+```
+
+---
 
 ## 数组有哪些常用遍历方法?
 
+| 方法 | 描述 | 返回值 | 是否改变原数组 |
+|------|------|--------|--------------|
+| **forEach** | 遍历每个元素 | undefined | ❌ 否 |
+| **map** | 转换每个元素 | 新数组 | ❌ 否 |
+| **filter** | 筛选满足条件的元素 | 新数组 | ❌ 否 |
+| **reduce** | 累积计算 | 单个值 | ❌ 否 |
+| **find** | 找第一个满足条件的元素 | 元素值 | ❌ 否 |
+| **findIndex** | 找第一个满足条件的元素索引 | 索引 | ❌ 否 |
+| **some** | 至少一个满足条件 | boolean | ❌ 否 |
+| **every** | 全部满足条件 | boolean | ❌ 否 |
+| **sort** | 排序 | 排序后数组 | ✅ 是 |
+| **reverse** | 反转 | 反转后数组 | ✅ 是 |
+| **splice** | 删除/新增元素 | 删除的元素数组 | ✅ 是 |
+
+**示例：**
+
+```js
+const nums = [1, 2, 3, 4, 5];
+
+nums.forEach(n => console.log(n));           // 1 2 3 4 5
+nums.map(n => n * 2);                        // [2, 4, 6, 8, 10]
+nums.filter(n => n > 2);                     // [3, 4, 5]
+nums.reduce((acc, n) => acc + n);            // 15
+nums.find(n => n > 3);                       // 4
+nums.findIndex(n => n > 3);                  // 3
+nums.some(n => n > 4);                       // true
+nums.every(n => n > 0);                      // true
+```
+
+---
+
 ## reduce是什么?
+
+**reduce：** 数组方法，将数组缩减为单个值
+
+```js
+const array = [1, 2, 3, 4, 5];
+const sum = array.reduce((accumulator, currentValue, index, array) => {
+  return accumulator + currentValue;
+}, 0); // 初始值为 0
+
+console.log(sum); // 15
+
+// accumulator: 累加器（初始值为 0）
+// currentValue: 当前元素
+// index: 当前索引
+// array: 原数组
+```
+
+**常用场景：**
+
+```js
+// 求和
+[1, 2, 3].reduce((a, b) => a + b, 0); // 6
+
+// 求平均
+const avg = [1, 2, 3].reduce((a, b) => a + b) / 3; // 2
+
+// 计数
+['a', 'b', 'a'].reduce((acc, item) => {
+  acc[item] = (acc[item] || 0) + 1;
+  return acc;
+}, {}); // { a: 2, b: 1 }
+
+// 展平数组
+[[1, 2], [3, 4]].reduce((acc, arr) => acc.concat(arr), []); // [1, 2, 3, 4]
+
+// 反转数组
+[1, 2, 3].reduce((acc, item) => [item, ...acc], []); // [3, 2, 1]
+```
+
+---
 
 ## forEach和map的区别?
 
+| 特性 | forEach | map |
+|------|---------|-----|
+| **返回值** | undefined | 新数组 |
+| **能否中断** | ❌ 不能 | ❌ 不能 |
+| **性能** | 略快 | 略慢 |
+| **链式调用** | ❌ 不能 | ✅ 可以 |
+| **用途** | 副作用操作 | 数据转换 |
+
+**示例：**
+
+```js
+const nums = [1, 2, 3];
+
+// forEach：执行副作用，无返回值
+const result1 = nums.forEach(n => {
+  console.log(n * 2);
+});
+console.log(result1); // undefined
+
+// map：将数组转换为新数组
+const result2 = nums.map(n => n * 2);
+console.log(result2); // [2, 4, 6]
+
+// 链式调用
+nums
+  .map(n => n * 2)
+  .filter(n => n > 3)
+  .forEach(n => console.log(n)); // 4 6
+```
+
+---
+
 ## 块级元素是保存在哪的?作用域是什么?
+
+**块级元素的作用域：** 块级作用域（Block Scope）
+
+在 ES6 中，使用 `let` 和 `const` 声明的变量具有块级作用域
+
+```js
+// 全局作用域
+let global = 'global';
+
+{
+  // 块级作用域
+  let block = 'block';  // 仅在此块内可访问
+  console.log(global);  // 'global'
+  console.log(block);   // 'block'
+}
+
+// console.log(block);  // ❌ ReferenceError
+
+// if、for、try-catch 等都会创建块级作用域
+if (true) {
+  let x = 1;
+}
+// console.log(x);     // ❌ ReferenceError
+
+function test() {
+  let fn = 'function scope';
+}
+// console.log(fn);    // ❌ ReferenceError
+```
+
+**var vs let/const：**
+
+```js
+// var：函数作用域或全局作用域
+if (true) {
+  var x = 1;
+}
+console.log(x); // 1（泄漏到全局）
+
+// let/const：块级作用域
+if (true) {
+  let y = 1;
+}
+// console.log(y); // ❌ ReferenceError
+```
+
+---
 
 ## 全局变量是保存在哪?
 
+**全局变量保存位置：**
+
+1. **浏览器环境：** `window` 对象
+   ```js
+   var global = 'value';
+   console.log(window.global); // 'value'
+   ```
+
+2. **Node.js 环境：** `global` 对象
+   ```js
+   var global = 'value';
+   console.log(global.global); // 'value'
+   ```
+
+3. **现代方式：** `globalThis`（Node.js 12+ 和现代浏览器）
+   ```js
+   globalThis.myVar = 'value';
+   ```
+
+**注意：** 块级声明的变量不会成为全局变量
+
+```js
+let x = 1;  // 不在 window 或 global 上
+var y = 1;  // 在 window 或 global 上
+```
+
+---
+
 ## const定义的对象能不能修改, 对象的属性能不能修改?
+
+**答案：**
+- **const 对象本身不能修改**（不能重新赋值）
+- **但对象的属性可以修改**
+
+```js
+const obj = { name: 'John', age: 30 };
+
+// ❌ 不能重新赋值
+// obj = {};  // TypeError
+
+// ✅ 可以修改属性值
+obj.name = 'Jane';
+obj.age = 25;
+console.log(obj); // { name: 'Jane', age: 25 }
+
+// ✅ 可以添加新属性
+obj.email = 'jane@example.com';
+
+// ⚠️ Object.freeze() 可以完全冻结
+const frozenObj = { name: 'John' };
+Object.freeze(frozenObj);
+// frozenObj.name = 'Jane'; // ❌ 无法修改
+```
+
+---
 
 ## Promise有哪些方法?
 
+| 方法 | 说明 | 返回值 |
+|------|------|--------|
+| **Promise.resolve()** | 返回已解决的 Promise | Promise |
+| **Promise.reject()** | 返回已拒绝的 Promise | Promise |
+| **Promise.all()** | 全部完成才成功 | Promise |
+| **Promise.race()** | 首个完成即返回 | Promise |
+| **Promise.allSettled()** | 等待全部完成（不关心结果） | Promise |
+| **Promise.any()** | 首个成功即返回 | Promise |
+
+**示例：**
+
+```js
+// resolve/reject
+Promise.resolve(10).then(v => console.log(v)); // 10
+Promise.reject(new Error('error')).catch(e => console.log(e));
+
+// all：全部成功才返回
+Promise.all([
+  Promise.resolve(1),
+  Promise.resolve(2)
+]).then(values => console.log(values)); // [1, 2]
+
+// race：首个完成
+Promise.race([
+  new Promise(r => setTimeout(() => r(1), 100)),
+  new Promise(r => setTimeout(() => r(2), 50))
+]).then(v => console.log(v)); // 2
+
+// allSettled：不关心成功失败
+Promise.allSettled([
+  Promise.resolve(1),
+  Promise.reject('error')
+]).then(results => console.log(results));
+// [{ status: 'fulfilled', value: 1 }, { status: 'rejected', reason: 'error' }]
+
+// any：首个成功
+Promise.any([
+  Promise.reject('e1'),
+  Promise.resolve(2)
+]).then(v => console.log(v)); // 2
+```
+
+---
+
 ## Promise的方法是同步还是异步?
+
+**Promise 的方法调用是同步的，但 Promise 的回调是异步的**
+
+```js
+console.log('1');
+
+const p = new Promise((resolve) => {
+  console.log('2 - 同步执行（在 Promise 构造函数中）');
+  resolve('result');
+});
+
+console.log('3');
+
+p.then((result) => {
+  console.log('4 - 异步执行（微任务）');
+});
+
+console.log('5');
+
+// 输出顺序：
+// 1
+// 2 - 同步执行（在 Promise 构造函数中）
+// 3
+// 5
+// 4 - 异步执行（微任务）
+```
+
+**总结：**
+- Promise 构造函数内的代码是**同步**执行
+- `.then()`、`.catch()`、`.finally()` 的回调是**异步**执行（微任务）
+
+---
 
 ## babel的原理?
 
+**Babel：** JavaScript 编译器，将现代 JS 代码转换为向后兼容的版本
+
+**工作流程：**
+
+1. **Parse（解析）**：源代码 → AST（抽象语法树）
+2. **Transform（转换）**：遍历 AST，应用插件规则修改节点
+3. **Generate（生成）**：转换后的 AST → 目标代码
+
+**示例：**
+
+```js
+// 输入（ES6 代码）
+const arr = [1, 2, 3];
+const [a, b, c] = arr;
+
+// Babel 转换后（ES5 代码）
+var arr = [1, 2, 3];
+var a = arr[0],
+    b = arr[1],
+    c = arr[2];
+```
+
+**配置文件（.babelrc）：**
+
+```json
+{
+  "presets": [
+    ["@babel/preset-env", { "targets": "> 0.25%, not dead" }],
+    "@babel/preset-react",
+    "@babel/preset-typescript"
+  ],
+  "plugins": [
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-transform-runtime"
+  ]
+}
+```
+
+---
+
 ## 微前端, 服务端Node, 服务器有没有了解?
+
+**简要介绍：**
+
+**微前端：** 将前端应用分解成小的、独立的子应用
+
+```js
+// 微前端框架：qiankun
+import { registerMicroApps, start } from 'qiankun';
+
+registerMicroApps([
+  {
+    name: '@app/home',
+    entry: 'http://localhost:3001',
+    container: '#home',
+    activeRule: '/'
+  },
+  {
+    name: '@app/about', 
+    entry: 'http://localhost:3002',
+    container: '#about',
+    activeRule: '/about'
+  }
+]);
+
+start();
+```
+
+**服务端 Node.js：** JavaScript 运行时环境
+
+```js
+// Express 服务器
+const express = require('express');
+const app = express();
+
+app.get('/api/users', (req, res) => {
+  res.json([{ id: 1, name: 'John' }]);
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
+```
+
+**云服务器：** 云计算服务商提供的虚拟机
+
+- 常见服务商：AWS、Azure、Google Cloud、阿里云等
+- 用于部署和运行应用
+
+---
 

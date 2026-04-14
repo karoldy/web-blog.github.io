@@ -1,6 +1,6 @@
 # xxx网络-前端工程师
 
-### 1.有以下对象; 转换成数组
+## 1.有以下对象; 转换成数组
 
 ```js
 let _obj = {
@@ -11,16 +11,150 @@ let _obj = {
 
 数组输出格式 `_arr = [{key: 'key1',op: 'op1', value: 'value1'}, {key: 'key2',op: 'op2', value: 'value2'}]`
 
+**解决方案：**
+
+```js
+let _obj = {
+  key1: { op1: 'value1' },
+  key2: { op2: 'value2' }
+};
+
+// 方案1：使用 Object.entries() 和 map
+const _arr = Object.entries(_obj).map(([key, value]) => {
+  const [op] = Object.keys(value);
+  return {
+    key,
+    op,
+    value: value[op]
+  };
+});
+
+// 结果
+console.log(_arr);
+// [
+//   { key: 'key1', op: 'op1', value: 'value1' },
+//   { key: 'key2', op: 'op2', value: 'value2' }
+// ]
+```
+
+**其他方案：**
+
+```js
+// 方案2：使用 Object.keys() 和 forEach
+const _arr = [];
+Object.keys(_obj).forEach(key => {
+  const innerObj = _obj[key];
+  const op = Object.keys(innerObj)[0];
+  _arr.push({
+    key,
+    op,
+    value: innerObj[op]
+  });
+});
+
+// 方案3：使用 for...in 循环
+const _arr = [];
+for (const key in _obj) {
+  if (_obj.hasOwnProperty(key)) {
+    const innerObj = _obj[key];
+    const [op, value] = Object.entries(innerObj)[0];
+    _arr.push({ key, op, value });
+  }
+}
+```
+
+**方案对比：**
+
+| 方案 | 优势 | 劣势 |
+|------|------|------|
+| Object.entries() + map | 简洁、函数式、可读性好 | 需要理解解构 |
+| Object.keys() + forEach | 易理解 | 代码较多 |
+| for...in | 兼容性好 | 需要hasOwnProperty检查 |
+
+**推荐：** 方案1（Object.entries + map）- 最简洁、最现代的写法
+
+---
 
 
-### 2.请问代码能执行成功吗, 为什么?
+
+## 2.请问代码能执行成功吗, 为什么?
 
 ```js
 const _arr = []; 
 arr.push(1);
 ```
 
-### 3.以下代码输出什么
+**答案：❌ 不能执行成功，会报错**
+
+**报错信息：**
+
+```
+ReferenceError: arr is not defined
+```
+
+**原因分析：**
+
+| 部分 | 说明 | 结果 |
+|------|------|------|
+| `const _arr = []` | **声明变量 _arr** | ✅ 成功 |
+| `arr.push(1)` | **访问变量 arr（不是 _arr）** | ❌ 报错 |
+
+**问题所在：**
+
+1. **变量名不匹配** - 声明的是 `_arr`，但使用的是 `arr`
+2. **变量未定义** - 代码中没有定义 `arr` 变量
+3. **引用错误** - JavaScript 会抛出 ReferenceError
+
+**正确的写法：**
+
+```js
+// 修复方案1：使用正确的变量名
+const _arr = []; 
+_arr.push(1);     // ✅ 成功
+console.log(_arr); // [1]
+
+// 修复方案2：先声明 arr
+const arr = [];     // 声明 arr
+arr.push(1);       // ✅ 成功
+console.log(arr);  // [1]
+
+// 修复方案3：声明两个变量
+const _arr = [];
+const arr = [];
+arr.push(1);        // ✅ 成功
+console.log(arr);   // [1]
+console.log(_arr);  // []
+```
+
+**扩展知识：const 数组可以修改吗？**
+
+```js
+const _arr = [];      // 使用 const 声明
+_arr.push(1);        // ✅ 可以！修改数组内容
+_arr = [];           // ❌ 不可以！重新赋值会报错
+                     // TypeError: Assignment to constant variable.
+```
+
+**const 的执行机制：**
+
+```
+const 阻止：重新赋值
+const 允许：修改值的内容
+
+数组示例：
+const arr = [];      // 指向地址 0x1000
+arr.push(1);        // 修改地址 0x1000 的内容 ✅
+arr = [1, 2];       // 尝试改变指向 ❌ 报错
+
+对象示例：
+const obj = { a: 1 };
+obj.a = 2;          // 修改属性值 ✅
+obj = {};           // 重新赋值 ❌ 报错
+```
+
+---
+
+## 3.以下代码输出什么
 
 ```js
 class Logger {
@@ -40,10 +174,479 @@ const { printName } = logger
 printName('world')
 ```
 
-### 4.请问A是什么类型
+**答案：❌ 报错**
+
+```
+ReferenceError: name is not defined
+```
+
+**问题分析：**
+
+代码中有 **两个错误**：
+
+| 问题 | 位置 | 说明 |
+|------|------|------|
+| **参数名错误** | 参数 `nmae` | 应该是 `name`，但参数名写成了 `nmae` |
+| **变量未定义** | 方法体中使用 `name` | `name` 没有定义，只有参数 `nmae` |
+
+**执行流程分析：**
+
+```js
+// 第1步：创建Logger实例
+const logger = new Logger();  // ✅ 成功
+
+// 第2步：解构 printName 方法
+const { printName } = logger;  // ✅ 成功，得到Method
+
+// 第3步：调用 printName('world')
+printName('world');
+// 执行流程：
+// - 进入 printName 方法
+// - 参数 nmae = 'world'（注意：参数名是nmae，不是name）
+// - 执行 this.print(`hello ${name}`);
+// - ❌ 报错：name 未定义！
+// - 找不到 name 变量，只有参数 nmae
+```
+
+**为什么会报错？**
+
+1. **参数名拼写错误** - `nmae` 应该是 `name`
+2. **作用域问题** - 方法体中使用的是 `name`，但参数叫 `nmae`
+3. **this 丢失** - 使用解构导致 this 绑定丢失
+
+**修复方案：**
+
+```js
+// 修复方案1：修正参数名
+class Logger {
+  printName (name = 'there') {  // 改为 name
+    this.print(`hello ${name}`);
+  }
+  print (text) {
+    console.log(text)
+  }
+}
+
+const logger = new Logger();
+const { printName } = logger;
+printName('world');  // ❌ 仍然报错：this 丢失
+// 原因：解构后，printName 失去了 this 上下文
+
+// 修复方案2：使用 call/apply 绑定 this
+const { printName } = logger;
+printName.call(logger, 'world');  // ✅ 输出：hello world
+
+// 修复方案3：使用箭头函数或绑定方法
+const printName = logger.printName.bind(logger);
+printName('world');  // ✅ 输出：hello world
+
+// 修复方案4：直接调用方法
+logger.printName('world');  // ✅ 输出：hello world（最简单）
+```
+
+**正确的完整代码：**
+
+```js
+class Logger {
+  printName (name = 'there') {  // ✅ 参数改为 name
+    this.print(`hello ${name}`);
+  }
+  print (text) {
+    console.log(text)
+  }
+}
+
+const logger = new Logger();
+logger.printName('world');  // ✅ 输出：hello world
+
+// 或者使用绑定
+const { printName } = logger;
+printName.call(logger, 'world');  // ✅ 输出：hello world
+```
+
+**this 绑定问题深析：**
+
+```js
+class Logger {
+  printName (name = 'there') {
+    console.log(this);  // 检查 this 是什么
+    this.print(`hello ${name}`);
+  }
+  print (text) {
+    console.log(text);
+  }
+}
+
+const logger = new Logger();
+const { printName } = logger;
+
+// 直接调用
+logger.printName('world');   // this = logger ✅
+
+// 解构后调用
+printName('world');          // this = undefined（严格模式）或全局对象 ❌
+printName.call(logger, 'world');  // this = logger ✅（使用 call 绑定）
+```
+
+**最终答案：**
+
+✅ **代码会报两个错误：**
+1. `ReferenceError: name is not defined` - 参数名拼写错误
+2. `TypeError: Cannot read property 'print' of undefined` - this 丢失（修复1后出现）
+
+---
+
+## 4.请问A是什么类型
 
 ```ts
 type A = number & string; 
 ```
 
-### 5.TypeScript 中 举例说说 never类型和unknown类型的使用场景
+**答案：`never` 类型**
+
+**解释：**
+
+`number & string` 是一个**交集类型**（intersection type），表示既要是 `number` 又要是 `string`，但这在JavaScript中是**不可能的**。
+
+**为什么是 never？**
+
+```
+number 类型的值：1, 2, 3.14, Infinity...
+string 类型的值：'hello', 'world', ''...
+
+number & string：既要是数字，又要是字符串
+结果：没有值能同时满足两个条件
+真值集合：空集 ∅
+类型：never（不可能的类型）
+```
+
+**类型系统理解：**
+
+| 类型 | 含义 | 示例 |
+|------|------|------|
+| `number \| string` | 并集：或者 | `1` 或 `'hello'` |
+| `number & string` | 交集：且 | 不存在的值 → `never` |
+| `never` | 永远不会发生 | 没有值满足条件 |
+
+**具体代码演示：**
+
+```ts
+// 交集类型
+type A = number & string;  // never
+
+// 不能赋任何值
+const a: A = 1;           // ❌ Error: number 不能赋给 never
+const a: A = 'hello';     // ❌ Error: string 不能赋给 never
+const a: A = null;        // ❌ Error
+
+// 只有 never 类型的值才能赋给 never
+const a: A = (() => { throw new Error(); })();  // ✅ 永不返回
+```
+
+**类似的 never 类型情况：**
+
+```ts
+// 1. 不可能的交集
+type A1 = number & string;     // never
+type A2 = boolean & object;    // never
+
+// 2. 永不返回的函数
+function throwError(): never {
+  throw new Error('Error');
+}
+
+function infinite(): never {
+  while (true) {}
+}
+
+// 3. 空联合
+type Empty = never | never;    // never
+
+// 4. 条件类型中
+type IsNumber<T> = T extends number ? true : never;
+type Test = IsNumber<string>;  // never
+```
+
+**实际应用：**
+
+```ts
+// 穷举检查（exhaustiveness checking）
+function handleStatus(status: 'success' | 'error'): string {
+  switch (status) {
+    case 'success':
+      return 'Success';
+    case 'error':
+      return 'Error';
+    default:
+      // 如果漏掉某个分支，TypeScript 会报错
+      const _exhaustiveCheck: never = status;  // 确保所有分支都被处理
+      return _exhaustiveCheck;
+  }
+}
+
+// 类型不兼容检查
+function assertNever(value: never): never {
+  throw new Error(`Unexpected value: ${value}`);
+}
+```
+
+**与其他类型的对比：**
+
+| 类型 | 描述 | 示例值 |
+|------|------|--------|
+| `any` | 任何类型都可以 | `1`, `'hello'`, `true` |
+| `unknown` | 未知类型，需要类型缩小 | 任何值 |
+| `void` | 函数无返回值 | `undefined` |
+| `never` | 永远不会有值 | 不存在 |
+
+**要点总结：**
+
+✅ `number & string` = `never`
+- 这是两个互斥类型的交集
+- 没有任何值能同时是数字和字符串
+- TypeScript 将其简化为 `never` 类型
+
+---
+
+## 5.TypeScript 中 举例说说 never类型和unknown类型的使用场景
+
+**never 和 unknown 的对比：**
+
+| 特性 | never | unknown |
+|------|-------|----------|
+| **类值集合** | 空集（∅） | 全集（所有值） |
+| **含义** | 永远不会有值 | 可能是任何值 |
+| **赋值** | 无法赋值 | 所有值都能赋值 |
+| **使用** | 保证类型安全 | 谨慎使用，需要类型缩小 |
+
+**never 类型的使用场景：**
+
+### 场景1：不可能的交集类型
+
+```ts
+type A = number & string;  // never
+
+// 用途：表示这个类型不可能存在
+const value: A = null;  // ❌ Error：无法赋值
+```
+
+### 场景2：永不返回的函数
+
+```ts
+// 函数永远抛出异常
+function throwError(): never {
+  throw new Error('Error occurred');
+}
+
+// 函数无限循环
+function infiniteLoop(): never {
+  while (true) {
+    // 永远不会返回
+  }
+}
+
+// 使用示例
+function process(data: any): string {
+  if (!data) {
+    throwError();  // 永不返回，所以不需要写返回值
+  }
+  return 'Success';
+}
+```
+
+### 场景3：穷举性检查（exhaustiveness checking）
+
+```ts
+// 确保 switch 里的所有分支都被处理
+type Status = 'pending' | 'success' | 'error';
+
+function handleStatus(status: Status): string {
+  switch (status) {
+    case 'pending':
+      return 'Processing...';
+    case 'success':
+      return 'Done!';
+    case 'error':
+      return 'Failed!';
+    default:
+      // 如果漏掉某个分支，status 的类型会是 never
+      const _exhaustiveCheck: never = status;
+      return _exhaustiveCheck;  // 提醒开发者漏掉了分支处理
+  }
+}
+
+// 如果添加新的 Status 类型，没有处理会报错
+type ExtendedStatus = 'pending' | 'success' | 'error' | 'retrying';
+
+function handleExtendedStatus(status: ExtendedStatus): string {
+  switch (status) {
+    case 'pending':
+      return 'Processing...';
+    case 'success':
+      return 'Done!';
+    case 'error':
+      return 'Failed!';
+    // ❌ Error：缺少 'retrying' 分支
+    // status 在 default 中变成 'retrying'，无法赋给 never
+    default:
+      const _exhaustiveCheck: never = status;
+      return _exhaustiveCheck;
+  }
+}
+```
+
+### 场景4：条件类型中排除
+
+```ts
+// 过滤掉特定类型
+type FilterNonString<T> = T extends string ? never : T;
+
+type A = FilterNonString<number>;  // number
+type B = FilterNonString<string>;  // never
+type C = FilterNonString<boolean>; // boolean
+
+// 实际使用：获取对象中的非字符串键
+type NonStringKeys<T> = {
+  [K in keyof T]: T[K] extends string ? never : K;
+}[keyof T];
+
+const obj = { a: 'hello', b: 123, c: true };
+type Keys = NonStringKeys<typeof obj>;  // 'b' | 'c'
+```
+
+---
+
+**unknown 类型的使用场景：**
+
+### 场景1：不知道参数类型
+
+```ts
+// ❌ 不好：使用 any（丧失类型安全）
+function processAny(value: any) {
+  value.foo.bar;  // 没有类型检查，可能报错
+}
+
+// ✅ 好：使用 unknown（强制类型检查）
+function processUnknown(value: unknown) {
+  // value.foo;  // ❌ Error：不能直接访问属性
+  
+  if (typeof value === 'object' && value !== null) {
+    if ('foo' in value) {
+      console.log((value as any).foo);  // 需要明确检查
+    }
+  }
+}
+```
+
+### 场景2：接收来源不确定的数据
+
+```ts
+// API 响应数据
+async function fetchData() {
+  const response = await fetch('/api/data');
+  // 不知道返回的数据结构
+  const data: unknown = await response.json();
+  
+  // 类型缩小（type narrowing）
+  if (typeof data === 'object' && data !== null) {
+    if ('name' in data) {
+      const name = (data as { name: string }).name;
+      console.log(name);
+    }
+  }
+}
+```
+
+### 场景3：超通用的工具函数
+
+```ts
+// 日志记录函数
+function log(value: unknown): void {
+  // 需要类型检查才能确定操作
+  if (typeof value === 'string') {
+    console.log(value.toUpperCase());
+  } else if (typeof value === 'number') {
+    console.log(value.toFixed(2));
+  } else if (Array.isArray(value)) {
+    console.log(`Array with ${value.length} items`);
+  }
+}
+
+log('hello');    // 'HELLO'
+log(123);       // '123.00'
+log([1, 2, 3]); // 'Array with 3 items'
+```
+
+### 场景4：JSON 解析
+
+```ts
+// JSON.parse 返回 unknown
+function parseJSON(json: string) {
+  const data: unknown = JSON.parse(json);
+  
+  // 需要类型验证
+  function isUser(obj: unknown): obj is { id: number; name: string } {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'id' in obj &&
+      'name' in obj &&
+      typeof (obj as any).id === 'number' &&
+      typeof (obj as any).name === 'string'
+    );
+  }
+  
+  if (isUser(data)) {
+    console.log(`User: ${data.name}`);
+  } else {
+    console.log('Invalid user data');
+  }
+}
+
+parseJSON('{\"id\": 1, \"name\": \"John\"}');  // 'User: John'
+parseJSON('{\"id\": 1}');                   // 'Invalid user data'
+```
+
+### 场景5：第三方库回调
+
+```ts
+// 事件监听器
+function addEventListener(
+  element: HTMLElement,
+  event: string,
+  handler: (event: unknown) => void
+) {
+  element.addEventListener(event, (e) => {
+    handler(e);  // 传入 unknown 类型
+  });
+}
+
+// 使用示例
+const btn = document.querySelector('button') as HTMLElement;
+addEventListener(btn, 'click', (event) => {
+  // event 是 unknown，需要类型检查
+  if (event instanceof MouseEvent) {
+    console.log(`Clicked at (${event.clientX}, ${event.clientY})`);
+  }
+});
+```
+
+---
+
+**never vs unknown 使用对比表：**
+
+| 需求 | 使用类型 | 代码示例 |
+|------|--------|----------|
+| 表示不可能的值 | never | `type A = never;` |
+| 确保分支完整性 | never | `const x: never = exhaustiveValue;` |
+| 表示未知的值 | unknown | `const data: unknown = ...;` |
+| 接收任何值但安全 | unknown | `function fn(val: unknown): void {...}` |
+| 丧失类型检查 | any | `const data: any = ...;`（不推荐） |
+
+**最佳实践：**
+
+✅ **never：** 用于类型系统的编译时检查，确保逻辑完整
+✅ **unknown：** 用于运行时的值检查，确保类型安全
+✅ **避免：** 使用 `any`，失去TypeScript的类型保护
+
+---

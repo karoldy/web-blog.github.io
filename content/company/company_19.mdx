@@ -2,24 +2,542 @@
 
 ## 怎么实现首屏时间减少
 
+**优化策略：**
+
+1. **减少资源体积**
+   - 压缩 JS/CSS
+   - 图片优化（WebP、懒加载）
+   - 代码分割（Code Splitting）
+
+2. **优化网络请求**
+   - CDN 加速
+   - 并行请求（HTTP/2）
+   - 資源预加载（preload）
+   - 資源预连接（preconnect）
+
+```html
+<link rel="preload" href="critical.js" as="script">
+<link rel="preconnect" href="https://api.example.com">
+<link rel="dns-prefetch" href="https://cdn.example.com">
+```
+
+3. **减少 JavaScript 阻塞**
+   ```html
+   <!-- async：异步加载，不阻塞 -->
+   <script async src="analytics.js"></script>
+   
+   <!-- defer：页面加载后执行 -->
+   <script defer src="script.js"></script>
+   ```
+
+4. **使用服务端渲染（SSR）**
+   - Next.js、Nuxt.js
+
+5. **缓存策略**
+   - 强缓存（Cache-Control）
+   - 协商缓存（ETag）
+
+---
+
 ## 实现居中的方法
+
+**Flexbox（推荐）**
+```css
+.container {
+  display: flex;
+  justify-content: center;  /* 水平 */
+  align-items: center;      /* 垂直 */
+  height: 100vh;
+}
+```
+
+**Grid**
+```css
+.container {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+}
+```
+
+**绝对定位 + transform**
+```css
+.container {
+  position: relative;
+  height: 100vh;
+}
+.item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+---
 
 ## webpack的构建流程
 
+**四个核心概念：**
+
+1. **Entry（入口）** - 起点文件
+2. **Output（输出）** - 输出文件
+3. **Loader（加载器）** - 处理非 JS 文件
+4. **Plugin（插件）** - 扩展功能
+
+**构建流程：**
+
+```
+Entry → Loader → Plugin → Output
+  ↓        ↓        ↓       ↓
+入口   模块转换  优化/注入  输出
+```
+
+**配置示例：**
+
+```js
+module.exports = {
+  entry: './src/index.js',      // 1. 入口
+  
+  module: {
+    rules: [
+      {
+        test: /\.jsx?$/,
+        use: 'babel-loader'       // 2. Loader
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
+  },
+  
+  plugins: [
+    new HtmlWebpackPlugin(),      // 3. Plugin
+    new MiniCssExtractPlugin()
+  ],
+  
+  output: {
+    filename: 'bundle.js',        // 4. 输出
+    path: path.resolve(__dirname, 'dist')
+  }
+};
+```
+
+---
+
 ## webpack怎么解决浏览器缓存的问题
+
+**使用文件哈希**
+
+```js
+module.exports = {
+  output: {
+    filename: '[name].[contenthash].js',  // 文件内容哈希
+    path: path.resolve(__dirname, 'dist')
+  }
+};
+```
+
+**哈希类型：**
+
+- `[hash]` - 构建哈希（整个构建改变）
+- `[contenthash]` - 文件内容哈希（仅文件变化才改变）
+- `[chunkhash]` - Chunk 哈希
+
+**结合 HTML**
+
+```html
+<!-- 哈希改变，浏览器会重新下载 -->
+<script src="bundle.abc123.js"></script>
+<script src="bundle.def456.js"></script>  <!-- 内容未变，哈希不变 -->
+```
+
+---
 
 ## webpack怎么实现路由懒加载
 
+**动态导入**
+
+```js
+// 方式1：import()
+const Home = () => import('./pages/Home');
+const About = () => import('./pages/About');
+
+const routes = [
+  { path: '/', component: Home },
+  { path: '/about', component: About }
+];
+
+// 方式2：webpack magic comment
+const Home = () => import(
+  /* webpackChunkName: "home" */
+  './pages/Home'
+);
+```
+
+**输出结果**
+
+```js
+// Webpack 会自动创建 chunks
+// dist/
+//   ├── main.js
+//   ├── home.abc123.js      // 路由 chunk
+//   └── about.def456.js     // 路由 chunk
+```
+
+---
+
 ## html缓存怎么解决
+
+**不缓存 HTML 文件**
+
+```js
+// Express
+app.use((req, res, next) => {
+  if (req.url.endsWith('.html')) {
+    res.set('Cache-Control', 'no-cache');
+  }
+  next();
+});
+
+// Nginx
+location ~* \.html$ {
+  add_header Cache-Control 'no-cache';
+}
+```
+
+**或使用 ETag**
+
+```
+ETag: "abc123"
+If-None-Match: "abc123"
+// 服务器对比，若相同返回 304 Not Modified
+```
+
+---
 
 ## 首屏大图请求太慢怎么解决
 
+1. **图片懒加载**
+```html
+<img loading="lazy" src="image.jpg">
+```
+
+2. **图片压缩和优化**
+```js
+// 使用 WebP，PNG 作为备选
+<picture>
+  <source srcset="image.webp" type="image/webp">
+  <img src="image.png" alt="image">
+</picture>
+```
+
+3. **CDN 加速**
+```html
+<img src="https://cdn.example.com/image.jpg">
+```
+
+4. **渐进式加载**
+```html
+<!-- 先加载低质量，再加载高质量 -->
+<img src="low-quality.jpg" data-src="high-quality.jpg">
+```
+
+5. **占位符**
+```html
+<!-- 使用 LQIP（低质量图片占位符） -->
+<img src="data:image/jpeg;base64,..." data-src="real-image.jpg">
+```
+
+---
+
 ## 手写深拷贝
+
+```js
+function deepClone(obj, map = new WeakMap()) {
+  // 处理 null 和原始类型
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  // 处理循环引用
+  if (map.has(obj)) return map.get(obj);
+  
+  // 处理 Date
+  if (obj instanceof Date) return new Date(obj);
+  
+  // 处理 RegExp
+  if (obj instanceof RegExp) return new RegExp(obj);
+  
+  // 处理数组
+  if (Array.isArray(obj)) {
+    const arr = [];
+    map.set(obj, arr);
+    obj.forEach((item, index) => {
+      arr[index] = deepClone(item, map);
+    });
+    return arr;
+  }
+  
+  // 处理对象
+  const copy = {};
+  map.set(obj, copy);
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      copy[key] = deepClone(obj[key], map);
+    }
+  }
+  
+  return copy;
+}
+
+// 测试
+const original = {
+  a: 1,
+  b: { c: 2 },
+  d: [1, 2, 3],
+  e: new Date()
+};
+const cloned = deepClone(original);
+```
+
+---
 
 ## 谈谈事件循环
 
+**JavaScript 事件循环：** 使单线程能处理异步任务
+
+**执行顺序：**
+
+1. 同步代码（Call Stack）
+2. 微任务队列（Microtask Queue）
+   - Promise.then、async/await
+   - MutationObserver
+3. 宏任务队列（Macrotask Queue）
+   - setTimeout、setInterval
+   - I/O、UI 事件
+
+**流程：**
+
+```
+Call Stack → Microtask Queue → Macrotask Queue → UI Render
+```
+
+**示例：**
+
+```js
+console.log('1');
+
+setTimeout(() => console.log('2'), 0);  // 宏任务
+
+Promise.resolve()
+  .then(() => console.log('3'));       // 微任务
+
+console.log('4');
+
+// 输出：1 4 3 2
+```
+
+---
+
 ## 谈谈实现过的比较复杂的组件
+
+**例如：虚拟滚动组件**
+
+```vue
+<template>
+  <div class="virtual-scroll" @scroll="handleScroll" ref="container">
+    <div class="spacer" :style="{ height: startOffset + 'px' }"></div>
+    <div v-for="item in visibleItems" :key="item.id">
+      {{ item.text }}
+    </div>
+    <div class="spacer" :style="{ height: endOffset + 'px' }"></div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue';
+
+const items = ref([...Array(10000).keys()].map(i => ({ id: i, text: `Item ${i}` })));
+const container = ref(null);
+const scrollTop = ref(0);
+const itemHeight = 50;
+const containerHeight = 600;
+
+const handleScroll = (e) => {
+  scrollTop.value = e.target.scrollTop;
+};
+
+const startIndex = computed(() => Math.floor(scrollTop.value / itemHeight));
+const endIndex = computed(() => Math.ceil((scrollTop.value + containerHeight) / itemHeight));
+const visibleItems = computed(() => items.value.slice(startIndex.value, endIndex.value));
+const startOffset = computed(() => startIndex.value * itemHeight);
+const endOffset = computed(() => (items.value.length - endIndex.value) * itemHeight);
+</script>
+
+<style scoped>
+.virtual-scroll {
+  overflow-y: auto;
+  height: 600px;
+}
+</style>
+```
+
+---
 
 ## vue2和vue3的区别
 
+| 特性 | Vue 2 | Vue 3 |
+|------|-------|-------|
+| **响应式** | Object.defineProperty | Proxy |
+| **API** | Options API | Composition API |
+| **TypeScript** | 支持不佳 | 原生支持 |
+| **性能** | 基准 | 快 2-3 倍 |
+| **包体积** | 33.3 KB | 26.3 KB |
+| **IE 支持** | IE9+ | 不支持 |
+| **新特性** | - | Fragment、Teleport、Suspense |
+
+**响应式对比：**
+
+```js
+// Vue 2：Object.defineProperty
+Object.defineProperty(obj, 'count', {
+  get() { /* 依赖收集 */ },
+  set(val) { /* 派发更新 */ }
+});
+
+// Vue 3：Proxy
+const proxy = new Proxy(obj, {
+  get(target, key) { /* 依赖收集 */ },
+  set(target, key, val) { /* 派发更新 */ }
+});
+```
+
+---
+
 ## 手写dialog组件的步骤
+
+```vue
+<template>
+  <teleport to="body">
+    <div v-show="visible" class="modal-overlay" @click="handleBackdropClick">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>{{ title }}</h2>
+          <button @click="close" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <slot></slot>
+        </div>
+        <div class="modal-footer">
+          <button @click="close" class="btn btn-cancel">取消</button>
+          <button @click="confirm" class="btn btn-primary">确认</button>
+        </div>
+      </div>
+    </div>
+  </teleport>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+
+const props = defineProps({
+  title: String,
+  modelValue: Boolean
+});
+
+const emit = defineEmits(['update:modelValue', 'confirm']);
+
+const visible = ref(props.modelValue);
+
+const close = () => {
+  visible.value = false;
+  emit('update:modelValue', false);
+};
+
+const confirm = () => {
+  emit('confirm');
+  close();
+};
+
+const handleBackdropClick = (e) => {
+  if (e.target === e.currentTarget) {
+    close();
+  }
+};
+
+watch(() => props.modelValue, (val) => {
+  visible.value = val;
+});
+</script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+</style>
+```
+
+---

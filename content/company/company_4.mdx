@@ -1,18 +1,66 @@
 # xxx科技-前端工程师
 
 ## 1.请描述TypeScript中泛型及使用场景？或者使用代码实现进行阐述。
+泛型（Generics）允许在保持类型安全的同时编写可复用的组件或函数，通过把类型作为参数传入来实现对多种类型的支持。常见场景：容器/集合类型、API 返回包装、工具函数（map/filter）、依赖注入或工厂函数等。
+
+示例：
+
+```ts
+function identity<T>(arg: T): T {
+  return arg;
+}
+
+const n = identity<number>(123);
+const s = identity<string>('abc');
+
+// 泛型接口
+interface Response<T> {
+  code: number;
+  data: T;
+}
+
+const r: Response<string[]> = { code: 0, data: ['a','b'] };
+```
+
+优点：重用性强、静态类型检查、更少类型断言。
 
 ---
 
 ## 2.请阐述页面如果出现以下代码，浏览器与服务器之间通讯会引起什么问题？
 
+（题目未给出具体代码，下面列举常见导致问题的代码模式与影响）
+
+- **频繁/无限网络请求（如 setInterval/递归 fetch）**：会造成服务器压力、带宽浪费、浏览器卡顿或触发速率限制。  
+- **未处理的跨域请求**：会被浏览器拦截（CORS），导致请求失败或暴露不安全的响应。  
+- **在页面中同步阻塞大量计算**：会阻塞主线程，导致请求/响应处理延迟或时间超时。  
+- **发送敏感信息到客户端/在客户端写凭证到不安全存储**：可能泄露隐私或被中间人窃取。  
+- **重复提交（表单/POST）**：可能造成幂等性问题和数据重复。  
+
+解决思路：限流/去抖节流、合理使用缓存、采用异步/队列、正确配置 CORS、避免在客户端存储敏感令牌或使用 HttpOnly cookie。
+
 ---
 
 ## 3.css中的display:none与visiblity:hidden的区别是什么, 它们与重绘重排的关联是什么?
 
+- **display:none**：元素从布局流中完全移除，占用空间消失；会触发回流（重排）和重绘（reflow + repaint）因为相邻元素位置可能改变。  
+- **visibility:hidden**：元素仍占据布局空间但不可见，仅改变可见性；通常只会触发重绘（repaint），不会引起大范围的回流（除非其他属性也改变）。  
+
+性能建议：尽量用 `visibility:hidden` 或 `opacity:0` + `pointer-events:none` 做动画或渐隐（避免回流），在需要完全移除布局影响时用 `display:none`。但具体要结合场景和浏览器优化策略。  
+
 ---
 
 ## 4.请阐述node.js的事件循环工作方式
+
+Node.js 的事件循环基于 libuv，实现单线程事件驱动模型。主要阶段（每轮 tick）：
+
+- **timers 阶段**：执行到期的 `setTimeout` 和 `setInterval` 回调。  
+- **pending callbacks（系统回调）**：处理上一轮循环中一些系统操作的回调。  
+- **idle, prepare**：内部使用，供 libuv 做准备工作。  
+- **poll 阶段**：检索新的 I/O 事件并执行回调；在没有 I/O 时会阻塞等待或在有定时器要到期时提前返回。  
+- **check 阶段**：执行 `setImmediate` 的回调。  
+- **close callbacks**：处理 `close` 事件回调（如 socket.on('close')）。
+
+此外，`process.nextTick` 的回调在当前阶段之后、下一事件循环之前立即执行（优先级高于 `setImmediate` 和 timers）。CPU 密集型任务会阻塞事件循环，应放到子进程/worker thread 或拆分为异步任务。  
 
 ---
 
@@ -29,20 +77,82 @@ function test () {
 test();
 ```
 
+输出：
+
+- 第一行：`undefined`（函数内 `var a` 被变量提升，但初始化在赋值之前）
+- 第二行：`2`
+
+原因：`var a` 在函数作用域内被提升为声明（未赋值），所以 `console.log(a)` 访问到的是局部未初始化的 `a`（结果 `undefined`）。
+
 ---
 
 ## 7.React Fiber是什么？以及你对其使用场景的了解
+
+React Fiber 是 React 16 引入的重写后的协调（reconciler）算法与内部架构，旨在把渲染工作拆分成可中断的增量任务以提升响应性。Fiber 支持优先级调度、增量渲染和时间切片（time-slicing）。
+
+使用场景与好处：大组件或复杂树的渲染不会长时间阻塞主线程，交互更流畅；可中断渲染允许把高优先级任务（如输入事件）插队执行；配合 Suspense 可做延迟加载与更好用户体验。
 
 ---
 
 ## 8.请描述你对OOP三要素的理解
 
+- **封装（Encapsulation）**：将数据与操作数据的方法组合在对象内，通过访问控制（public/private/protected）隐藏内部实现，提供接口保障使用安全。  
+- **继承（Inheritance）**：子类继承父类属性与方法，实现代码复用与层次化设计；同时需注意组合优于继承来降低耦合。  
+- **多态（Polymorphism）**：同一接口或方法名可作用于不同类型的对象（运行时多态/重写），提高扩展性与通用性。
+
 ---
 
 ## 9.假设实现一个简单的Express中间件addData, 功能是给req的data属性添加数据, 中间支持如下使用方法, 请写出addData方法的实现逻辑
+
+实现思路：返回一个中间件函数，接收静态对象或函数以支持动态数据，合并到 `req.data`，并在合并后调用 `next()`。示例实现：
+
+```js
+// addData 支持 addData({ a: 1 }) 或 addData(req => ({ time: Date.now() }))
+function addData(payload) {
+  return function (req, res, next) {
+    try {
+      const toAdd = typeof payload === 'function' ? payload(req, res) : payload;
+      req.data = Object.assign({}, req.data || {}, toAdd);
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}
+
+// 用法示例：
+// app.use(addData({ app: 'myApp' }));
+// app.use(addData(req => ({ ip: req.ip })));
+```
 
 ---
 
 ## 10.请用代码实现node.js单线程多进程模型过程或者实现思路
 
----
+思路：使用 `cluster` 模块在主进程中 fork 多个 worker，每个 worker 运行服务器实例，主进程负责管理（启动/重启/负载分发由操作系统完成）。示例如下：
+
+```js
+const cluster = require('cluster');
+const os = require('os');
+const http = require('http');
+
+if (cluster.isMaster) {
+  const cpus = os.cpus().length;
+  for (let i = 0; i < cpus; i++) {
+    cluster.fork();
+  }
+
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`worker ${worker.process.pid} died, forking a new one`);
+    cluster.fork();
+  });
+} else {
+  // 每个 worker 都监听同一端口，操作系统分发连接
+  http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end(`handled by ${process.pid}`);
+  }).listen(3000);
+}
+```
+
+可以结合负载均衡、进程内缓存隔离、使用 `sticky-session` 等实现会话保持。对于 CPU 密集型任务，可把工作交给子进程或 `worker_threads`。

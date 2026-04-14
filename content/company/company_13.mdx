@@ -1,40 +1,101 @@
 # xxx科技-前端工程师
 
-### 1.请选择结果为真的表达式 ()
+## 1.请选择结果为真的表达式 ()
 
-A、null instanceof Object
+### 答案：**C**
 
-B、null === undefined
+| 选项 | 表达式 | 结果 | 解释 |
+|------|--------|------|------|
+| A | `null instanceof Object` | false | `instanceof` 检查原型链，null 的原型链顶端是 null，不是 Object |
+| **C** | **`null == undefined`** | **true** | **`==` 会类型转换，null 和 undefined 相等** |
+| B | `null === undefined` | false | `===` 不进行类型转换，null 和 undefined 是不同类型 |
+| D | `NaN == NaN` | false | NaN 不等于任何值，包括它自己 |
 
-C、null == undefined
+**知识点：**
 
-D、NaN == NaN
+```js
+null == undefined      // true（特殊规则）
+null === undefined     // false（类型和值都要相同）
+Object.is(null, null)  // true
+Object.is(NaN, NaN)    // true（与 == 和 === 不同）
+```
 
-### 2.关于JavaScript, 以下选项描述错误的是 ()
+---
 
-A、在原型上拓展的可枚举方法, 会被for in循环出来
+## 2.关于JavaScript, 以下选项描述错误的是 ()
 
-B、使用Object.defineProperty 可向对象添加或者修改属性
+### 答案：**C、E**
 
-C、通过hasOwnProperty可判断一个对象以及其原型链上是否具有指定名称的属性
+| 选项 | 描述 | 是否正确 | 说明 |
+|------|-----|--------|------|
+| A | 原型上拓展的可枚举方法，会被 for in 循环出来 | ✅ 正确 | for in 包括原型链上的可枚举属性 |
+| B | `Object.defineProperty` 可向对象添加或修改属性 | ✅ 正确 | 可以添加、修改和定义属性描述符 |
+| **C** | **`hasOwnProperty` 可判断对象以及其原型链上是否具有指定属性** | **❌ 错误** | **`hasOwnProperty` 只检查自身属性，不检查原型链** |
+| D | 原型链是 JavaScript 实现继承的一种模型 | ✅ 正确 | 这是 JavaScript 的核心机制 |
+| **E** | **每个对象都有 prototype 属性** | **❌ 错误** | **对象有 `__proto__`，函数有 `prototype`。不是所有对象都有 prototype** |
+| F | for 循环按顺序，for in 循环不一定按顺序 | ✅ 正确 | for in 的遍历顺序不确定 |
 
-D、原型链是JavaScript实现继承的一种模型
+**区别示例：**
 
-E、每个对象都有prototype属性, 返回对象类型原型的引用
+```js
+function Parent() {}
+Parent.prototype.method = 'parent';
 
-F、for循环是按顺序的, for in 循环是不一定按顺序的
+const obj = new Parent();
+obj.own = 'own';
 
-### 3.下面有关JavaScript中 call 和 apply的描述, 错误的是 ()
+// hasOwnProperty 只检查自身属性
+console.log(obj.hasOwnProperty('own'));          // true
+console.log(obj.hasOwnProperty('method'));       // false
 
-A、call与apply都属于Function.prototype的一个方法, 所以每个Function实例都有call、apply属性
+// in 操作符检查自身和原型链
+console.log('own' in obj);                       // true
+console.log('method' in obj);                    // true
 
-B、apply传入的是一个参数数组, 也就是将多个参数组合成为一个数组传入
+// for...in 遍历自身和可枚举的原型属性
+for (let key in obj) {
+  console.log(key); // 'own', 'method'
+}
+```
 
-C、call传入的则是直接的参数列表。call方法可将一个函数的对象上下文从初始的上下文改变为由thisObj指定的新对象
+---
 
-D、两者的参数不同, call函数第一个参数都是要传入给当前对象的对象, apply不是
+## 3.下面有关JavaScript中 call 和 apply的描述, 错误的是 ()
 
-### 4.以下输出内容为 ()
+### 答案：**D**
+
+| 选项 | 描述 | 是否正确 | 说明 |
+|------|-----|--------|------|
+| A | call 与 apply 都属于 Function.prototype | ✅ 正确 | 都是函数原型上的方法 |
+| B | apply 传入的是参数数组 | ✅ 正确 | `apply(thisArg, [arg1, arg2])` |
+| C | call 传入的是参数列表，改变 this 上下文 | ✅ 正确 | `call(thisArg, arg1, arg2)` |
+| **D** | **两者的第一个参数都是要传入的对象** | **❌ 错误** | **第一个参数都是 this 指向的对象，不是"要传入的对象"** |
+
+**区别示例：**
+
+```js
+function introduce(job, hobby) {
+  return `我是${this.name}，职位是${job}，爱好是${hobby}`;
+}
+
+const person = { name: '小明' };
+
+// call：逐个传递参数
+introduce.call(person, '前端工程师', '编程');
+// 输出：我是小明，职位是前端工程师，爱好是编程
+
+// apply：使用数组传递参数
+introduce.apply(person, ['前端工程师', '编程']);
+// 输出：我是小明，职位是前端工程师，爱好是编程
+
+// bind：返回新函数，不立即执行
+const boundFunc = introduce.bind(person, '前端工程师');
+boundFunc('编程'); // 我是小明，职位是前端工程师，爱好是编程
+```
+
+---
+
+## 4.以下输出内容为 ()
 
 ```js showLineNumbers copy
 var a = {};
@@ -42,91 +103,675 @@ var b = Object.prototype;
 [a.prototype === blur, Object.getProtoTypeOf(a) === b]
 ```
 
-A、[false, true]
+### 答案：**A、[false, true]**
 
-B、[true, true]
+**包含两个错误：**
 
-C、[false, false]
+```js
+var a = {};
+var b = Object.prototype;
+```
 
-D、other
+1. **`a.prototype === blur`**
+   - `blur` 未定义（应该是 `null` 或缺失）
+   - 如果代码是 `a.prototype === null`，结果是 `true`
+   - 如果代码是 `a.prototype === undefined`，结果是 `true`
+   - 这里 `blur` 不存在，会抛错，假设结果为 `false`
 
-### 5.关于Vue组件间的参数传递, 下列哪项是不正确的 ()
+2. **`Object.getProtoTypeOf(a) === b`**
+   - 注意：方法名应该是 `Object.getPrototypeOf`（typo：ProtoType → Prototype）
+   - `Object.getPrototypeOf(a)` 返回 `a` 的隐式原型，即 `a.__proto__`
+   - 对于空对象 `{}` 创建的对象，其 `__proto__` 指向 `Object.prototype`
+   - 因此 `Object.getPrototypeOf(a) === b` 是 `true`
 
-A、若子组件给父组件传值, 可使用 $emit 方法
+**正确代码：**
 
-B、祖孙组件之间可以使用provide和inject方法跨层级相互传值
+```js
+var a = {};
+var b = Object.prototype;
 
-C、若子组件使用 $emit('say') 派发事件, 父组件可使用 @say 监听
+console.log(Object.getPrototypeOf(a) === b);  // true
+console.log(a.__proto__ === b);               // true
+console.log(a.hasOwnProperty('prototype'));   // false
+```
 
-D、若父组件给子组件传值, 子组件可通过props接收数据
+---
 
-### 6.以下对vue的双向绑定说法不正确的是 ()
+## 5.关于Vue组件间的参数传递, 下列哪项是不正确的 ()
 
-A、采用数据劫持结合发布-订阅模式的方式
+### 答案：**B 是最不正确的说法**
 
-B、通过Object.defineProperty()来劫持各个属性的setter, getter, 在数据变动时发布消息给订阅者, 触发相应监听回调
+| 选项 | 描述 | 是否正确 | 说明 |
+|------|-----|--------|------|
+| A | 子组件给父组件传值，使用 `$emit` | ✅ 正确 | 标准的向上通信方式 |
+| **B** | **祖孙组件间可使用 provide 和 inject** | **⚠️ 有歧义** | **用法说法反了：祖先用 provide，后代用 inject，不是"相互"** |
+| C | 子组件 `$emit('say')`，父组件 `@say` 监听 | ✅ 正确 | 正确的事件监听方式 |
+| D | 父组件给子组件传值，通过 props | ✅ 正确 | 标准的向下传值方式 |
 
-C、MVVM作为数据绑定的入口, 整合Observer, Compile和Watcher三者, 通过Observer来监听自己的model的数据变化
+**正确的 provide/inject 用法：**
 
-D、vue是通过基于脏检查机制实现双向绑定
+```js
+// 父组件（祖先）
+export default {
+  provide() {
+    return {
+      message: '来自祖先的数据'
+    }
+  }
+}
 
-### 7.以下哪些是JavaScript的全局函数(多选) ()
+// 孙组件（后代）
+export default {
+  inject: ['message'],
+  setup() {
+    // 可以使用 message
+  }
+}
+```
 
-A、escape
+---
 
-B、parseFloat
+## 6.以下对 vue 的双向绑定说法不正确的是 ()
 
-C、eval
+### 答案：**D**
 
-D、setTimeout
+| 选项 | 描述 | 是否正确 | 说明 |
+|------|-----|--------|------|
+| A | 采用数据劫持结合发布-订阅模式 | ✅ 正确 | Vue 的核心实现方式 |
+| B | 通过 `Object.defineProperty()` 劫持 setter/getter | ✅ 正确 | Vue2 的实现方式 |
+| C | MVVM 整合 Observer、Compile、Watcher | ✅ 正确 | Vue 的架构设计 |
+| **D** | **Vue 基于脏检查机制实现双向绑定** | **❌ 错误** | **Vue 使用数据劫持，不是脏检查。脏检查是 AngularJS 的方式** |
 
-E、alet
+**Vue 的实现方式：**
 
-### 8.在ES6中, promise的状态有(多选) ()
+```js
+// Vue 使用数据劫持
+Object.defineProperty(obj, 'count', {
+  get() { /* 依赖收集 */ },
+  set(newVal) { /* 触发更新 */ }
+});
 
-A、pending
+// AngularJS 使用脏检查
+// 在每个事件循环中检查数据是否变化
+```
 
-B、Pause
+---
 
-C、Resolved
+## 7.以下哪些是 JavaScript 的全局函数(多选) ()
 
-D、Rejected
+### 答案：**A、B、C、D**
 
-### 9.下列关于闭包描述正确的是(多选) ()
+| 选项 | 函数 | 是否全局函数 | 说明 |
+|------|------|-----------|------|
+| **A** | `escape` | **✅ 是** | **`escape()` 编码字符串，但已弃用，用 `encodeURIComponent()` 替代** |
+| **B** | `parseFloat` | **✅ 是** | **全局函数，解析字符串为浮点数** |
+| **C** | `eval` | **✅ 是** | **全局函数，执行字符串中的代码（不推荐使用）** |
+| **D** | `setTimeout` | **✅ 是** | **全局函数，延迟执行代码** |
+| **E** | `alet` | **❌ 否** | **应该是 `alert`，这是 window 对象的方法** |
 
-A、`(function () {})()` 理论上是一个闭包
+**使用示例：**
 
-B、闭包不耗内存, 可以随意使用
+```js
+// 全局函数
+parseFloat('3.14');           // 3.14
+setTimeout(() => {}, 1000);   // 延迟 1s 执行
+eval('2 + 3');               // 5（不推荐）
+escape('hello world');        // 已弃用
 
-C、闭包内变量执行后不会被清除
+// Window 方法
+alert('提示');
+prompt('输入');
+confirm('确认');
+```
 
-D、闭包不满足链式作用域结构
+---
 
-### 10.对于vue中响应式数据原理的说法, 下列哪项是不正确的?(多选) ()
+## 8.在 ES6 中, promise 的状态有(多选) ()
 
-A、采用数据劫持方式, 即Object.definedProperty()劫持data中各属性, 实现响应式数据
+### 答案：**A、C、D**
 
-B、视图中的变化会通过watcher更新data中的数据
+| 状态 | 命名 | 说明 | 是否存在 |
+|------|------|------|--------|
+| **A** | **Pending** | **进行中** | **✅ 是** |
+| **B** | Pause | 暂停 | ❌ 不存在 |
+| **C** | Resolved | 已解决（成功） | ✅ 是 |
+| **D** | Rejected | 已拒绝（失败） | ✅ 是 |
 
-C、若data中某属性多次发生变化, watcher仅会进入更新队列一次
+**说明：**
 
-D、通过编译过程进行依赖收集
+Promise 有三种状态：
+- `pending`：初始状态，异步操作未完成
+- `fulfilled`（或 `resolved`）：操作成功完成
+- `rejected`：操作失败
 
-### 11.描述一下 cookie, sessionStorage, localStorage的区别
+一旦状态改变，就不可以再改变。
 
-### 12.缓存(强缓存)是什么, 如何设置缓存
+```js
+const p = new Promise((resolve, reject) => {
+  // pending 状态
+  setTimeout(() => {
+    resolve('成功');  // 变为 fulfilled
+  }, 1000);
+});
+```
 
-### 13.vue实现数据双向绑定的原理
+---
 
-### 14.安全相关XSS的反射型是什么, 怎么避免
+## 9.下列关于闭包描述正确的是(多选) ()
 
-### 15.请说明下伪类和伪元素
+### 答案：**A、C**
 
-### 16.JavaScript中的事件循环机制
+| 选项 | 描述 | 是否正确 | 说明 |
+|------|-----|--------|------|
+| **A** | **`(function () {})()` 是一个闭包** | **✅ 正确** | **IIFE 创建了私有作用域，是闭包** |
+| **B** | 闭包不耗内存，可随意使用 | ❌ 错误 | **闭包会保留对父作用域的引用，占用内存** |
+| **C** | **闭包内变量执行后不会被清除** | **✅ 正确** | **闭包保留了对外部变量的引用，GC 不会清除** |
+| **D** | 闭包不满足链式作用域结构 | ❌ 错误 | 闭包正是利用链式作用域形成的 |
 
-### 17.什么是防抖? 什么是节流? 请写出对应函数样例, 并说明在什么场景下使用
+**闭包示例：**
 
-### 18.实现一个vue自定义指令-懒加载
+```js
+function outer() {
+  let count = 0;  // 这个变量会被保留在内存中
+  
+  return function inner() {
+    count++;
+    console.log(count);
+  };
+}
 
-### 19.实现一个有缓存的斐波拉契数列
+const counter = outer();
+counter();  // 1
+counter();  // 2
+counter();  // 3
+
+// count 变量始终保存在内存中，不会被清除
+```
+
+---
+
+## 10.对于 vue 中响应式数据原理的说法, 下列哪项是不正确的?(多选) ()
+
+### 答案：**A（不完全正确，Vue3 改用 Proxy）**
+
+| 选项 | 描述 | 是否正确 | 说明 |
+|------|-----|--------|------|
+| **A** | 采用 `Object.defineProperty()` 劫持判断 | **⚠️ 不完全正确** | **Vue2 用 `Object.defineProperty()`，Vue3 用 `Proxy`** |
+| B | 视图中的变化通过 watcher 更新 data | ✅ 正确 | v-model 会触发 watcher 更新数据 |
+| **C** | **若 data 属性多次变化，watcher 仅进入队列一次** | **⚠️ 有效结果** | **同步修改多次只会存入一个 watcher，异步则分别计算** |
+| D | 通过编译过程进行依赖收集 | ✅ 正确 | 编译过程会进行依赖收集 |
+
+**Vue 响应式系统的进化：**
+
+```js
+// Vue 2：Object.defineProperty（有局限性）
+Object.defineProperty(obj, 'count', {
+  get() { /* 依赖收集 */ },
+  set(val) { /* 触发更新 */ }
+});
+
+// Vue 3：Proxy（更强大）
+const proxy = new Proxy(obj, {
+  get(target, key) { /* 依赖收集 */ },
+  set(target, key, val) { /* 触发更新 */ }
+});
+```
+
+---
+
+## 11.描述一下 cookie、sessionStorage、localStorage 的区别
+
+| 特性 | Cookie | SessionStorage | LocalStorage |
+|------|--------|----------------|--------------|
+| **存储大小** | ~4KB | ~5-10MB | ~5-10MB |
+| **有效期** | 可设置过期时间 | 浏览器关闭清除 | 永久存储（除非手动清除） |
+| **作用域** | 跨域可共享（需服务器设置） | 仅当前标签页 | 同源共享 |
+| **发送** | 每次 HTTP 请求自动发送 | 仅客户端存储 | 仅客户端存储 |
+| **安全性** | 容易被盗取（HttpOnly 保护） | 较安全 | 较安全 |
+| **访问** | `document.cookie` | `sessionStorage` | `localStorage` |
+
+**使用示例：**
+
+```js
+// Cookie
+document.cookie = 'name=john; max-age=3600; path=/';
+console.log(document.cookie);
+
+// SessionStorage（浏览器关闭清除）
+sessionStorage.setItem('user', 'john');
+console.log(sessionStorage.getItem('user'));
+sessionStorage.removeItem('user');
+
+// LocalStorage（永久保存）
+localStorage.setItem('theme', 'dark');
+console.log(localStorage.getItem('theme'));
+localStorage.clear(); // 清除所有
+```
+
+---
+
+## 12.缓存(强缓存)是什么, 如何设置缓存
+
+**强缓存：** 浏览器完全不发送请求，直接使用本地缓存资源。
+
+**设置方式：**
+
+1. **Expires 头（HTTP/1.0）**
+   ```
+   Expires: Wed, 21 Oct 2025 07:28:00 GMT
+   ```
+
+2. **Cache-Control 头（HTTP/1.1 推荐）**
+   ```
+   Cache-Control: max-age=31536000  // 缓存 1 年
+   Cache-Control: public            // 所有地方可缓存
+   Cache-Control: private           // 仅浏览器缓存
+   Cache-Control: no-cache          // 使用缓存前必须验证
+   Cache-Control: no-store          // 不缓存
+   ```
+
+**服务器配置示例（Node.js）：**
+
+```js
+app.use((req, res, next) => {
+  // 静态资源缓存 1 年
+  if (req.url.match(/\.(js|css|png|jpg)$/)) {
+    res.set('Cache-Control', 'public, max-age=31536000');
+  }
+  // HTML 不缓存
+  else if (req.url.endsWith('.html')) {
+    res.set('Cache-Control', 'no-cache');
+  }
+  next();
+});
+```
+
+---
+
+## 13.vue实现数据双向绑定的原理
+
+```js
+// 简化的 Vue 响应式系统
+
+class Vue {
+  constructor(options) {
+    this.data = options.data;
+    this.template = options.template;
+    this.methods = options.methods;
+    
+    this.observe(this.data);
+    this.render();
+  }
+  
+  observe(obj) {
+    Object.keys(obj).forEach(key => {
+      let value = obj[key];
+      const dep = new Dep(); // 依赖收集
+      
+      Object.defineProperty(obj, key, {
+        get() {
+          Dep.target && dep.addSub(Dep.target);
+          return value;
+        },
+        set(newValue) {
+          if (newValue !== value) {
+            value = newValue;
+            dep.notify(); // 触发更新
+          }
+        }
+      });
+    });
+  }
+  
+  render() {
+    Dep.target = new Watcher(); // 创建观察者
+    // 解析模板并更新视图
+    document.body.innerHTML = this.parseTemplate();
+    Dep.target = null;
+  }
+  
+  parseTemplate() {
+    let html = this.template;
+    Object.keys(this.data).forEach(key => {
+      html = html.replace(`{{ ${key} }}`, this.data[key]);
+    });
+    return html;
+  }
+}
+
+class Dep {
+  constructor() {
+    this.subs = [];
+  }
+  
+  addSub(sub) {
+    this.subs.push(sub);
+  }
+  
+  notify() {
+    this.subs.forEach(sub => sub.update());
+  }
+}
+
+class Watcher {
+  update() {
+    console.log('视图需要更新');
+    // 重新渲染
+  }
+}
+```
+
+---
+
+## 14.安全相关XSS的反射型是什么, 怎么避免
+
+**反射型 XSS：** 用户提供的数据立即被服务器反射回浏览器，被当作代码执行。
+
+**攻击示例：**
+
+```js
+// 恶意 URL
+https://example.com/search?q=<img src=x onerror=alert('XSS')>
+
+// 服务器响应（未转义）
+<p>您搜索的内容：<img src=x onerror=alert('XSS')></p>
+```
+
+**防止方法：**
+
+```js
+// 1. 服务器端转义（推荐）
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  };
+  return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+console.log(escapeHtml('<img src=x onerror=alert(1)>'));
+// 输出：&lt;img src=x onerror=alert(1)&gt;
+
+// 2. CSP（内容安全政策）
+// 响应头：Content-Security-Policy: script-src 'self'
+
+// 3. 前端防护
+const userInput = document.getElementById('input').value;
+const escaped = escapeHtml(userInput);
+document.getElementById('output').textContent = escaped; // 用 textContent 而不是 innerHTML
+```
+
+---
+
+## 15.请说明下伪类和伪元素
+
+| 特性 | 伪类（Pseudo-Class） | 伪元素（Pseudo-Element） |
+|------|-------------------|----------------------|
+| **语法** | `:` 单冒号 | `::` 双冒号（`:` 也支持） |
+| **作用** | 选择处于特定状态的元素 | 创建虚拟元素 |
+| **选择** | 真实 DOM 中存在的元素 | 不存在于 DOM 中 |
+| **数量** | 可以多个叠加 | 每个元素仅一个 |
+
+**伪类示例：**
+
+```css
+/* 状态伪类 */
+a:hover {}      /* 鼠标悬停 */
+a:visited {}    /* 已访问 */
+a:active {}     /* 被激活 */
+input:focus {}  /* 获得焦点 */
+
+/* 结构伪类 */
+li:first-child {}   /* 第一个子元素 */
+li:last-child {}    /* 最后一个子元素 */
+li:nth-child(2) {}  /* 第二个子元素 */
+
+/* 其他 */
+input:checked {}    /* 复选框被选中 */
+input:disabled {}   /* 禁用状态 */
+```
+
+**伪元素示例：**
+
+```css
+/* 创建虚拟元素 */
+p::first-line {}    /* 第一行 */
+p::first-letter {}  /* 第一个字符 */
+p::before {}        /* 前面插入内容 */
+p::after {}         /* 后面插入内容 */
+input::placeholder {}  /* 输入框占位符 */
+
+/* 实际应用 */
+h1::before {
+  content: '标题：';
+  color: red;
+}
+```
+
+---
+
+## 16.JavaScript 中的事件循环机制
+
+**事件循环流程：**
+
+1. 执行同步代码（Call Stack）
+2. 同步代码执行完成后，检查微任务（Microtask Queue）
+3. 微任务全部执行完成后，检查宏任务（Macrotask Queue）
+4. 执行第一个宏任务，然后再检查微任务
+5. 重复 2-4 步直到队列为空
+
+**任务分类：**
+
+| 宏任务 | 微任务 |
+|------|--------|
+| script 代码 | Promise.then/catch/finally |
+| setTimeout/setInterval | async/await |
+| setImmediate | MutationObserver |
+| I/O 操作 | queueMicrotask |
+| UI 渲染 | |
+
+**执行示例：**
+
+```js
+console.log('1. 同步');
+
+setTimeout(() => {
+  console.log('2. 宏任务(setTimeout)');
+}, 0);
+
+Promise.resolve()
+  .then(() => {
+    console.log('3. 微任务(Promise)');
+  })
+  .then(() => {
+    console.log('4. 微任务(Promise)');
+  });
+
+console.log('5. 同步');
+
+// 输出顺序：
+// 1. 同步
+// 5. 同步
+// 3. 微任务(Promise)
+// 4. 微任务(Promise)
+// 2. 宏任务(setTimeout)
+```
+
+---
+
+## 17.什么是防抖? 什么是节流? 请写出对应函数样例, 并说明在什么场景下使用
+
+**防抖（Debounce）：** 延迟执行，如果在延迟时间内又触发，则重新计时。
+
+```js
+function debounce(fn, delay) {
+  let timer = null;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
+// 使用场景：搜索输入、窗口 resize、自动保存等
+const search = debounce((query) => {
+  console.log(`搜索：${query}`);
+}, 500);
+
+input.addEventListener('input', (e) => {
+  search(e.target.value);
+});
+```
+
+**节流（Throttle）：** 固定间隔执行，不管中间触发多少次。
+
+```js
+function throttle(fn, delay) {
+  let lastTime = 0;
+  return function(...args) {
+    const now = Date.now();
+    if (now - lastTime >= delay) {
+      fn.apply(this, args);
+      lastTime = now;
+    }
+  };
+}
+
+// 使用场景：滚动加载、按钮点击、鼠标移动等
+const scroll = throttle(() => {
+  console.log('滚动中...');
+}, 300);
+
+window.addEventListener('scroll', scroll);
+```
+
+**对比：**
+
+| 防抖 | 节流 |
+|------|------|
+| 一段时间无操作后执行 | 固定时间间隔执行 |
+| 搜索输入 | 按钮避免重复点击 |
+| 窗口 resize | 页面滚动加载 |
+
+---
+
+## 18.实现一个 vue 自定义指令-懒加载
+
+```js
+// Vue 2
+Vue.directive('lazy', {
+  inserted(el, binding) {
+    const imageUrl = binding.value;
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          el.src = imageUrl;
+          el.style.opacity = '1';
+          observer.unobserve(el);
+        }
+      });
+    });
+    
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.5s';
+    observer.observe(el);
+  }
+});
+
+// 使用
+// <img v-lazy="imageUrl" />
+```
+
+```vue
+<!-- Vue 3 -->
+<script setup>
+const vLazy = (el, binding) => {
+  const imageUrl = binding.value;
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        el.src = imageUrl;
+        el.style.opacity = '1';
+        observer.unobserve(el);
+      }
+    });
+  });
+  
+  el.style.opacity = '0';
+  el.style.transition = 'opacity 0.5s';
+  observer.observe(el);
+};
+</script>
+
+<template>
+  <img v-lazy="imageUrl" />
+</template>
+```
+
+---
+
+## 19.实现一个有缓存的斐波拉契数列
+
+```js
+// 方式1：闭包 + 缓存
+function createFibonacci() {
+  const cache = { 0: 0, 1: 1 };
+  
+  function fib(n) {
+    if (n in cache) {
+      return cache[n];
+    }
+    const result = fib(n - 1) + fib(n - 2);
+    cache[n] = result;
+    return result;
+  }
+  
+  return fib;
+}
+
+const fib = createFibonacci();
+console.log(fib(10));  // 55
+console.log(fib(50));  // 快速计算
+
+// 方式2：装饰器模式
+function memoize(fn) {
+  const cache = {};
+  return function(n) {
+    if (n in cache) {
+      return cache[n];
+    }
+    const result = fn(n);
+    cache[n] = result;
+    return result;
+  };
+}
+
+const fibonacci = memoize(function fib(n) {
+  if (n <= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+});
+
+console.log(fibonacci(10));  // 55
+
+// 方式3：动态规划（最高效）
+function fibonacciDP(n) {
+  if (n <= 1) return n;
+  
+  const dp = [0, 1];
+  for (let i = 2; i <= n; i++) {
+    dp[i] = dp[i - 1] + dp[i - 2];
+  }
+  return dp[n];
+}
+
+console.log(fibonacciDP(50));  // 12586269025
+```
+
+---
 

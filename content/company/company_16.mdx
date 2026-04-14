@@ -1,22 +1,398 @@
 # xxx软件公司-前端工程师
 
-### 1.请解释一下DOCTYPE的作用，有DOCTYPE和没有DOCTYPE有什么区别
+## 1.请解释一下DOCTYPE的作用，有DOCTYPE和没有DOCTYPE有什么区别
 
-### 2.CSS属性Position有哪些值？有什么作用？
+**DOCTYPE 的作用：** 声明文档类型，告诉浏览器使用哪个 HTML 标准
 
-### 3.纯样式垂直居中有哪些方法，请举例？
+**有 DOCTYPE 和没有的区别：**
 
-### 4.什么情况下会遇到跨域问题？有哪些解决方法？
+| 特性 | 有 DOCTYPE | 无 DOCTYPE |
+|------|-----------|-----------|
+| **渲染模式** | 标准模式 | 怪异模式（Quirks Mode） |
+| **盒模型** | W3C 标准盒模型 | IE 旧盒模型（border-box） |
+| **元素尺寸计算** | 正确 | 可能不正确 |
+| **CSS 样式** | 标准解析 | 可能有兼容性问题 |
+| **JavaScript** | 正常工作 | 可能有行为差异 |
 
-### 5.如何理解闭包？使用闭包时的注意点有哪些？
+**标准 DOCTYPE：**
 
-### 6.请手写字符串去重函数
+```html
+<!-- HTML 5 -->
+<!DOCTYPE html>
 
-### 7.使用Reduce函数来实现简单的数组求和
+<!-- HTML 4 严格模式 -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/HTML4/strict.dtd">
 
-### 8.请举出集中Vue/React组件之间的通信方式
+<!-- HTML 4 过渡模式 -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" ...>
+```
 
-### 9.一下代码输出什么结果，this.name中this指向什么？
+**盒模型区别示例：**
+
+```css
+.box {
+  width: 100px;
+  border: 10px solid black;
+  padding: 10px;
+}
+
+/* 标准模式：总宽度 = 100 + 10*2 + 10*2 = 140px */
+/* 怪异模式：总宽度 = 100px（border 和 padding 包含在内） */
+```
+
+---
+
+## 2.CSS 属性 Position 有哪些值？有什么作用？
+
+| 值 | 描述 | 特性 |
+|-----|------|------|
+| **static** | 默认值，遵循文件流 | 不能设置 top、left 等 |
+| **relative** | 相对于自身原位置定位 | 占据原有空间 |
+| **absolute** | 相对最近的定位祖先定位 | 脱离文件流 |
+| **fixed** | 相对于视口定位 | 脱离文件流，不随滚动 |
+| **sticky** | 相对定位和固定定位的混合 | 滚动到指定位置变为 fixed |
+
+**示例：**
+
+```css
+/* relative：相对自身左移 10px */
+.relative {
+  position: relative;
+  left: 10px;
+  /* 原位置仍然被占据 */
+}
+
+/* absolute：脱离文件流，相对最近定位祖先 */
+.parent {
+  position: relative;  /* 成为定位祖先 */
+}
+.absolute {
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* 相对 .parent 定位 */
+}
+
+/* fixed：窗口固定 */
+.fixed {
+  position: fixed;
+  top: 0;
+  right: 0;
+  /* 不随滚动移动 */
+}
+
+/* sticky：滚动到指定位置变为 fixed */
+.sticky {
+  position: sticky;
+  top: 0;
+  /* 滚动到 top: 0 时固定 */
+}
+```
+
+---
+
+## 3.纯样式垂直居中有哪些方法，请举例？
+
+**方法1：Flexbox（推荐）**
+
+```css
+.container {
+  display: flex;
+  justify-content: center;  /* 水平居中 */
+  align-items: center;      /* 垂直居中 */
+  height: 200px;
+}
+
+.item {
+  width: 100px;
+  height: 100px;
+}
+```
+
+**方法2：Grid（推荐）**
+
+```css
+.container {
+  display: grid;
+  place-items: center;  /* 水平和垂直都居中 */
+  height: 200px;
+}
+
+.item {
+  width: 100px;
+  height: 100px;
+}
+```
+
+**方法3：绝对定位 + transform**
+
+```css
+.container {
+  position: relative;
+  height: 200px;
+}
+
+.item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+}
+```
+
+**方法4：绝对定位 + 四边距**
+
+```css
+.container {
+  position: relative;
+  height: 200px;
+}
+
+.item {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin: auto;
+  width: 100px;
+  height: 100px;
+}
+```
+
+**方法5：绝对定位 + margin（需知道高度）**
+
+```css
+.container {
+  position: relative;
+  height: 200px;
+}
+
+.item {
+  position: absolute;
+  top: 50%;
+  margin-top: -50px;  /* 高度的一半 */
+  width: 100px;
+  height: 100px;
+}
+```
+
+---
+
+## 4.什么情况下会遇到跨域问题？有哪些解决方法？
+
+**跨域发生的情况：** 协议、域名、端口中任何一个不同
+
+```
+http://example.com:8080/a.html 
+向 https://api.example.org:3000/api 请求
+// 三个都不同：http≠https、example.com≠api.example.org、8080≠3000
+```
+
+**解决方法：**
+
+### 1. CORS（推荐）
+
+```js
+// 后端设置响应头
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://example.com');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
+// 前端正常请求
+fetch('https://api.example.org/api', {
+  credentials: 'include'
+}).then(res => res.json());
+```
+
+### 2. 代理（开发环境）
+
+```js
+// webpack.config.js 或 vite.config.js
+devServer: {
+  proxy: {
+    '/api': {
+      target: 'https://api.example.org',
+      changeOrigin: true,
+      pathRewrite: { '^/api': '' }
+    }
+  }
+}
+
+// 请求 /api/user 会代理到 https://api.example.org/user
+```
+
+### 3. JSONP
+
+```js
+// 只支持 GET 请求
+function jsonp(url, callback) {
+  const script = document.createElement('script');
+  window[callback] = function(data) {
+    console.log(data);
+    document.body.removeChild(script);
+  };
+  script.src = `${url}?callback=${callback}`;
+  document.body.appendChild(script);
+}
+
+jsonp('https://api.example.org/api', 'handleResponse');
+```
+
+### 4. PostMessage
+
+```js
+// 跨窗口通信
+const popup = window.open('https://api.example.org/popup.html');
+popup.postMessage({ msg: 'Hello' }, 'https://api.example.org');
+
+window.addEventListener('message', (event) => {
+  console.log(event.data);
+});
+```
+
+---
+
+## 5.如何理解闭包？使用闭包时的注意点有哪些？
+
+**闭包：** 函数能够访问其外层作用域的变量
+
+```js
+function outer() {
+  const count = 0;
+  return function inner() {
+    count++;
+    return count;
+  };
+}
+
+const counter = outer();
+counter(); // 1
+counter(); // 2
+```
+
+**注意点：**
+
+```js
+// ❌ 常见错误：闭包陷阱
+const functions = [];
+for (var i = 0; i < 3; i++) {
+  functions.push(function() {
+    return i;
+  });
+}
+functions[0](); // 3（不是 0）
+
+// ✅ 修复1：使用 let
+for (let i = 0; i < 3; i++) {
+  functions.push(function() {
+    return i;
+  });
+}
+
+// ✅ 修复2：使用 IIFE
+for (var i = 0; i < 3; i++) {
+  functions.push((function(j) {
+    return function() { return j; };
+  })(i));
+}
+
+// ⚠️ 内存隐患
+function createLargeArray() {
+  const largeArray = new Array(1000000).fill(0);
+  return function() {
+    return largeArray[0];  // largeArray 始终在内存中
+  };
+}
+```
+
+---
+
+## 6.请手写字符串去重函数
+
+```js
+// 方式1：Set
+function removeDuplicates(str) {
+  return [...new Set(str)].join('');
+}
+
+// 方式2：对象
+function removeDuplicates(str) {
+  const seen = {};
+  return str.split('').filter(char => {
+    if (seen[char]) return false;
+    seen[char] = true;
+    return true;
+  }).join('');
+}
+
+// 方式3：indexOf
+function removeDuplicates(str) {
+  return str.split('')
+    .filter((char, index) => str.indexOf(char) === index)
+    .join('');
+}
+
+// 测试
+console.log(removeDuplicates('aabbcc'));  // abc
+```
+
+---
+
+## 7.使用 Reduce 函数来实现简单的数组求和
+
+```js
+// 基础求和
+const numbers = [1, 2, 3, 4, 5];
+const sum = numbers.reduce((acc, curr) => acc + curr, 0);
+console.log(sum); // 15
+
+// 带初始值
+const sum = numbers.reduce((acc, curr) => acc + curr, 10);
+console.log(sum); // 25
+
+// 对象数组求和
+const items = [{ price: 10 }, { price: 20 }, { price: 30 }];
+const total = items.reduce((acc, item) => acc + item.price, 0);
+console.log(total); // 60
+
+// 多维数组展平求和
+const nested = [[1, 2], [3, 4], [5, 6]];
+const flatSum = nested.reduce((acc, arr) => acc + arr.reduce((a, b) => a + b), 0);
+console.log(flatSum); // 21
+```
+
+---
+
+## 8.请举出几种 Vue/React 组件之间的通信方式
+
+**Vue：**
+
+1. **Props + $emit**
+2. **v-model**
+3. **\$parent / \$children**
+4. **ref**
+5. **provide / inject**
+6. **Vuex / Pinia**
+
+**React：**
+
+1. **Props 向下传递**
+2. **回调函数向上通信**
+3. **Context API**
+4. **Redux**
+5. **useReducer**
+6. **自定义 Hook**
+
+---
+
+## 9.一下代码输出什么结果，this.name 中 this 指向什么？
 
 ```js
 window.name = 'ajia';
@@ -34,18 +410,275 @@ let funcA = a.getA;
 funcA();
 ```
 
-### 11.null和undefined的区别
+**答案：输出 `NaN`，this 指向 `window`**
 
-### 12.Js延迟加载的方式
+**过程分析：**
 
-### 13.document.write和innerHTML的区别
+```js
+// 1. new A() 创建实例，this.name = 998
+a.name = 998;
 
-### 14.call()和apply()的作用
+// 2. a.getA 返回函数引用
+funcA = function() {
+  console.log(this);          // window
+  return this.name + 1;       
+}
 
-### 15.异步加载和延迟加载
+// 3. funcA() 直接调用（非方法调用）
+// this 默认指向 window
+console.log(window.name + 1); // 'ajia' + 1 = NaN
+```
 
-### 16.Ajax是什么？Ajax的交互模型？同步和异步的区别？
+**总结：**
+- 直接调用函数时，this 指向 window（非严格模式）或 undefined（严格模式）
+- 作为对象方法调用时，this 指向对象本身
+- 箭头函数没有自己的 this
 
-### 17.Js操作获取和设置cookie
+---
 
-### 18.编写一个方法去掉一个数组的重复元素
+## 11.null 和 undefined 的区别
+
+| 特性 | null | undefined |
+|------|------|-----------|
+| **意义** | 表示"无值" | 表示"未赋值" |
+| **类型** | object | undefined |
+| **赋值** | 显式赋值 | 默认值或未声明 |
+| **使用** | 代表"空" | 代表"无" |
+
+```js
+// undefined：未赋值
+let x;
+console.log(x); // undefined
+
+function test() {
+  // 没有 return，返回 undefined
+}
+
+// null：显式设置
+let y = null;
+
+console.log(null == undefined);   // true
+console.log(null === undefined);  // false
+
+// 判断值是否存在
+if (value != null) {  // 同时排除 null 和 undefined
+  // value 存在
+}
+```
+
+---
+
+## 12.Js 延迟加载的方式
+
+1. **defer 属性**
+   ```html
+   <script src="script.js" defer></script>
+   <!-- 页面加载完后执行，保持顺序 -->
+   ```
+
+2. **async 属性**
+   ```html
+   <script src="script.js" async></script>
+   <!-- 异步加载，不保持顺序 -->
+   ```
+
+3. **动态创建 script**
+   ```js
+   const script = document.createElement('script');
+   script.src = 'script.js';
+   document.body.appendChild(script);
+   ```
+
+4. **setTimeout**
+   ```js
+   setTimeout(() => {
+     const script = document.createElement('script');
+     script.src = 'script.js';
+     document.body.appendChild(script);
+   }, 0);
+   ```
+
+---
+
+## 13.document.write 和 innerHTML 的区别
+
+| 特性 | document.write | innerHTML |
+|------|----------------|-----------|
+| **作用时机** | 文档加载过程 | 加载完后 |
+| **清空页面** | 加载后调用会清空页面 | 不会清空页面 |
+| **性能** | 快（流式） | 慢（重排） |
+| **安全性** | 可能有 XSS 风险 | 有 XSS 风险 |
+
+```js
+// document.write：文档加载时
+document.write('Hello');
+
+// innerHTML：加载后
+document.getElementById('app').innerHTML = '<p>Hello</p>';
+
+// ❌ 加载后调用 document.write 会清空页面
+window.onload = () => {
+  document.write('Clear all!');  // 整个页面被清空
+};
+```
+
+---
+
+## 14.call() 和 apply() 的作用
+
+**改变函数的 this 指向**
+
+```js
+function greet(greeting, name) {
+  return `${greeting}, ${name}! I'm ${this.name}`;
+}
+
+const person = { name: 'John' };
+
+// call：逐个传参
+greet.call(person, 'Hello', 'Alice');
+// 输出："Hello, Alice! I'm John"
+
+// apply：数组传参
+greet.apply(person, ['Hi', 'Bob']);
+// 输出："Hi, Bob! I'm John"
+
+// bind：返回新函数
+const boundGreet = greet.bind(person);
+boundGreet('Hey', 'Charlie');
+// 输出："Hey, Charlie! I'm John"
+```
+
+---
+
+## 15.异步加载和延迟加载
+
+**异步加载：** 不阻塞页面加载
+
+```html
+<script async src="script.js"></script>
+```
+
+**延迟加载：** 页面加载完后再加载
+
+```html
+<script defer src="script.js"></script>
+<img 
+  loading="lazy" 
+  src="large.jpg"
+/>
+```
+
+---
+
+## 16.Ajax 是什么？Ajax 的交互模型？同步和异步的区别？
+
+**Ajax：** 异步 JavaScript 和 XML
+
+```js
+// XHR
+const xhr = new XMLHttpRequest();
+xhr.open('GET', '/api/data');
+xhr.onload = () => {
+  console.log(xhr.responseText);
+};
+xhr.send();
+
+// Fetch API
+fetch('/api/data')
+  .then(res => res.json())
+  .then(data => console.log(data));
+```
+
+**交互模型：** 客户端 ↔ 服务器（无需整页刷新）
+
+**同步 vs 异步：**
+
+```js
+// 同步（阻塞）
+xhr.open('GET', '/api/data', false);  // async = false
+xhr.send();  // 这里会等待响应
+console.log(xhr.responseText);  // 拿到结果
+
+// 异步（不阻塞）
+xhr.open('GET', '/api/data', true);  // async = true （默认）
+xhr.onload = () => {
+  console.log(xhr.responseText);
+};
+xhr.send();  // 立即返回
+```
+
+---
+
+## 17.Js 操作获取和设置 cookie
+
+```js
+// 获取 cookie
+function getCookie(name) {
+  const cookies = document.cookie.split('; ');
+  for (let cookie of cookies) {
+    const [key, value] = cookie.split('=');
+    if (key === name) return decodeURIComponent(value);
+  }
+  return null;
+}
+
+// 设置 cookie
+function setCookie(name, value, days = 7) {
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = `expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; ${expires}; path=/`;
+}
+
+// 删除 cookie
+function deleteCookie(name) {
+  setCookie(name, '', -1);
+}
+
+// 使用
+setCookie('user', 'John', 7);
+console.log(getCookie('user')); // John
+deleteCookie('user');
+```
+
+---
+
+## 18.编写一个方法去掉一个数组的重复元素
+
+```js
+// 方式1：Set
+function removeDuplicates(arr) {
+  return [...new Set(arr)];
+}
+
+// 方式2：filter + indexOf
+function removeDuplicates(arr) {
+  return arr.filter((item, index) => arr.indexOf(item) === index);
+}
+
+// 方式3：reduce
+function removeDuplicates(arr) {
+  return arr.reduce((acc, item) => {
+    if (!acc.includes(item)) {
+      acc.push(item);
+    }
+    return acc;
+  }, []);
+}
+
+// 方式4：对象
+function removeDuplicates(arr) {
+  const obj = {};
+  return arr.filter(item => {
+    if (obj[item]) return false;
+    obj[item] = true;
+    return true;
+  });
+}
+
+// 测试
+console.log(removeDuplicates([1, 2, 2, 3, 3, 3])); // [1, 2, 3]
+```
+
+---

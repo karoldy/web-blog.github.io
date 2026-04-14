@@ -2,6 +2,14 @@
 
 ## 1.JavaScript中==和===的区别
 
+- **===（严格相等）**：比较值和类型，两者都不一样则为 false。推荐使用。
+- **==（宽松相等）**：比较值，类型不同会进行类型转换。容易有隐藏的 bug。
+特例：
+- `0 == false` → `true`
+- `0 === false` → `false`
+- `null == undefined` → `true`
+- `null === undefined` → `false`
+
 ---
 
 ## 2.写出下面代码的输出结果
@@ -10,6 +18,10 @@
 var a = 0.1 + 0.2;
 console.log(a == 0.3);
 ```
+
+输出：`false`
+
+原因：浮点数精度问题。`0.1 + 0.2 = 0.30000000000000004`，不等于 `0.3`。
 
 ---
 
@@ -23,6 +35,26 @@ console.log('1 && 1 = ' + (1 && 2));
 console.log([] == false);
 console.log({} == false);
 ```
+
+输出：
+
+```
+0 || 1 = 1
+1 || 2 = 1
+0 && 1 = 0
+1 && 1 = 2
+true
+false
+```
+
+解释：
+
+- `0 || 1`：0 是假值，返回 1
+- `1 || 2`：1 是真值，返回 1  
+- `0 && 1`：0 是假值，返回 0
+- `1 && 2`：1 是真值，继续估值 2，返回 2
+- `[] == false`：[] 转换为 0，0 == false 是 true
+- `{} == false`：{} 转换为 '[object Object]'，不等于 false
 
 ---
 
@@ -40,6 +72,20 @@ console.log(value1);
 console.log(value2);
 ```
 
+输出：
+
+```
+false
+true
+```
+
+解释：
+
+`var a = b = 3` 中：
+- `b = 3` 先执行，创建全局变量 b（没有 var）
+- `var a = ...` 创建函数作用域的局部变量 a
+- 函数执行后，a 不存在于全局域；b 存在于全局域
+
 ---
 
 ## 5.写一个函数，将时间戳格式化返回
@@ -51,8 +97,21 @@ var timeStamp = 1646370983268;
 // 要求输出结果为 2020/01/01 00:00:00 格式
 
 function formatDate (stamp) {
-  // TODO
+  const date = new Date(stamp);
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 }
+
+// 例子：
+const result = formatDate(1646370983268);
+console.log(result); // 2022/03/04 09:36:23
 ```
 
 ---
@@ -63,8 +122,30 @@ function formatDate (stamp) {
 var arr = [3, 1, 5, 6, 3, 10];
 
 function reverseArray (arr) {
-  // TODO
+  // 方案 1: 使用 reverse() 方法（修改原数组）
+  // arr.reverse();
+  // return arr;
+  
+  // 方案 2: 使用 一、for 循环（不修改原数组）
+  const result = [];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    result.push(arr[i]);
+  }
+  return result;
 }
+
+// 例子：
+const arr = [3, 1, 5, 6, 3, 10];
+console.log(reverseArray(arr)); // [10, 3, 6, 5, 1, 3]
+
+// 方案 3: 使用 spread 操作符
+// return [...arr].reverse();
+
+// 方案 4: 双指针互换
+// for (let i = 0, j = arr.length - 1; i < j; i++, j--) {
+//   [arr[i], arr[j]] = [arr[j], arr[i]];
+// }
+// return arr;
 ```
 
 ---
@@ -83,4 +164,43 @@ var pokerList = [{number:5,color:1},{number: 10, color:3}...]
 
 请设计对pokerList按题目要求进行排序的算法
 */
+
+function sortPoker(pokerList) {
+  return pokerList.sort((a, b) => {
+    // 按数字从小到大排序
+    if (a.number !== b.number) {
+      return a.number - b.number;
+    }
+    // 同一数字时，按花色排序：黑(4) 红(3) 梅(2) 方(1)
+    return b.color - a.color;
+  });
+}
+
+// 方案 2: 不修改原数组，使用 [...pokerList]
+const sortPokerNew = (pokerList) => {
+  return [...pokerList].sort((a, b) => {
+    if (a.number !== b.number) {
+      return a.number - b.number;
+    }
+    return b.color - a.color;
+  });
+};
+
+// 例子：
+const pokerList = [
+  {number: 5, color: 1},
+  {number: 13, color: 4},
+  {number: 1, color: 3},
+  {number: 1, color: 1},
+  {number: 5, color: 4}
+];
+
+const sorted = sortPoker(pokerList);
+console.log(sorted);
+// 输出：
+// [{number: 1, color: 4}, {number: 1, color: 3}, {number: 1, color: 2}, {number: 1, color: 1}, ...]
+// 
+// 说明：
+// 数字从小到大 (A → K)
+// 同数字时，花色按照黑、红、梅、方顺序 (4, 3, 2, 1)
 ```
