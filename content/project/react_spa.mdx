@@ -1,25 +1,86 @@
 # React SPA
 
-- Vite
 - React
-- husky
-- eslint
-- @commitlint/cli
 - UI(看项目)
 - zustand(全局数据流)
-- jest
-- storybook(待选)
 - react-i18next
 - i18next
 - react-router
 - react-toastify
-- sass(待选)
-- tailwindcss(待选);
-- msw(mock)
 - TanStack Query(数据请求)
-- axios(待选)
-- @floating-ui/react
+- @iconify/react(待选)
 - formik/react-hook-form(待选)
 - zod/yup
 - dayjs
-- @iconify/react(待选)
+
+## `.release-it.json`
+
+```json
+{
+  "hooks": {
+    "after:release": "git push origin HEAD"
+  },
+  "git": {
+    "commit": true,
+    "commitMessage": "chore(release): ${version}",
+    "push": false,
+    "tag": false,
+    "requireCleanWorkingDir": true
+  },
+  "npm": {
+    "publish": false
+  },
+  "github": {
+    "release": false
+  },
+  "gitlab": {
+    "release": false
+  },
+  "plugins": {
+    "./select-env.js": {},
+    "@release-it/conventional-changelog": {
+      "header": "# Changelog",
+      "whatBump": false,
+      "ignoreRecommendedBump": true,
+      "infile": "CHANGELOG.md",
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          {
+            "type": "feat",
+            "section": "Features"
+          },
+          {
+            "type": "fix",
+            "section": "Bug Fixes"
+          },
+          {
+            "type": "refactor",
+            "section": "Restructured"
+          },
+          {
+            "type": "perf",
+            "section": "Performance Improved"
+          },
+          {
+            "type": "chore",
+            "hidden": true
+          },
+          {
+            "type": "docs",
+            "hidden": true
+          },
+          {
+            "type": "test",
+            "hidden": true
+          },
+          {
+            "type": "style",
+            "hidden": true
+          }
+        ]
+      }
+    }
+  }
+}
+```

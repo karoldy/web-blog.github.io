@@ -15,5 +15,4 @@ export default {
   "project": "项目",
   "library": "工具库",
   "markdown": "Markdown"
-  // "resume": "简历详解"
 }
