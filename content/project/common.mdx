@@ -1,0 +1,100 @@
+# 公共库
+
+- Vite
+- husky
+- eslint
+- release-it
+- @release-it/conventional-changelog
+- @commitlint/config-conventional
+- @commitlint/cli
+- jest
+- storybook(待选)
+- axios(待选)
+- msw(mock)
+- sass(待选)
+- tailwindcss(待选)
+- @floating-ui
+
+## select-env
+
+```js
+import dayjs from 'dayjs';
+import { select } from "@inquirer/prompts";
+import { Plugin } from "release-it";
+// import prompts from "./prompts.mjs";
+
+const prompts = {
+  tag: {
+    type: "confirm",
+    message: (context) => {
+      const { env, version, date } = context;
+      return `Tag (${env}-v${version}-${date})?`;
+    },
+    default: true
+  }
+};
+
+const defaultChoices = [
+  {
+    name: "DEV",
+    value: "dev"
+  },
+  {
+    name: "SIT",
+    value: "sit"
+  },
+  {
+    name: "UAT",
+    value: "uat"
+  },
+  {
+    name: "PRE-PROD",
+    value: "ppd"
+  },
+  {
+    name: "PROD",
+    value: "prod"
+  }
+];
+
+class ReleaseItSelectEnvironmentPlugin extends Plugin {
+  constructor(...args) {
+    super(...args);
+    this.registerPrompts(prompts);
+  }
+
+  getInitialOptions(options, pluginName) {
+    const _options = options[pluginName] || {};
+    const { choices = defaultChoices } = _options;
+    return { ..._options, choices };
+  }
+
+  async init() {
+    await super.init();
+    const { choices } = this.getContext();
+    const env = await select({
+      message: "Which environment do you want to release to?",
+      choices
+    });
+    const date = `${dayjs().format('YYYYMMDD-HHmm')}`
+    this.config.setContext({ env, date });
+  }
+
+  async afterRelease() {
+    await this.step({
+      task: () => this.tag(),
+      label: "Git tag",
+      prompt: "tag"
+    });
+  }
+
+  async tag() {
+    const { env, version, date } = this.config.getContext();
+    const tagName = `${env}-v${version}-${date}`;
+    await this.exec(["git", "tag", tagName]);
+    await this.exec(["git", "push", "origin", tagName]);
+  }
+}
+
+export default ReleaseItSelectEnvironmentPlugin;
+```
