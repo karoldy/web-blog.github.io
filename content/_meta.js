@@ -7,13 +7,13 @@ export default {
     "display": "hidden"
   },
   "blog": "笔记",
-  "project": "项目",
   "interview": "面试题",
   "collection": "前端面试题合集",
   "company": "企业真题",
   "summary": "面试总结",
   "web_high_interview": "前端(高级)面试体系手册",
+  "project": "项目",
   "library": "工具库",
-  "markdown": "Markdown",
-  "resume": "简历详解"
+  "markdown": "Markdown"
+  // "resume": "简历详解"
 }
