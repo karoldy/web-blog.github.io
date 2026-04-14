@@ -1,15 +1,451 @@
 # xxx科技公司-前端工程师
 
-### 1.什么是重绘和重排？
+## 1.什么是重绘和重排？
 
-### 2.什么是闭包?它有什么作用？
+**重排（Reflow）：** 重新计算元素的几何属性（大小、位置），触发浏览器重新计算布局
 
-### 3.Js是如何实现继承的？
+**重绘（Repaint）：** 只更新元素的视觉样式（颜色、背景等），不改变布局
 
-### 4.宏任务和微任务有哪些？他们有什么异同？
+| 特性 | 重排 | 重绘 |
+|------|------|------|
+| **性能** | 高开销 | 低开销 |
+| **触发条件** | 改变大小、位置、显示隐藏 | 改变颜色、背景等样式 |
+| **影响范围** | 可能影响其他元素 | 仅影响元素本身 |
 
-### 5.Vue3中`toRef`, `toRefs`和`toRaw`有什么区别?
+**触发重排的操作：**
 
-### 6.Vue的双向数据绑定原理是什么？
+```js
+// 修改元素大小、位置
+element.style.width = '100px';
+element.style.height = '100px';
+element.style.display = 'none';
 
-### 7.如何实现深度克隆？
+// 修改文档结构
+document.body.appendChild(newEl);
+
+// 读取布局属性（立即触发重排）
+const width = element.offsetWidth;
+const height = element.offsetHeight;
+const top = element.offsetTop;
+```
+
+**性能优化：**
+
+```js
+// ❌ 不好：多次修改，触发多次重排
+element.style.width = '100px';
+element.style.height = '100px';
+element.style.padding = '10px';
+
+// ✅ 好：一次修改
+element.style.cssText = 'width: 100px; height: 100px; padding: 10px';
+
+// ✅ 或使用 class
+element.classList.add('new-style');
+
+// ✅ 或使用 DocumentFragment
+const fragment = document.createDocumentFragment();
+items.forEach(item => {
+  const el = document.createElement('li');
+  el.textContent = item;
+  fragment.appendChild(el);
+});
+document.body.appendChild(fragment); // 只触发一次重排
+```
+
+---
+
+## 2.什么是闭包?它有什么作用？
+
+**闭包：** 由函数以及其周围的词法环境组成的整体
+
+```js
+function outer() {
+  const count = 0;  // 外层变量
+  
+  return function inner() {
+    count++;  // 内层函数可以访问外层变量
+    return count;
+  };
+}
+
+const counter = outer();
+console.log(counter()); // 1
+console.log(counter()); // 2
+```
+
+**闭包的作用：**
+
+1. **数据隐藏和封装**
+   ```js
+   function createCounter() {
+     let count = 0;  // 私有变量
+     return {
+       increment: () => ++count,
+       decrement: () => --count,
+       get: () => count
+     };
+   }
+   
+   const counter = createCounter();
+   counter.increment(); // 1
+   // counter.count;    // ❌ 无法直接访问
+   ```
+
+2. **工厂模式**
+   ```js
+   function createUser(name) {
+     return {
+       getName: () => name,
+       greet: () => `Hello, ${name}!`
+     };
+   }
+   ```
+
+3. **模块化**
+   ```js
+   const Module = (function() {
+     const private = 'secret';
+     return {
+       getPrivate: () => private
+     };
+   })();
+   ```
+
+---
+
+## 3.Js 是如何实现继承的？
+
+**方式1：原型链继承**
+
+```js
+function Parent() {
+  this.name = 'parent';
+}
+Parent.prototype.greet = function() {
+  return `Hello, ${this.name}`;
+};
+
+function Child() {
+  this.type = 'child';
+}
+Child.prototype = new Parent();
+
+const child = new Child();
+console.log(child.greet()); // Hello, parent
+```
+
+**方式2：借用构造函数**
+
+```js
+function Parent(name) {
+  this.name = name;
+}
+
+function Child(name, age) {
+  Parent.call(this, name);  // 借用 Parent 初始化
+  this.age = age;
+}
+
+const child = new Child('John', 10);
+```
+
+**方式3：组合继承（原型链 + 构造函数）**
+
+```js
+function Parent(name) {
+  this.name = name;
+}
+Parent.prototype.greet = function() {
+  return `Hello, ${this.name}`;
+};
+
+function Child(name, age) {
+  Parent.call(this, name);
+  this.age = age;
+}
+Child.prototype = new Parent();
+Child.prototype.constructor = Child;
+
+const child = new Child('John', 10);
+```
+
+**方式4：原型式继承**
+
+```js
+const parent = {
+  name: 'parent',
+  greet() { return `Hello, ${this.name}`; }
+};
+
+const child = Object.create(parent);
+child.name = 'child';
+```
+
+**方式5：寄生式继承**
+
+```js
+function createChild(parent) {
+  const child = Object.create(parent);
+  child.type = 'child';
+  return child;
+}
+```
+
+**方式6：ES6 class（推荐）**
+
+```js
+class Parent {
+  constructor(name) {
+    this.name = name;
+  }
+  greet() {
+    return `Hello, ${this.name}`;
+  }
+}
+
+class Child extends Parent {
+  constructor(name, age) {
+    super(name);
+    this.age = age;
+  }
+}
+
+const child = new Child('John', 10);
+```
+
+---
+
+## 4.宏任务和微任务有哪些？他们有什么异同？
+
+| 分类 | 任务列表 |
+|------|---------|
+| **宏任务（Macrotask）** | script、setTimeout、setInterval、setImmediate、I/O、UI 渲染 |
+| **微任务（Microtask）** | Promise.then/catch、async/await、MutationObserver、queueMicrotask |
+
+**执行顺序：**
+
+1. 执行同步代码和宏任务
+2. 宏任务执行完，检查微任务队列，执行所有微任务
+3. 微任务执行完，检查是否需要 UI 渲染
+4. 渲染后，执行下一个宏任务
+5. 重复 2-4
+
+**示例：**
+
+```js
+console.log('1. 开始');
+
+setTimeout(() => {
+  console.log('2. setTimeout');
+}, 0);
+
+Promise.resolve()
+  .then(() => {
+    console.log('3. Promise 1');
+  })
+  .then(() => {
+    console.log('4. Promise 2');
+  });
+
+console.log('5. 结束');
+
+// 输出：
+// 1. 开始
+// 5. 结束
+// 3. Promise 1
+// 4. Promise 2
+// 2. setTimeout
+```
+
+---
+
+## 5.Vue3 中 `toRef`, `toRefs` 和 `toRaw` 有什么区别?
+
+| 函数 | 作用 | 返回值 |
+|------|------|--------|
+| **toRef** | 将响应式对象的单个属性转为 ref | ref 对象 |
+| **toRefs** | 将响应式对象的所有属性转为 ref | 包含所有 ref 的对象 |
+| **toRaw** | 获取响应式对象的原始对象 | 原始对象 |
+
+**toRef 示例：**
+
+```js
+const state = reactive({ count: 0 });
+
+// 转换单个属性
+const count = toRef(state, 'count');
+count.value++; // state.count 也会更新
+```
+
+**toRefs 示例：**
+
+```js
+const state = reactive({ count: 0, message: '' });
+
+// 转换所有属性
+const { count, message } = toRefs(state);
+
+// 可以直接在模板中使用
+return { count, message };
+```
+
+**toRaw 示例：**
+
+```js
+const state = reactive({ count: 0 });
+
+// 获取原始对象
+const raw = toRaw(state);
+raw.count++; // 不会触发响应式更新
+```
+
+---
+
+## 6.Vue 的双向数据绑定原理是什么？
+
+**数据流向：**
+
+```
+View（用户输入） 
+    ↓
+  @input 事件
+    ↓
+  methods 处理
+    ↓
+更新 data
+    ↓
+Watcher 侦听
+    ↓
+视图重新渲染
+```
+
+**简化实现：**
+
+```js
+class Vue {
+  constructor(options) {
+    this.data = options.data;
+    this.methods = options.methods;
+    
+    // 1. 数据劫持
+    this.observe(this.data);
+    
+    // 2. 编译模板
+    this.compile(options.el);
+  }
+  
+  // 数据劫持
+  observe(obj) {
+    Object.keys(obj).forEach(key => {
+      let value = obj[key];
+      
+      Object.defineProperty(obj, key, {
+        get() {
+          return value;
+        },
+        set(newValue) {
+          if (newValue !== value) {
+            value = newValue;
+            // 触发视图更新
+            this.update();
+          }
+        }
+      });
+    });
+  }
+  
+  // 编译模板
+  compile(el) {
+    const elem = document.querySelector(el);
+    const input = elem.querySelector('input');
+    const span = elem.querySelector('span');
+    
+    // 双向绑定
+    input.addEventListener('input', (e) => {
+      this.data.count = e.target.value;
+    });
+    
+    // 数据变化，更新视图
+    span.textContent = this.data.count;
+  }
+  
+  update() {
+    // 更新视图
+  }
+}
+```
+
+---
+
+## 7.如何实现深度克隆？
+
+**方式1：JSON 方法（简单对象有效）**
+
+```js
+const obj = { a: 1, b: { c: 2 } };
+const copy = JSON.parse(JSON.stringify(obj));
+
+// 缺点：无法克隆 function、Date、Symbol 等
+```
+
+**方式2：递归实现（推荐）**
+
+```js
+function deepClone(obj, map = new WeakMap()) {
+  // 处理 null 和原始类型
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  // 处理循环引用
+  if (map.has(obj)) {
+    return map.get(obj);
+  }
+  
+  // 处理不同类型
+  if (obj instanceof Date) return new Date(obj);
+  if (obj instanceof RegExp) return new RegExp(obj);
+  if (obj instanceof Array) {
+    const arr = [];
+    map.set(obj, arr);
+    obj.forEach((item, index) => {
+      arr[index] = deepClone(item, map);
+    });
+    return arr;
+  }
+  
+  // 处理对象
+  const copy = {};
+  map.set(obj, copy);
+  
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      copy[key] = deepClone(obj[key], map);
+    }
+  }
+  
+  return copy;
+}
+
+// 测试
+const original = {
+  a: 1,
+  b: { c: 2, d: [3, 4] },
+  e: new Date(),
+  f: /test/g,
+  g: function() { return 'fn'; }
+};
+
+const cloned = deepClone(original);
+console.log(cloned.b.d === original.b.d); // false
+```
+
+**方式3：使用 structuredClone（新 API）**
+
+```js
+const obj = { a: 1, b: { c: 2 } };
+const copy = structuredClone(obj);
+```
+
+---

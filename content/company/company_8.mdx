@@ -2,26 +2,275 @@
 
 ## 1.eslint是什么?请说明在一个web应用内如何应用。
 
+ESLint 是一个开源的 JavaScript 代码检查工具，用于识别代码中的问题（风格错误、可能的 bug、不规范等）。
+
+**应用方式：**
+
+1. 安装：`npm install eslint --save-dev`
+2. 初始化：`npx eslint --init`
+3. 配置规则（.eslintrc.json）
+4. 运行检查：`npx eslint src/`
+5. IDE 集成、Pre-commit Hook、CI/CD 流程集成
+
 ---
 
 ## 2.请说明const, let, var三者的分别
+
+| 特性 | var | let | const |
+|------|-----|-----|-------|
+| **作用域** | 函数作用域 | 块级作用域 | 块级作用域 |
+| **变量提升** | 是，值为 undefined | 否（TDZ） | 否（TDZ） |
+| **重复声明** | 可以 | 不可以 | 不可以 |
+| **重新赋值** | 可以 | 可以 | **不可以** |
+
+**推荐用法：** 默认用 `const`，需要变量变更时用 `let`，避免 `var`。
 
 ---
 
 ## 3.在一个前后端分离的web应用中, web前端储存JWT以实现用户登录。这样, 你会把token储存在localStorage还是cookie?为什么
 
+**推荐方案：HttpOnly Cookie + SameSite**
+
+**原因对比：**
+
+- **localStorage**：XSS 攻击可直接偷取，不安全
+- **HttpOnly Cookie**：JS 无法访问，防止 XSS；配合 Secure 和 SameSite 更安全
+
+**最佳实践：**
+
+1. 访问令牌存储在 HttpOnly Cookie（短期，15 分钟）
+2. 刷新令牌存储在 HttpOnly Cookie（长期，7 天）
+3. 设置 Cookie 属性：`Set-Cookie: token=xxx; HttpOnly; Secure; SameSite=Strict`
+4. 配合 CSRF Token 防护
+
 ---
 
 ## 4.在一个前后端分离的web应用中, 通过前端调用Backend的API接口, 进行数据的增删改查。这样, 你会如何编写单元测试用例? 如何执行?
+
+**测试框架选择：Jest + MSW (Mock Service Worker)**
+
+**编写测试示例：**
+
+```js
+// api.test.js
+import { rest } from 'msw';
+import { setupServer } from 'msw/node';
+import { getOrders, createOrder, deleteOrder } from './api';
+
+// 创建 Mock 服务器
+const server = setupServer(
+  rest.get('/api/orders/1', (req, res, ctx) => {
+    return res(ctx.json({ id: 1, status: 'pending' }));
+  }),
+  rest.post('/api/orders', (req, res, ctx) => {
+    return res(ctx.status(201), ctx.json({ id: 2, ...req.body }));
+  }),
+  rest.delete('/api/orders/1', (req, res, ctx) => {
+    return res(ctx.status(204));
+  })
+);
+
+beforeAll(() => server.listen());
+afterEach(() => server.resetHandlers());
+afterAll(() => server.close());
+
+// 查询 测试
+test('getOrders 应获取订单数据', async () => {
+  const response = await getOrders(1);
+  expect(response.data.id).toBe(1);
+});
+
+// 创建测试
+test('createOrder 应创建新订单', async () => {
+  const response = await createOrder({ name: 'Order 1' });
+  expect(response.status).toBe(201);
+});
+
+// 删除测试
+test('deleteOrder 应删除订单', async () => {
+  const response = await deleteOrder(1);
+  expect(response.status).toBe(204);
+});
+```
+
+**执行测试：**
+
+```bash
+npm test                    # 运行所有测试
+npm test -- api.test.js     # 运行特定文件
+npm test -- --watch         # 监视模式
+npm test -- --coverage      # 生成覆盖率报告
+```
 
 ---
 
 ## 5.有一个web应用, 是给商家查看实时的餐厅的订单情况。一般情况下, 该应用利用websocket来实现后端推送订单数据到前端显示。在平台上, 除了websocket外, 也有HTTP接口获取最新订单数据。为了让应用在websocket断线时, 仍然能够自动获得订单数据更新，请说出你的方案
 
+**方案：WebSocket + HTTP 轮询降级 + 心跳检测**
+
+**实现逻辑：**
+
+```js
+class OrderService {
+  constructor() {
+    this.ws = null;
+    this.pollTimer = null;
+    this.isConnected = false;
+  }
+
+  // 启动 WebSocket 连接
+  connectWebSocket() {
+    this.ws = new WebSocket('ws://api.example.com/orders');
+    
+    this.ws.onopen = () => {
+      console.log('WebSocket 已连接');
+      this.isConnected = true;
+      this.stopPolling();  // 成功，停止轮询
+      this.startHeartbeat();
+    };
+    
+    this.ws.onmessage = (event) => {
+      const order = JSON.parse(event.data);
+      this.updateUI(order);
+    };
+    
+    this.ws.onerror = () => {
+      console.error('WebSocket 错误');
+      this.isConnected = false;
+      this.startPolling();  // 出错，启动轮询
+    };
+    
+    this.ws.onclose = () => {
+      console.log('WebSocket 断开');
+      this.isConnected = false;
+      this.stopHeartbeat();
+      this.startPolling();  // 断开，启动轮询
+      setTimeout(() => this.connectWebSocket(), 5000);  // 5秒后重连
+    };
+  }
+
+  // HTTP 轮询降级方案
+  startPolling() {
+    if (this.pollTimer) return;
+    console.log('启动 HTTP 轮询');
+    
+    this.pollTimer = setInterval(async () => {
+      try {
+        const response = await fetch('/api/orders/latest');
+        const orders = await response.json();
+        orders.forEach(order => this.updateUI(order));
+      } catch (error) {
+        console.error('轮询失败:', error);
+      }
+    }, 10000);  // 10 秒轮询一次
+  }
+
+  stopPolling() {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+      console.log('停止 HTTP 轮询');
+    }
+  }
+
+  // 心跳检测（保活）
+  startHeartbeat() {
+    setInterval(() => {
+      if (this.isConnected && this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000);  // 30 秒一次
+  }
+
+  stopHeartbeat() {
+    // 清理逻辑
+  }
+
+  updateUI(order) {
+    console.log('订单更新:', order);
+  }
+}
+
+// 使用
+const service = new OrderService();
+service.connectWebSocket();
+```
+
+**方案优点：**
+
+- 优先使用 WebSocket（实时性最好）
+- 自动降级到 HTTP 轮询（保障可用性）
+- 心跳检测保持连接活跃\n- 自动重连机制（5秒重试）
+- 轮询频率可调整（10秒）
+
 ---
 
 ## 6.你是如何处理网页跨域问题的？尽可能写出你知道的方法。
 
+- **CORS**（跨域资源共享）：配置 `Access-Control-Allow-*`。
+- **JSONP**：利用 `<script>` 标签无跨域限制。
+- **代理（Proxy）**：后端代理前端资源。
+- **iframe + postMessage**：跨框架通信。
+- **WebSocket**：双向折线。
+
 ---
 
-## 7.请用你认为最优的算法写一个函数, 输入一个二维数组和一个整数(范围是1-50), 这个函数判断数组中是否包含该整数。这个二维数组规律如下:
+## 7.请用你认为最优的算法写一个函数, 输入一个二维数组和一个整数(范围是1-50), 这个函数判断数组中是否包含该整数。
+
+**最优方案：嵌套循环（单次查询）**
+
+```js
+function containsValue(matrix, target) {
+  for (let row of matrix) {
+    if (row.includes(target)) return true;
+  }
+  return false;
+}
+
+// 测试
+const matrix = [
+  [1, 5, 9],
+  [10, 20, 30],
+  [35, 40, 50]
+];
+
+console.log(containsValue(matrix, 20));  // true
+console.log(containsValue(matrix, 25));  // false
+```
+
+**时间复杂度：** O(n×m)  
+**空间复杂度：** O(1)  
+**优点：** 代码简洁，利用 short-circuit 优化，单次查询性能好
+
+**备选方案 1：使用 Some 方法（函数式风格）**
+
+```js
+function containsValue(matrix, target) {
+  return matrix.some(row => row.includes(target));
+}
+```
+
+**备选方案 2：Set 扁平化（多次查询推荐）**
+
+```js
+function containsValue(matrix, target) {
+  // 预处理：将二维数组转换为 Set，查询时间 O(1)
+  const fullSet = new Set(matrix.flat());
+  return fullSet.has(target);
+}
+```
+
+**时间复杂度：** O(n×m)（预处理）+ O(1)（查询）  
+**空间复杂度：** O(n×m)  
+**优点：** 多次查询时效率高
+
+**方案对比表：**
+
+| 方案 | 时间复杂度 | 空间复杂度 | 适用场景 |
+|------|-----------|-----------|----------|
+| 嵌套循环 / Some | O(n×m) | O(1) | **单次查询推荐** |
+| Set 扁平 | O(n×m) | O(n×m) | 多次查询 |
+| 排序矩阵搜索 | O(n+m) | O(1) | 矩阵已排序 |
+
+**推荐：** 单次查询用**嵌套循环**或 **Some**（简洁高效），多次查询用 **Set** 方案。
+

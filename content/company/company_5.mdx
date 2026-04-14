@@ -2,6 +2,76 @@
 
 ## 1.有几种方法实现垂直居中
 
+**1. Flexbox（推荐）**
+
+```css
+.container {
+  display: flex;
+  align-items: center;     /* 垂直居中 */
+  justify-content: center; /* 水平居中 */
+  height: 300px;
+}
+```
+
+**2. Grid**
+
+```css
+.container {
+  display: grid;
+  place-items: center;
+  height: 300px;
+}
+```
+
+**3. 绝对定位 + transform**
+
+```css
+.container {
+  position: relative;
+  height: 300px;
+}
+.child {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+```
+
+**4. line-height（仅限单行文字）**
+
+```css
+.container {
+  height: 300px;
+  line-height: 300px;
+  text-align: center;
+}
+```
+
+**5. padding 法（已知内容高度）**
+
+```css
+.container {
+  padding-top: 100px;
+  padding-bottom: 100px;
+}
+```
+
+**6. margin: auto（绝对定位）**
+
+```css
+.container {
+  position: relative;
+  height: 300px;
+}
+.child {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto 0;
+}
+```
+
 ---
 
 ## 2.下面代码输出什么, 并作简单解释
@@ -16,13 +86,82 @@ for (var i = 0; i < 5; i ++) {
 }
 ```
 
+输出：
+
+```
+0
+1
+2
+3
+4
+```
+
+解释：IIFE 在每次循环时被调用，但**没有传参数给函数**，所以函数内访问的 `i` 仍是外层循环的 `i`。但 `setTimeout` 中的 `i * 100` 在每次迭代时都会立即求值，计算延迟时间（0ms, 100ms, 200ms...），所以回调会按顺序执行，正确输出 0, 1, 2, 3, 4。
+
 ---
 
 ## 3.\[3, 2, 5, 1, 7\], 不使用数组的方法循环, 如何获取最大值
 
+不使用数组的 .forEach/.map/.reduce 等方法，用 `for` 循环实现：
+
+```js
+const arr = [3, 2, 5, 1, 7];
+let max = arr[0];
+
+for (let i = 1; i < arr.length; i++) {
+  if (arr[i] > max) {
+    max = arr[i];
+  }
+}
+
+console.log(max); // 7
+```
+
+或使用展开运算符 + `Math.max`：
+
+```js
+const max = Math.max(...[3, 2, 5, 1, 7]); // 7
+```
+
 ---
 
 ## 4.有这样一个数组, 请把数组中的元素向右移动s个位置, 其中s是非负数，输入\[1, 2, 3, 4, 5, 6, 7\]和s=3, 输出\[5, 6, 7, 1, 2, 3, 4\], 请写出方法
+
+```js
+function rotateRight(arr, s) {
+  if (arr.length === 0) return arr;
+
+  // 归一化 s（处理 s > arr.length）
+  s = s % arr.length;
+  
+  // 方法1：slice 拼接
+  return arr.slice(-s).concat(arr.slice(0, -s));
+}
+
+console.log(rotateRight([1, 2, 3, 4, 5, 6, 7], 3)); // [5, 6, 7, 1, 2, 3, 4]
+```
+
+或原地修改（三次反转法）：
+
+```js
+function rotateRightInPlace(arr, s) {
+  function reverse(arr, start, end) {
+    while (start < end) {
+      [arr[start], arr[end]] = [arr[end], arr[start]];
+      start++;
+      end--;
+    }
+  }
+
+  s = s % arr.length;
+  reverse(arr, 0, arr.length - 1);
+  reverse(arr, 0, s - 1);
+  reverse(arr, s, arr.length - 1);
+  return arr;
+}
+
+console.log(rotateRightInPlace([1, 2, 3, 4, 5, 6, 7], 3)); // [5, 6, 7, 1, 2, 3, 4]
+```
 
 ---
 
@@ -50,6 +189,25 @@ function fn (a, c) {
 
 fn(1, 2);
 ```
+
+输出：
+
+```
+12
+2
+undefined
+undefined
+function () {}
+function c () {}
+```
+
+解释：
+
+- 函数声明和变量声明在函数作用域顶部被提升。`function a() {}` 和 `var a` 都被提升；`a` 最终被 `var a = 12` 赋值为 `12`。
+- `function c() {}` 被提升，但参数 `c = 2` 不会被函数声明覆盖（参数名和内部变量可共存，参数优先）。
+- `var d` 被提升为 `undefined`（if 块无法创建新作用域）。
+- `var b` 被提升为 `undefined`，后被赋值为函数。
+- 最后 `function c() {}` 的声明存在，打印输出其函数体。
 
 ---
 
@@ -84,3 +242,24 @@ new Promise(function (reslove) {
 
 console.log(8);
 ```
+
+假设第3行的 `consoloe` 是笔误，应为 `console`，输出顺序：
+
+```
+4
+1
+6
+8
+3
+2
+7
+5
+```
+
+执行顺序解释：
+
+1. **同步代码**：`console.log(4)` → `4`。
+2. **微任务队列**：`a1()` 调用 → 打印 `1`，然后 `await a2()` 转为微任务；`new Promise` executor 执行 → 打印 `6`，`resolve()` 后 `then` 进入微任务。
+3. **继续同步**：`console.log(8)` → `8`。
+4. **微任务执行**：`a2()` 恢复 → 打印 `3`；`await` 后代码执行 → 打印 `2`；Promise `then` → 打印 `7`。
+5. **宏任务**：`setTimeout` 回调 → 打印 `5`。

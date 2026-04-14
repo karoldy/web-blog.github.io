@@ -1,0 +1,22 @@
+# 周大福 珠宝会 销售端混合 App 前端子应用
+
+**项目描述**
+
+面向香港门店销售人员的珠宝会会员管理前端系统，以微前端子应用形式集成于集团销售平台（SalesApp）内，支持销售员在门店移动设备上为客户办理珠宝会全流程业务，包括开会、续会、供款、标会、结算及会员查询等核心功能。
+
+**技术栈**
+
+Vue 3 · TypeScript · Vite 5 · Pinia · Vue Router 4 · qiankun（微前端） · Element Plus · Vant 4 · Tailwind CSS · SCSS · Capacitor（混合 App） · vue-i18n（多语言：繁/简/英） · Axios · Docker
+
+**主要职责与亮点**
+
+- 微前端架构接入：基于 qiankun 框架将应用作为独立子应用嵌入集团主基座（SalesApp），实现 bootstrap / mount / unmount / update 完整生命周期管理，并处理子应用沙箱隔离、路由注入、全局 props 通信（staffDetails、branchDetails、SSO Token）等复杂场景
+- 会员业务全流程开发：涵盖珠宝会开会（Registration）、续会（Renew）、每月供款（Supply）、标会竞标（Bidding）、会折信息查询（MemberInfo）、历史供款记录（ContributionRecord）等核心业务模块
+- 多微服务对接：统一封装 Axios 请求层，对接 CCRMA、ICS Cloud、SALES-CORE-API、Adobe CDP 等多个后端微服务，支持多 API Domain 动态路由
+- 混合 App 支持：集成 Capacitor + @capacitor-community/barcode-scanner 支持扫码功能，适配门店移动设备（iOS / Android）
+- 国际化：实现繁体中文（zh_TW）、简体中文（zh_CN）、英文（en_US）三语言切换，适应香港双语门店场景
+- 工程化建设：配置 commitlint + husky 规范 Git 提交，Vite 分包策略优化构建体积，Dockerfile 支持容器化部署，多环境（dev / sit / uat / prod）构建配置
+- 状态管理：使用 Pinia 管理会议（Meeting）、会员（VIP Info）、审批（Approve）、发票（Invoice）、导航栈（Navigator）等多模块全局状态，并实现 sessionStorage 持久化插件
+
+**项目成果**
+实现业务全流程数字化：将周大福珠宝会开会、续会、供款、标会、结算等原本依赖纸质或分散系统的门店业务，整合为统一移动端操作入口，销售员无需切换多个系统即可完成全流程

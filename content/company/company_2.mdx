@@ -2,47 +2,147 @@
 
 ## 1.设置元素浮动后，该元素的display值是多少
 
+设置`float`后元素会脱离文档流并表现为块级元素（即按块级格式化），浏览器会把它当作块元素处理。
+
 ---
 
 ## 2.垂直居中的方法
 
+- 使用`line-height`（单行文本）：设置与容器相同的`line-height`。
+- 使用Flexbox：父元素`display:flex; align-items:center;`。
+- 使用Grid：父元素`display:grid; align-items:center;`。
+- 使用绝对定位+位移：子元素`position:absolute; top:50%; transform:translateY(-50%);`。
+- 使用表格布局：父元素`display:table-cell; vertical-align:middle;`。
+
+每种方法的缺点：`line-height`只适用于单行文本；`flex/grid`在旧浏览器中兼容性需注意；绝对定位依赖已知高度或相对定位容器；表格布局语义较差。
+
 ---
 
-## 3.\['1', '2', '3'\].map(parseInt)的答案是多少
+## 3.['1', '2', '3'].map(parseInt)的答案是多少
+
+结果是`[1, NaN, NaN]`。原因是`map`会向回调传入`(value, index)`，而`parseInt`的第二个参数是`radix`（基数）：
+- `parseInt('1', 0)` -> 1
+- `parseInt('2', 1)` -> NaN（基数1非法）
+- `parseInt('3', 2)` -> NaN（'3'在二进制中无效）
 
 ---
 
 ## 4.document.load 和document.ready的区别
 
+严格来说`document.load`并不存在。常见的是`window.onload`与`DOMContentLoaded`/jQuery的`$(document).ready()`：
+- `window.onload`：在页面所有资源（图片、样式、子框架等）加载完成后触发。
+- `DOMContentLoaded` / `$(document).ready()`：在DOM结构解析完成后触发，不等待图片等外部资源。
+
 ---
 
 ## 5.typeof null输出什么
+
+`typeof null` 返回字符串`"object"`，这是 JavaScript 的历史遗留问题（类型系统的一个缺陷）。
 
 ---
 
 ## 6.JavaScript的本地存储
 
+常见的本地存储方式：
+- `localStorage`：持久化，按域名存储字符串，容量约5MB，同步API。
+- `sessionStorage`：会话级（窗口/标签页）存储，关闭页面后清除。
+- `IndexedDB`：结构化、异步、较大容量，适合复杂/大量数据。
+- Cookies：可设置过期时间，随请求发送到服务器，容量小，常用于会话管理。
+
 ---
 
 ## 7.JavaScript中如何对一个对象进行深度clone
+
+常用方法：
+- `JSON.parse(JSON.stringify(obj))`：简单且常用，但会丢失函数、undefined、Symbol、Date、RegExp 和循环引用。
+- `structuredClone(obj)`：现代浏览器提供，能处理更多类型（包括Date、RegExp、Map、Set），但不支持函数。
+- 递归实现：手写递归拷贝并处理特殊类型和循环引用（适用复杂场景）。
+- 第三方库：`lodash.cloneDeep(obj)`，成熟且兼容性好。
 
 ---
 
 ## 8.请编写一个JavaScript函数parseQueryString。它的用途是把URL参数解析为一个对象
 
+使用`URLSearchParams`的简洁实现：
+
+```js
+function parseQueryString(url) {
+	const query = url ? (new URL(url, location.href)).search : location.search;
+	const params = new URLSearchParams(query);
+	const result = {};
+	for (const [key, value] of params.entries()) {
+		if (result.hasOwnProperty(key)) {
+			if (Array.isArray(result[key])) result[key].push(value);
+			else result[key] = [result[key], value];
+		} else {
+			result[key] = value;
+		}
+	}
+	return result;
+}
+```
 
 ---
 
 ## 9.怎么添加、移除、移动、复制、创建和查找节点
 
+- 创建：`document.createElement(tagName)`。
+- 添加：`parent.appendChild(node)` 或 `parent.insertBefore(node, referenceNode)`。
+- 移除：`parent.removeChild(node)` 或 `node.remove()`。
+- 移动：同样使用`appendChild`或`insertBefore`将已有节点插入到新位置（会从旧位置移除）。
+- 复制：`node.cloneNode(true)`（深拷贝）或`cloneNode(false)`（浅拷贝）。
+- 查找：`document.getElementById`、`document.getElementsByClassName`、`document.querySelector`、`document.querySelectorAll`。
+
 ---
 
 ## 10.px,em,rem的区别
+
+- `px`：绝对单位，表示设备像素（或参考像素），与元素的字体大小无关。
+- `em`：相对单位，相对于当前元素的`font-size`（继承自父元素），嵌套时会累乘。
+- `rem`：相对单位，相对于根元素（`html`）的`font-size`，不会随嵌套而累乘，便于统一缩放。
 
 ---
 
 ## 11.请详细说下vue生命周期的理解
 
+Vue 实例生命周期的主要阶段（以 Vue 2 为例）：
+- beforeCreate：实例初始化，数据观测和事件/生命周期设置尚未完成。
+- created：实例已创建，数据观测和方法已就绪，但未挂载DOM，常用于获取初始数据。
+- beforeMount：挂载开始，模板编译并开始插入DOM前。
+- mounted：挂载完成，DOM 可访问，适合执行依赖DOM的操作或发起网络请求（已常用）。
+- beforeUpdate：响应式数据更新，DOM 重新渲染前触发，可用于读取旧的 DOM 状态。
+- updated：DOM 完成更新后触发，可做依赖于最新 DOM 的操作（注意避免导致无限更新）。
+- beforeDestroy：实例销毁前，适合清理定时器、取消订阅等。
+- destroyed：实例销毁后，所有绑定和事件监听被移除。
+
+在 Vue 3 中，生命周期钩子名称基本相同（`beforeMount`→`onBeforeMount`等），但组合式 API 下使用 `setup()` 管理副作用，注意副作用的清理和依赖管理。
+
 ---
 
 ## 12.jsonp的原理和实现
+
+原理：利用`<script>`标签不受同源策略限制的特性，请求跨域资源，服务器返回一段调用预先约定回调函数的JavaScript代码（例如`callback({...})`），从而实现跨域数据获取。
+
+简单实现：
+
+```js
+function jsonp(url, callbackName = 'callback') {
+	return new Promise((resolve, reject) => {
+		const cbName = 'jsonp_cb_' + Date.now();
+		window[cbName] = function(data) {
+			resolve(data);
+			delete window[cbName];
+			script.parentNode.removeChild(script);
+		};
+		const script = document.createElement('script');
+		script.src = url + (url.includes('?') ? '&' : '?') + `${callbackName}=${cbName}`;
+		script.onerror = err => {
+			reject(err);
+			delete window[cbName];
+			script.parentNode.removeChild(script);
+		};
+		document.head.appendChild(script);
+	});
+}
+
+注意：JSONP 只能做 GET 请求，且存在安全风险（执行远端脚本），现代跨域应优先使用 CORS 或者代理。

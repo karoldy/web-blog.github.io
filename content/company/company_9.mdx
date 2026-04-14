@@ -15,6 +15,24 @@ var str = '123abc';
 alert(str);
 ```
 
+**结果：**
+
+```
+object          // typeof null 返回 object（JS的历史遗留问题）
+undefined       // typeof undefined 返回 undefined
+number          // typeof NaN 返回 number（NaN是一个特殊的数值）
+true            // NaN == undefined 返回 true（宽松相等会转换类型）
+false           // NaN == NaN 返回 false（NaN不等于任何值，包括自己）
+number          // typeof (str++) 返回 number（后++返回原值，typeof作用在原值上）
+123abc          // str 值为字符串 '123abc'（++只作用于数值，字符串不变）
+```
+
+**关键点：**
+- `typeof null` 返回 `"object"` 是JavaScript的一个著名bug
+- `NaN` 是 `number` 类型的一个特殊值
+- `NaN` 与任何值都不相等（包括自己），判断NaN应使用 `isNaN()` 或 `Number.isNaN()`
+- 字符串自增(`str++`) 尝试转换为数字，失败则为 `NaN`
+
 ---
 
 ## 2.写出函数DateDemo的返回结果。系统时间假定为今天
@@ -30,42 +48,1598 @@ function DateDemo () {
 }
 ```
 
+**返回结果：**
+
+```
+今天的日期是：3/14/
+```
+
+**代码分析：**
+
+| 代码 | 说明 | 结果 |
+|------|------|------|
+| `d.getMonth()` | 获取月份（0-11，所以3代表4月） | `3` |
+| `d.getDate()` | 获取日期（1-31） | `14` |
+| `d.getYear()` | 获取年份（已过时） | `126`（表示2026）|
+| `s += d.getMonth() + '/'` | 字符串拼接 | `'今天的日期是：3/'` |
+| `s += d.getDate() + '/'` | 字符串拼接 | `'今天的日期是：3/14/'` |
+| `s + d.getYear()` | **关键：这行没有赋值！** | 计算但不保存结果 |
+| `return s` | 返回 | `'今天的日期是：3/14/'` |
+
+**问题所在：**
+
+第5行 `s + d.getYear();` 没有赋值给 `s`，应该是 `s += d.getYear();`
+
+**正确版本：**
+
+```js
+function DateDemo () {
+  var d, s = '今天的日期是：';
+  d = new Date();
+  s += d.getMonth() + '/';
+  s += d.getDate() + '/';
+  s += d.getYear();  // 注意：应该用 += 而不是 +
+  return s;
+}
+// 返回：'今天的日期是：3/14/126'
+```
+
 ---
 
 ## 3.html的含义是什么, 其主体部分由什么标记构成
+
+**HTML的含义：**
+
+**HTML** = **H**yper **T**ext **M**arkup **L**anguage（超文本标记语言）
+
+- **超文本**：包含普通文本、图片、音频、视频等内容，以及超链接
+- **标记**：使用标签来定义内容的结构和语义
+- **语言**：用于创建网页的标准化语言
+
+**HTML的基本结构：**
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- 头部：包含元数据、样式、脚本等 -->
+    <title>页面标题</title>
+  </head>
+  <body>
+    <!-- 主体部分：页面内容 -->
+    <h1>标题</h1>
+    <p>段落</p>
+  </body>
+</html>
+```
+
+**主体部分的标记构成：**
+
+| 标记 | 用途 | 示例 |
+|------|------|------|
+| `<h1>-<h6>` | 标题 | `<h1>一级标题</h1>` |
+| `<p>` | 段落 | `<p>段落文本</p>` |
+| `<a>` | 超链接 | `<a href="url">链接</a>` |
+| `<img>` | 图像 | `<img src="image.jpg">` |
+| `<ul>/<ol>/<li>` | 列表 | `<ul><li>项目</li></ul>` |
+| `<table>/<tr>/<td>` | 表格 | `<table><tr><td>单元格</td></tr></table>` |
+| `<div>` | 块级容器 | `<div>内容</div>` |
+| `<span>` | 行内容器 | `<span>内容</span>` |
+| `<form>/<input>` | 表单 | `<form><input type="text"></form>` |
+
+**主体部分 = `<body>` 标记内的所有内容**
 
 ---
 
 ## 4.说明在网页设计中div标签的作用
 
+**div标签的定义：**
+
+`<div>` 是一个**通用块级容器元素**（division），用于对网页内容进行分组和组织。
+
+**div标签的主要作用：**
+
+1. **布局容器** - 将相关内容组织在一起
+   ```html
+   <div class="container">
+     <h1>标题</h1>
+     <p>内容段落</p>
+     <img src="image.jpg" alt="图片">
+   </div>
+   ```
+
+2. **应用CSS样式** - 与id/class结合控制样式
+   ```html
+   <div id="header"> <!-- 应用特定ID样式 -->
+   <div class="card"> <!-- 应用样式类 -->
+   ```
+
+3. **组织页面结构** - 创建页面的主要区域
+   ```html
+   <div id="header">页眉</div>
+   <div id="nav">导航</div>
+   <div id="main">主要内容</div>
+   <div id="footer">页脚</div>
+   ```
+
+4. **浮动和定位** - 配合CSS实现复杂布局
+   ```css
+   .left { float: left; width: 30%; }
+   .right { float: right; width: 70%; }
+   ```
+
+5. **JavaScript交互** - 作为DOM操作的目标
+   ```js
+   document.getElementById('myDiv').innerHTML = '动态内容';
+   document.querySelector('.myDiv').addEventListener('click', handler);
+   ```
+
+**div标签的特点：**
+
+| 特点 | 说明 |
+|------|------|
+| **块级元素** | 独占一行，宽度默认100% |
+| **无语义** | 只用于布局，不表达内容含义 |
+| **通用容器** | 可包含其他任何HTML元素 |
+| **独立样式** | 可独立应用CSS样式 |
+
+**现代HTML5替代方案：**
+
+```html
+<!-- 旧做法 -->
+<div id="header">页眉</div>
+<div id="nav">导航</div>
+<div id="content">内容</div>
+<div id="footer">页脚</div>
+
+<!-- 新做法（语义化HTML5） -->
+<header>页眉</header>
+<nav>导航</nav>
+<article>内容</article>
+<footer>页脚</footer>
+```
+
 ---
 
 ## 5.css指的是什么? 在网页设计中为什么要用到css技术?
+
+**CSS的定义：**
+
+**CSS** = **C**ascading **S**tyle **S**heets（层叠样式表）
+
+用于定义HTML元素的**外观和排版**，包括颜色、字体、间距、布局等。
+
+**CSS的作用方式：**
+
+```
+HTML（结构）+ CSS（样式）+ JavaScript（交互）
+    ↓                ↓                ↓
+  内容          外观、排版         动态行为
+```
+
+**为什么要用CSS技术：**
+
+1. **分离关注点** - 将内容和样式分离
+   ```html
+   <!-- 不推荐：混合内容和样式 -->
+   <font color="red" size="5"><b>标题</b></font>
+   
+   <!-- 推荐：分离关注 -->
+   <h1>标题</h1>
+   <style>
+     h1 { color: red; font-size: 24px; font-weight: bold; }
+   </style>
+   ```
+
+2. **代码可维护性** - 统一修改样式无需改HTML
+   ```css
+   /* 只需修改一处，所有h1都适用 */
+   h1 { color: red; }
+   ```
+
+3. **样式复用** - 通过类名在多个元素上复用
+   ```css
+   .highlight { background: yellow; color: black; }
+   ```
+
+4. **页面性能** - 外部CSS文件可缓存，减少页面加载
+   ```html
+   <!-- 单个CSS文件可被多个页面复用 -->
+   <link rel="stylesheet" href="style.css">
+   ```
+
+5. **响应式设计** - 一套HTML可适配多种设备
+   ```css
+   @media (max-width: 768px) {
+     .container { width: 100%; }
+   }
+   ```
+
+6. **减少HTML体积** - 避免重复的样式属性
+   ```html
+   <!-- HTML体积小，加载快 -->
+   <p class="text-large">大文本</p>
+   <p class="text-large">大文本</p>
+   ```
+
+7. **提升开发效率** - 使用预处理器（Sass、Less等）
+   ```scss
+   $primary-color: #006699;
+   .button { color: $primary-color; }
+   .link { color: $primary-color; }
+   ```
+
+**使用CSS的面试答案总结：**
+
+- ✅ **结构和样式分离** - 易于维护和扩展
+- ✅ **统一管理样式** - 改一处影响全部
+- ✅ **减少代码重复** - 提高代码效率
+- ✅ **支持响应式** - 一套代码多终端
+- ✅ **性能优化** - 文件缓存、压缩等
 
 ---
 
 ## 6.解析CSS sprites, 如何使用
 
+**CSS Sprites的定义：**
+
+CSS Sprites（精灵图、雪碧图）是一种**网页图片优化技术**，将多个小图片合并成一张大图片，然后通过CSS定位显示所需部分。
+
+**使用原理：**
+
+```
+原始方案：              CSS Sprites方案：
+▶ icon1.png            
+▶ icon2.png    →→→    combined.png（一张大图）
+▶ icon3.png            
+▶ icon4.png            
+
+HTTP请求数：4个         HTTP请求数：1个
+加载时间：快速          加载时间：更快速
+```
+
+**具体使用步骤：**
+
+**1. 准备合并图片**
+
+将所有小图片合并成一张大图（使用图片处理工具）：
+
+```
+文件名：sprites.png
+大小：200px × 200px
+包含4个50×50的图标
+```
+
+**2. 编写CSS代码**
+
+```css
+/* 基础样式 */
+.icon {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  background-image: url('sprites.png');
+  background-repeat: no-repeat;
+}
+
+/* 首页图标 - 位置 (0, 0) */
+.icon-home {
+  background-position: 0 0;
+}
+
+/* 用户图标 - 位置 (50px, 0) */
+.icon-user {
+  background-position: -50px 0;
+}
+
+/* 设置图标 - 位置 (100px, 0) */
+.icon-settings {
+  background-position: -100px 0;
+}
+
+/* 搜索图标 - 位置 (150px, 0) */
+.icon-search {
+  background-position: -150px 0;
+}
+```
+
+**3. HTML中使用**
+
+```html
+<i class="icon icon-home"></i>      <!-- 显示首页图标 -->
+<i class="icon icon-user"></i>      <!-- 显示用户图标 -->
+<i class="icon icon-settings"></i>  <!-- 显示设置图标 -->
+<i class="icon icon-search"></i>    <!-- 显示搜索图标 -->
+```
+
+**CSS Sprites的优势：**
+
+| 优势 | 说明 |
+|------|------|
+| **减少HTTP请求** | 多个图片合为一张，减少服务器请求 |
+| **加速页面加载** | 减少网络往返次数，提升性能 |
+| **降低服务器压力** | 请求数减少，服务器负载降低 |
+| **改善用户体验** | 页面加载更快，体验更好 |
+
+**CSS Sprites的局限性：**
+
+- ❌ **维护困难** - 修改任何图片需要重新合并
+- ❌ **不适合高清屏** - 高DPI设备需要更大图片
+- ❌ **学习曲线** - background-position坐标计算麻烦
+
+**现代替代方案：**
+
+1. **字体图标（推荐）**
+   ```html
+   <i class="iconfont icon-home"></i>  <!-- 使用自定义字体 -->
+   ```
+
+2. **SVG图片**
+   ```html
+   <svg><use href="#icon-home"></use></svg>
+   ```
+
+3. **单个优化的PNG** - 现代浏览器压缩能力强
+   ```html
+   <img src="icon.png" alt="icon">
+   ```
+
+**总结：**
+
+CSS Sprites曾是重要的性能优化技术，但随着技术发展（HTTP/2、字体图标、SVG等），已不是首选方案。现在字体图标和SVG更加流行。
+
 ---
 
 ## 7.css中id和class怎么定义, 哪个定义的优先级别高?如果class定义一个html元素没有边框, 而id定义这个元素有边框, 最后的结果是什么?
+
+**ID和Class的定义方式：**
+
+```css
+/* ID选择器 - 使用 # 前缀 */
+#unique-element {
+  color: red;
+  border: 2px solid black;
+}
+
+/* Class选择器 - 使用 . 前缀 */
+.highlight {
+  color: blue;
+  background: yellow;
+}
+```
+
+```html
+<!-- HTML中应用 -->
+<div id="unique-element" class="highlight">内容</div>
+```
+
+**CSS优先级规则（特异性）：**
+
+| 选择器类型 | 优先级权重 | 例子 |
+|----------|----------|------|
+| **!important** | 1000 | `color: red !important;` |
+| **ID选择器** | 100 | `#my-id { ... }` |
+| **Class选择器** | 10 | `.my-class { ... }` |
+| **元素选择器** | 1 | `p { ... }` |
+| **通配符** | 0 | `* { ... }` |
+
+**ID的优先级 > Class的优先级**
+
+**实际例子：**
+
+```css
+/* ID优先级：100 */
+#box {
+  border: 2px solid red;    /* ✓ 最终效果：有边框 */
+}
+
+/* Class优先级：10 */
+.no-border {
+  border: none;              /* ✗ 被ID覆盖 */
+}
+```
+
+```html
+<div id="box" class="no-border"></div>
+<!-- 最后的结果：有2px红色边框（ID优先级高） -->
+```
+
+**优先级计算示例：**
+
+```css
+/* 优先级：0,1,0 = 100 */
+#header { }
+
+/* 优先级：0,0,10 = 10 */
+.title { }
+
+/* 优先级：0,0,1 = 1 */
+p { }
+
+/* 优先级：0,1,1 = 101（ID+元素） */
+#header p { }
+
+/* 优先级：0,1,2 = 112（ID+两个元素） */
+#header nav li { }
+
+/* 优先级：0,2,1 = 201（两个ID+元素） */
+#header #nav { }
+```
+
+**优先级比较示例：**
+
+```css
+/* 优先级：10 */
+.text { color: blue; }
+
+/* 优先级：100 */
+#main { color: red; }
+
+/* 最终结果：红色 */
+<p id="main" class="text">文本</p>
+```
+
+**特殊情况 - 使用!important：**
+
+```css
+/* 优先级：10 */
+.no-border {
+  border: none;
+}
+
+/* 优先级：100 */
+#box {
+  border: 2px solid red;
+}
+
+/* 优先级：1000+ - 最高优先级 */
+.force-border {
+  border: 5px solid green !important;  /* ✓ 胜出 */
+}
+```
+
+```html
+<div id="box" class="no-border force-border">
+  <!-- 最终结果：5px绿色边框 -->
+</div>
+```
+
+**ID和Class的使用建议：**
+
+| 特性 | ID | Class |
+|------|----|----|
+| **选择范围** | 一个页面一个 | 多个元素 |
+| **重复性** | 不可重复 | 可重复使用 |
+| **优先级** | 高（100） | 低（10） |
+| **使用场景** | 页面唯一元素 | 通用样式 |
+| **最佳实践** | 尽量少用 | 优先使用 |
+
+**总结：**
+
+✅ **最后的结果是：有边框（红色2px边框）**
+
+因为ID选择器的优先级（100）高于Class选择器（10），不管Class定义什么，ID定义的样式都会覆盖。
 
 ---
 
 ## 8.== 和 === 的区别
 
+**==（宽松相等）和 ===（严格相等）的区别：**
+
+| 特征 | == | === |
+|------|----|----|
+| **类型转换** | 会进行类型转换 | 不进行类型转换 |
+| **比较方式** | 先转换再比较 | 直接比较 |
+| **推荐使用** | ❌ 不推荐 | ✅ 推荐 |
+| **性能** | 较慢（类型转换开销） | 较快（直接比较） |
+
+**==（宽松相等）的转换规则：**
+
+```js
+// 类型转换后比较值
+0 == false              // true（false转换为0）
+1 == true               // true（true转换为1）
+'0' == false            // true（'0'转换为0，false转换为0）
+'1' == true             // true（'1'转换为1，true转换为1）
+null == undefined       // true（特殊规则）
+0 == null               // false（null不转换）
+'' == false             // true（''转换为0，false转换为0）
+[] == false             // true（[]转换为0，false转换为0）
+'123' == 123            // true（字符串转数字）
+```
+
+**===（严格相等）- 类型和值都要相同：**
+
+```js
+// 类型不同直接返回false
+0 === false             // false（类型不同）
+1 === true              // false（类型不同）
+'0' === false           // false（类型不同）
+'1' === true            // false（类型不同）
+null === undefined      // false（类型不同）
+0 === null              // false（类型不同）
+'' === false            // false（类型不同）
+[] === false            // false（类型不同）
+'123' === 123           // false（类型不同）
+
+// 类型和值都相同
+123 === 123             // true
+'hello' === 'hello'     // true
+true === true           // true
+null === null           // true
+undefined === undefined // true
+```
+
+**常见陷阱示例：**
+
+```js
+// 容易出错的情况
+if (x == 0) { }   // ❌ 危险：0, false, '', null, undefined都满足
+if (x === 0) { }  // ✅ 安全：只有0满足
+
+// 数组和对象比较
+[] == []     // false（比较的是引用，不是内容）
+[] === []    // false（比较的是引用）
+{} == {}     // false（比较的是引用）
+{} === {}    // false（比较的是引用）
+
+// NaN的特殊情况
+NaN == NaN   // false
+NaN === NaN  // false
+// 判断NaN应使用：isNaN() 或 Number.isNaN()
+```
+
+**类型强制转换过程（==）：**
+
+```javascript
+'5' == 5
+// 步骤：
+// 1. 检查类型是否相同 → 不同，执行转换
+// 2. 将字符串'5'转换为数字5
+// 3. 比较 5 == 5 → true
+```
+
+**为什么推荐使用===：**
+
+1. **避免隐式转换** - 容易产生bug
+   ```js
+   // == 的隐式转换容易出错
+   if (input == 0) { }  // 可能意外匹配false, '', null等
+   
+   // === 更明确
+   if (input === 0) { }  // 只匹配数字0
+   ```
+
+2. **性能更好** - 无类型转换开销
+3. **代码意图清晰** - 不需要考虑类型转换规则
+4. **减少bug** - 类型转换规则复杂易出错
+
+**最佳实践：**
+
+```js
+// ✅ 推荐：使用严格相等
+if (value === null) { }
+if (value === undefined) { }
+if (value === 0) { }
+if (name === 'John') { }
+
+// ❌ 避免：使用宽松相等
+if (value == null) { }      // 看起来像检查null，实际也匹配undefined
+if (value == 0) { }         // 可能意外匹配false等
+```
+
+**总结：**
+
+✅ **永远优先使用 === **
+
+- 更安全、更快速、代码意图更清晰
+- === 检查类型和值，避免隐式转换的bug
+- 只在特定场景（如 `x == null` 检查null和undefined）才考虑使用==
+
 ---
 
 ## 9.怎么解决超链接访问过后hover样式就不出现的问题
+
+**问题描述：**
+
+当用户点击超链接后，`:hover` 伪类样式不再显示，只显示 `:visited` 样式。
+
+**根本原因：**
+
+CSS伪类的书写顺序很重要。浏览器按照**特异性相同时的书写顺序**来应用样式。如果 `:visited` 写在 `:hover` 之后，就会覆盖 `:hover` 样式。
+
+**错误示例：**
+
+```css
+/* ❌ 错误：:visited在:hover之后，会覆盖:hover */
+a { color: blue; }
+a:visited { color: purple; }  /* 访问过后变紫色 */
+a:hover { color: red; }       /* 但hover样式被覆盖了 */
+```
+
+```
+访问前：blue → hover → red ✓
+访问后：purple（:visited覆盖了:hover，无法再变红）✗
+```
+
+**解决方案：正确的伪类顺序**
+
+```css
+/* ✅ 正确：按照LVHA顺序 */
+a { color: blue; }           /* 未访问 */
+a:visited { color: purple; } /* 已访问 */
+a:hover { color: red; }      /* 鼠标悬停 */
+a:active { color: orange; }  /* 鼠标按下 */
+```
+
+**推荐的伪类顺序（记忆法：LVHA）：**
+
+| 顺序 | 伪类 | 含义 | 说明 |
+|------|------|------|------|
+| 1 | `:link` | 未访问的链接 | 初始状态 |
+| 2 | `:visited` | 已访问的链接 | 访问过后 |
+| 3 | `:hover` | 鼠标悬停 | 动态状态 |
+| 4 | `:active` | 鼠标按下 | 动态状态 |
+
+**完整示例：**
+
+```css
+/* 链接未访问状态 */
+a:link {
+  color: blue;
+  text-decoration: none;
+}
+
+/* 链接已访问状态 */
+a:visited {
+  color: purple;
+}
+
+/* 鼠标悬停状态（最重要！） */
+a:hover {
+  color: red;
+  text-decoration: underline;
+  background-color: yellow;
+}
+
+/* 鼠标按下状态 */
+a:active {
+  color: orange;
+  font-weight: bold;
+}
+```
+
+**现代实践：简化写法**
+
+```css
+/* 可以省略:link，直接用a标签 */
+a {
+  color: blue;
+  text-decoration: none;
+}
+
+a:visited {
+  color: purple;
+}
+
+a:hover {
+  color: red;
+  text-decoration: underline;
+}
+
+a:active {
+  color: orange;
+}
+```
+
+**进阶：使用焦点状态（可访问性）**
+
+```css
+/* 为键盘导航用户提供焦点反馈 */
+a:focus {
+  outline: 2px solid blue;
+  outline-offset: 2px;
+}
+```
+
+**完整示例 - HTML和CSS**
+
+```html
+<style>
+  a:link {
+    color: #0066cc;
+    text-decoration: none;
+  }
+  
+  a:visited {
+    color: #663399;
+  }
+  
+  a:hover {
+    color: #ff0000;
+    text-decoration: underline;
+  }
+  
+  a:active {
+    color: #ff9900;
+    font-weight: bold;
+  }
+</style>
+
+<a href="https://example.com">点击我</a>
+```
+
+**常见错误和正确做法：**
+
+```css
+/* ❌ 错误1：:hover在:visited之前 */
+a:hover { color: red; }
+a:visited { color: purple; }  /* 访问后purple覆盖hover的red */
+
+/* ✅ 正确 */
+a:visited { color: purple; }
+a:hover { color: red; }
+
+/* ❌ 错误2：:active在:hover之前 */
+a:hover { color: red; }
+a:active { color: orange; }
+
+/* ✅ 正确：:active应在:hover之后 */
+a:hover { color: red; }
+a:active { color: orange; }
+```
+
+**关键要点：**
+
+1. **记住顺序：LVHA** - `:link` → `:visited` → `:hover` → `:active`
+2. **动态状态后置** - `:hover` 和 `:active` 必须在 `:visited` 之后
+3. **实际应用** - `:link` 可省略，但顺序不能错
 
 ---
 
 ## 10.小程序的双向绑定和vue哪里不一样
 
+**双向绑定的定义：**
+
+数据和视图自动同步 - 数据变化自动更新视图，视图变化自动更新数据。
+
+**小程序vs Vue的双向绑定对比：**
+
+| 特性 | 小程序 | Vue |
+|------|--------|-----|
+| **绑定语法** | `model:value` 属性绑定 | `v-model` 指令 |
+| **数据更新** | `setData()` 方法 | 直接赋值或响应式API |
+| **性能** | 性能开销较大 | 优化更好 |
+| **学习曲线** | 相对复杂 | 相对简单 |
+
+**1. 小程序的数据绑定方式：**
+
+```js
+// 小程序 - WXML（模板）+ JS（逻辑）
+// pages/index/index.wxml
+<view>
+  <input type="text" value="{{input_value}}" bindinput="handleInput" />
+  <text>输入的值：{{input_value}}</text>
+</view>
+
+// pages/index/index.js
+Page({
+  data: {
+    input_value: ''
+  },
+  
+  // 必须定义事件处理方法
+  handleInput(e) {
+    // 必须调用 setData() 才能更新视图
+    this.setData({
+      input_value: e.detail.value
+    });
+  }
+});
+```
+
+**小程序特点：**
+- ❌ **不是真正的双向绑定** - 需要手动绑定事件
+- ❌ **必须调用setData()** - 不能直接修改数据
+- ✓ **事件驱动** - 通过事件处理更新数据
+
+**2. Vue的双向绑定方式：**
+
+```vue
+<!-- Vue - 模板 + 脚本 -->
+<template>
+  <div>
+    <!-- v-model 实现真正的双向绑定 -->
+    <input v-model="inputValue" type="text" />
+    <p>输入的值：{{ inputValue }}</p>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      inputValue: ''
+    }
+  }
+}
+</script>
+```
+
+**Vue特点：**
+- ✓ **真正的双向绑定** - v-model自动处理
+- ✓ **可直接修改** - reactive数据自动更新视图
+- ✓ **语法简洁** - 一个指令搞定
+
+**对比示例：**
+
+```javascript
+// 小程序：需要手动绑定事件，调用setData
+Page({
+  data: { count: 0 },
+  
+  // 必须定义处理方法
+  addCount() {
+    this.setData({
+      count: this.data.count + 1
+    });
+  }
+});
+
+// HTML
+<view>{{count}}</view>
+<button bindtap="addCount">+1</button>
+```
+
+```vue
+<!-- Vue：直接修改，自动更新 -->
+<template>
+  <div>
+    {{ count }}
+    <button @click="addCount">+1</button>
+  </div>
+</template>
+
+<script>
+export default {
+  data() { return { count: 0 } },
+  methods: {
+    addCount() {
+      this.count++;  // 直接修改，自动更新视图
+    }
+  }
+}
+</script>
+```
+
+**3. 表单输入的具体对比：**
+
+```javascript
+// 小程序
+<input bindinput="onInput" />
+<script>
+  onInput(e) {
+    this.setData({ value: e.detail.value });
+  }
+</script>
+
+// Vue
+<input v-model="value" />
+<!-- 无需额外代码，v-model自动处理 -->
+```
+
+**4. 性能对比：**
+
+| 操作 | 小程序 | Vue |
+|------|--------|-----|
+| **每次setData开销** | 较大（序列化数据） | 较小（响应式代理） |
+| **频繁更新** | 不推荐 | 推荐使用防抖 |
+| **大数据结构** | 更新整个对象较慢 | 只更新改变部分 |
+
+**5. 响应式实现的区别：**
+
+```javascript
+// 小程序：被动更新
+this.setData({         // 调用setData才能更新
+  user: {
+    name: 'John',
+    age: 25
+  }
+});
+
+// Vue：主动响应
+this.user.name = 'John';  // 自动触发更新
+this.user.age = 25;       // 响应式系统自动感知
+```
+
+**核心区别总结：**
+
+| 维度 | 小程序 | Vue |
+|------|--------|-----|
+| **双向绑定** | 伪双向（事件驱动） | 真正双向 |
+| **数据更新** | setData()方法 | 直接赋值 |
+| **事件绑定** | bind前缀（bindtap等） | @符号（@click等） |
+| **代码简洁度** | 相对复杂 | 简洁优雅 |
+| **学习成本** | 较高 | 较低 |
+
+**小程序双向绑定的最佳实践：**
+
+```js
+// 小程序中模仿v-model的用法
+Page({
+  data: {
+    form: {
+      name: '',
+      age: '',
+      email: ''
+    }
+  },
+  
+  // 通用输入处理
+  handleInput(e) {
+    const { field } = e.currentTarget.dataset;
+    this.setData({
+      [`form.${field}`]: e.detail.value  // 动态更新
+    });
+  }
+});
+
+// WXML
+<input 
+  data-field="name" 
+  bindinput="handleInput" 
+  value="{{form.name}}"
+/>
+```
+
 ---
 
-## 11.授权验证登录怎么做, 用户退出后下次进入还需要再次授权吗? 
+## 11.授权验证登录怎么做, 用户退出后下次进入还需要再次授权吗?
+
+**授权验证登录的工作流程：**
+
+```
+用户登录
+  ↓
+获取授权令牌（Token）
+  ↓
+存储令牌（本地存储）
+  ↓
+API请求时附带令牌
+  ↓
+服务器验证令牌
+  ↓
+处理请求 or 拒绝请求
+```
+
+**完整的认证和授权流程：**
+
+**1. 登录阶段 - 获取Token**
+
+```javascript
+// 前端：用户登录
+async function login(username, password) {
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  
+  const data = await response.json();
+  
+  if (data.success) {
+    // 获得Token
+    const token = data.token;
+    const refreshToken = data.refreshToken;
+    
+    // 存储Token（HttpOnly Cookie/LocalStorage）
+    localStorage.setItem('token', token);
+    localStorage.setItem('refreshToken', refreshToken);
+    
+    return true;
+  }
+  return false;
+}
+```
+
+```javascript
+// 后端：验证并返回Token
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  // 验证用户名和密码
+  const user = users.find(u => u.username === username && u.password === password);
+  
+  if (user) {
+    // 生成JWT Token
+    const token = jwt.sign(
+      { userId: user.id, username: user.username },
+      'secret_key',
+      { expiresIn: '15m' }  // 15分钟过期
+    );
+    
+    // 生成刷新Token
+    const refreshToken = jwt.sign(
+      { userId: user.id },
+      'refresh_secret_key',
+      { expiresIn: '7d' }  // 7天过期
+    );
+    
+    res.json({
+      success: true,
+      token,
+      refreshToken,
+      message: '登录成功'
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: '用户名或密码错误'
+    });
+  }
+});
+```
+
+**2. 请求阶段 - 附带Token**
+
+```javascript
+// 前端：每次请求都附带Token
+async function apiRequest(url, options = {}) {
+  const token = localStorage.getItem('token');
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  // 如果有Token，添加到请求头
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+  
+  // 处理401错误（Token过期）
+  if (response.status === 401) {
+    return handleTokenExpired();
+  }
+  
+  return response.json();
+}
+```
+
+**3. 服务器验证阶段**
+
+```javascript
+// 后端中间件：验证Token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];  // 提取Bearer后面的token
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Token缺失' });
+  }
+  
+  jwt.verify(token, 'secret_key', (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Token无效或已过期' });
+    }
+    req.user = user;
+    next();
+  });
+}
+
+// 使用中间件保护路由
+app.get('/api/user-info', authenticateToken, (req, res) => {
+  res.json({
+    userId: req.user.userId,
+    username: req.user.username,
+    data: '用户信息'
+  });
+});
+```
+
+**Token刷新机制（处理Token过期）：**
+
+```javascript
+// 前端：Token过期处理
+async function handleTokenExpired() {
+  const refreshToken = localStorage.getItem('refreshToken');
+  
+  if (!refreshToken) {
+    // 刷新Token也没有，需要重新登录
+    redirectToLogin();
+    return;
+  }
+  
+  // 使用刷新Token获取新的访问Token
+  const response = await fetch('/api/refresh-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken })
+  });
+  
+  if (response.ok) {
+    const data = await response.json();
+    // 更新本地Token
+    localStorage.setItem('token', data.newToken);
+    // 重新发送原请求
+    return true;
+  } else {
+    // 刷新失败，需要重新登录
+    redirectToLogin();
+  }
+}
+
+// 后端：刷新Token接口
+app.post('/api/refresh-token', (req, res) => {
+  const { refreshToken } = req.body;
+  
+  jwt.verify(refreshToken, 'refresh_secret_key', (err, user) => {
+    if (err) {
+      return res.status(401).json({ message: '刷新Token已过期' });
+    }
+    
+    // 生成新的访问Token
+    const newToken = jwt.sign(
+      { userId: user.userId, username: user.username },
+      'secret_key',
+      { expiresIn: '15m' }
+    );
+    
+    res.json({ success: true, newToken });
+  });
+});
+```
+
+**4. 退出登录阶段**
+
+```javascript
+// 前端：退出登录
+function logout() {
+  // 清除所有认证信息
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('userId');
+  
+  // 可选：通知服务器（黑名单Token）
+  fetch('/api/logout', { method: 'POST' });
+  
+  // 重定向到登录页面
+  window.location.href = '/login';
+}
+
+// 后端：可选的退出接口
+app.post('/api/logout', authenticateToken, (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  
+  // 可选：将Token添加到黑名单
+  tokenBlacklist.add(token);
+  
+  res.json({ success: true, message: '退出成功' });
+});
+```
+
+**关键问题：用户退出后下次进入还需要再次授权吗？**
+
+**答案：取决于Token的存储方式和配置**
+
+| 场景 | 退出后是否需要重新授权 | 说明 |
+|------|----------------------|------|
+| **Token存储在LocalStorage** | ✅ 需要  | 退出时删除了Token，下次进入需要重新登录 |
+| **Token存储在HttpOnly Cookie** | ✅ 需要  | Cookie也会被删除，需要重新登录 |
+| **用户未手动退出，浏览器关闭** | ❌ 不需要 | Token仍在存储中，自动登录 |
+| **配置自动刷新** | ❌ 不需要 | 使用RefreshToken自动续期 |
+
+**具体实现：**
+
+```javascript
+// 应用启动时自动检查Token
+app.mounted(async () => {
+  const token = localStorage.getItem('token');
+  
+  if (token) {
+    try {
+      // 验证Token是否有效
+      const response = await apiRequest('/api/verify-token');
+      if (response.success) {
+        // Token有效，自动登录
+        store.setUser(response.user);
+      } else {
+        // Token无效，尝试刷新
+        await refreshToken();
+      }
+    } catch (error) {
+      // Token无效，需要重新登录
+      redirectToLogin();
+    }
+  }
+});
+```
+
+**安全建议：**
+
+1. **Token存储**
+   - ✅ 推荐：HttpOnly Cookie（JS无法访问，防止XSS）
+   - ⚠️ 次选：LocalStorage（需要防止XSS）
+   - ❌ 避免：SessionStorage（容易丢失）
+
+2. **Token过期**
+   - 访问Token：短期（15分钟）
+   - 刷新Token：长期（7天）
+   - 黑名单：防止已注销Token被使用
+
+3. **CSRF防护**
+   - 使用SameSite属性
+   - 配合CSRF Token
+
+**流程图：**
+
+```
+首次登录：
+用户输入 → 服务器验证 → 颁发Token → 存储Token → 自动登录
+
+再次进入：
+检查Token → Token有效 → 自动登录 ✓
+         → Token过期 → 使用RefreshToken续期 ✓
+         → 都失效 → 重新登录 ✓
+
+退出登录：
+清除本地Token → 再次进入必须重新登录 ✓
+```
 
 ---
 
 ## 12.如何提高小程序的应用速度?
+
+**小程序性能优化的核心指标：**
+
+| 指标 | 目标 | 影响 |
+|------|------|------|
+| **首屏加载时间** | < 2s | 用户体验 |
+| **运行帧率** | 60 FPS | 流畅度 |
+| **包大小** | < 2MB | 下载速度 |
+| **内存占用** | < 100MB | 稳定性 |
+
+**1. 减少包大小**
+
+```
+目标：控制在 2MB 以内
+影响：首屏加载时间、下载速度
+```
+
+**措施：**
+
+```javascript
+// ❌ 不推荐：引入整个库
+import _ from 'lodash';  // 整个库很大
+const result = _.map(arr, x => x * 2);
+
+// ✅ 推荐：按需导入
+import map from 'lodash/map';
+const result = map(arr, x => x * 2);
+
+// ❌ 不推荐：重复引入
+import _ from 'lodash';
+import { map } from 'lodash';  // 重复了
+
+// ✅ 推荐：使用代码分割
+// main.js
+import('./heavy-module').then(module => {
+  // 按需加载
+});
+```
+
+**优化方案：**
+
+- 删除无用代码（Tree Shaking）
+- 使用原生API替代第三方库
+- 压缩资源（图片、CSS、JS）
+- 分离业务和基础库
+
+**2. 分包加载（代码分割）**
+
+```
+将代码分为多个包，按需加载
+主包：核心功能    (< 2MB)
+分包1：模块A      (按需加载)
+分包2：模块B      (按需加载)
+```
+
+**实现：**
+
+```json
+// app.json
+{
+  "pages": [
+    "pages/index/index",
+    "pages/user/index"
+  ],
+  "subpackages": [
+    {
+      "root": "pages/video",
+      "pages": [
+        "list/index",
+        "detail/index"
+      ]
+    },
+    {
+      "root": "pages/shop",
+      "pages": [
+        "list/index",
+        "cart/index"
+      ]
+    }
+  ]
+}
+```
+
+```javascript
+// 使用时自动加载分包
+wx.navigateTo({
+  url: '/pages/video/list/index'  // 自动加载分包
+});
+```
+
+**3. 图片优化**
+
+```
+优化前：500KB PNG
+优化后：50KB WebP  (提升10倍)
+```
+
+**措施：**
+
+```javascript
+// ❌ 不推荐：直接使用大图
+<image src="/images/banner.png" style="width: 750rpx" />
+
+// ✅ 推荐：使用合适尺寸
+<image src="/images/banner.webp" style="width: 375rpx" />
+
+// ✅ 推荐：使用图片懒加载
+<image 
+  src="{{item.image}}" 
+  lazy-load="true"
+  style="width: 100%"
+/>
+
+// ✅ 推荐：使用渐进式图片
+// 先加载低质量占位图，再加载高质量图
+```
+
+**优化方案：**
+
+- 使用WebP格式（更小）
+- 压缩图片（tinypng等工具）
+- 使用适当尺寸（不要用大图缩小）
+- 图片懒加载：`lazy-load="true"`
+- 使用CDN加速
+- 合并小图片成雪碧图
+
+**4. 数据请求优化**
+
+```javascript
+// ❌ 不推荐：每次都请求
+Page({
+  onShow() {
+    this.fetchData();  // 每次都请求，浪费带宽
+  }
+});
+
+// ✅ 推荐：缓存数据
+Page({
+  onShow() {
+    if (this.data.cached) {
+      return;  // 使用缓存
+    }
+    this.fetchData();
+  }
+});
+
+// ✅ 推荐：合并请求
+Promise.all([
+  fetch('/api/user'),
+  fetch('/api/products'),
+  fetch('/api/comments')
+]).then(([user, products, comments]) => {
+  // 一次加载多个数据
+});
+
+// ✅ 推荐：分页加载
+async function loadMore() {
+  const data = await fetch(`/api/products?page=${this.page}&limit=20`);
+  this.page++;
+}
+```
+
+**5. 渲染性能优化**
+
+```javascript
+// ❌ 不推荐：频繁更新DOM
+for (let i = 0; i < 1000; i++) {
+  this.setData({ list: [...this.data.list, item] });  // 1000次setData
+}
+
+// ✅ 推荐：一次性更新
+const newList = [];
+for (let i = 0; i < 1000; i++) {
+  newList.push(item);
+}
+this.setData({ list: newList });  // 只有1次setData
+
+// ✅ 推荐：使用虚拟列表（长列表优化）
+<scroll-view scroll-y="true" enable-flex="true">
+  <block wx:for="{{visibleItems}}">
+    <view>{{item}}</view>
+  </block>
+</scroll-view>
+```
+
+**6. 避免内存泄漏**
+
+```javascript
+// ❌ 不推荐：监听器未清除
+Page({
+  onLoad() {
+    // 监听每次都创建，但从不清除 × 内存泄漏
+    wx.onNetworkStatusChange(() => {
+      this.fetchData();
+    });
+  }
+});
+
+// ✅ 推荐：及时清除
+Page({
+  onLoad() {
+    this.networkListener = () => this.fetchData();
+    wx.onNetworkStatusChange(this.networkListener);
+  },
+  
+  onUnload() {
+    // 页面卸载时清除监听器
+    wx.offNetworkStatusChange(this.networkListener);
+  }
+});
+
+// ✅ 推荐：清除定时器
+Page({
+  onLoad() {
+    this.timer = setInterval(() => {
+      this.updateData();
+    }, 1000);
+  },
+  
+  onUnload() {
+    clearInterval(this.timer);  // 必须清除
+  }
+});
+```
+
+**7. 预加载和预渲染**
+
+```javascript
+// 预加载关键资源
+wx.preloadRequest({
+  url: '/api/user-info',
+  method: 'GET'
+});
+
+// 预加载图片
+wx.preloadImage({
+  urls: ['/images/home.jpg', '/images/user.jpg']
+});
+
+// 预加载视频
+<video src="{{videoUrl}}" preload="true"></video>
+```
+
+**8. CSS和JS优化**
+
+```javascript
+// ❌ 不推荐：过度使用阴影、渐变
+.card {
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);  /* 性能差 */
+  background: linear-gradient(45deg, #fff, #f0f0f0);  /* 频繁重绘 */
+}
+
+// ✅ 推荐：简化样式
+.card {
+  border: 1px solid #ddd;  /* 更高效 */
+  background: #f5f5f5;
+}
+
+// ❌ 不推荐：选择器太复杂
+.container .box .item .text span {...}
+
+// ✅ 推荐：简化选择器
+.item-text {...}
+```
+
+**9. 网络优化**
+
+```javascript
+// ✅ 使用 HTTP 压缩
+// 服务器配置 gzip 压缩
+
+// ✅ 使用 CDN
+// 将静态资源部署到 CDN，加快下载速度
+
+// ✅ 使用 webSocket 代替轮询
+// 实时通信更高效
+
+// ✅ 响应缓存策略
+const cache = {};
+async function getCachedData(url) {
+  if (cache[url]) return cache[url];
+  const data = await fetch(url);
+  cache[url] = data;
+  return data;
+}
+```
+
+**10. 性能监控**
+
+```javascript
+// 监控页面加载时间
+wx.onLoad = function() {
+  const startTime = Date.now();
+  
+  // ... 加载数据
+  
+  const loadTime = Date.now() - startTime;
+  console.log(`页面加载耗时: ${loadTime}ms`);
+  
+  // 上报给性能平台
+  reportPerformance({
+    page: 'index',
+    loadTime,
+    timestamp: new Date()
+  });
+};
+
+// 使用性能 API
+wx.getPerformance().then(perfData => {
+  console.log('首屏时间:', perfData.firstScreenTime);
+  console.log('加载完成时间:', perfData.loadTime);
+});
+```
+
+**性能优化检查清单：**
+
+```
+[ ] 包大小 < 2MB
+[ ] 首屏加载 < 2s
+[ ] 使用分包加载
+[ ] 图片已压缩和懒加载
+[ ] 避免内存泄漏
+[ ] 数据请求已缓存
+[ ] 长列表使用虚拟列表
+[ ] 去除无用代码
+[ ] CDN加速
+[ ] 监控和上报性能指标
+```
+
+**包大小分析命令：**
+
+```bash
+# 分析包大小
+npm run build
+ls -lh dist/
+
+# 查看详细依赖大小
+webpack-bundle-analyzer
+```
+
+**优化效果预期：**
+
+| 优化项 | 效果 | 难度 |
+|--------|------|------|
+| 图片压缩 | 30-40% 包体积减少 | 低 |
+| 分包加载 | 50%+ 首屏快 | 中 |
+| 虚拟列表 | 长列表流畅度+100% | 高 |
+| 代码分割 | 20-30% 包体积减少 | 中 |
+| 缓存策略 | 重复请求消除 | 低 |

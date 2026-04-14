@@ -1,19 +1,594 @@
 # xxx云-前端工程师
 
-### 1.Vue3的Componsition API 与 Options API有何不同? 请举例说明
+## 1.Vue3的Componsition API 与 Options API有何不同? 请举例说明
 
-### 2.在Vue3中, 如何使用TypeScript7来定义一个接收props的组件
+| 特性 | Options API | Composition API |
+|------|------------|-----------------|
+| **组织方式** | 按选项划分（data、methods、computed等） | 按逻辑功能划分 |
+| **代码位置** | 分散在不同选项中 | 可集中在同一位置 |
+| **逻辑复用** | 通过 mixins | 通过组合函数 |
+| **类型支持** | 需要额外配置 | 原生 TypeScript 支持 |
+| **学习曲线** | 较平缓 | 较陡峭 |
 
-### 3.请解释TypeScript中的联合类型和交叉类型的区别, 并给出例子
+**Options API 示例：**
 
-### 4.在Vue3中, 如何使用Componsition API实现一个计算器组件
+```js
+export default {
+  data() {
+    return {
+      count: 0
+    };
+  },
+  computed: {
+    double() {
+      return this.count * 2;
+    }
+  },
+  methods: {
+    increment() {
+      this.count++;
+    }
+  }
+}
+```
 
-### 5.TypeScript中的装饰器是什么? 请给除一个实用的例子
+**Composition API 示例：**
 
-### 6.API调用: 解释REST API和GraphQL API的主要区别
+```js
+import { ref, computed } from 'vue';
 
-### 7.HTML/CSS: 请解释BEM命名约定, 并给出一个例子
+export default {
+  setup() {
+    const count = ref(0);
+    const double = computed(() => count.value * 2);
+    
+    const increment = () => {
+      count.value++;
+    };
+    
+    return { count, double, increment };
+  }
+}
+```
 
-### 8.JavaScript: 解释Promise和async/await在异步编程中的用途
+---
 
-### 9.性能优化: 请解释前端性能优化的一个策略
+## 2.在Vue3中, 如何使用TypeScript来定义一个接收props的组件
+
+```vue
+<template>
+  <div>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <button @click="handleClick">点击</button>
+  </div>
+</template>
+
+<script lang="ts">
+import { defineComponent, PropType } from 'vue';
+
+// 方式1：defineComponent + PropType
+export default defineComponent({
+  props: {
+    title: {
+      type: String as PropType<string>,
+      required: true
+    },
+    message: {
+      type: String,
+      default: '默认消息'
+    },
+    count: {
+      type: Number as PropType<number>,
+      default: 0
+    }
+  },
+  emits: ['click'],
+  setup(props, { emit }) {
+    const handleClick = () => {
+      emit('click', props.count);
+    };
+    
+    return { handleClick };
+  }
+});
+</script>
+```
+
+**Composition API + TypeScript 写法：**
+
+```vue
+<script setup lang="ts">
+interface Props {
+  title: string;
+  message?: string;
+  count?: number;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  message: '默认消息',
+  count: 0
+});
+
+const emit = defineEmits<{
+  click: [count: number];
+}>();
+
+const handleClick = () => {
+  emit('click', props.count);
+};
+</script>
+```
+
+---
+
+## 3.请解释TypeScript中的联合类型和交叉类型的区别, 并给出例子
+
+**联合类型（Union Types）：** 表示一个值可以是多个类型中的任意一个
+
+```ts
+// 定义
+type Status = 'pending' | 'success' | 'error';
+type ID = string | number;
+
+// 使用
+function printId(id: ID) {
+  // 只能访问两个类型都有的属性和方法
+  console.log(id.toString());  // ✅
+  // console.log(id.toFixed(2));  // ❌ 报错：string 没有 toFixed
+}
+
+const id1: ID = 123;      // ✅
+const id2: ID = 'abc123'; // ✅
+```
+
+**交叉类型（Intersection Types）：** 表示一个类型必须同时拥有多个类型的所有属性
+
+```ts
+interface Admin {
+  name: string;
+  permissions: string[];
+}
+
+interface User {
+  id: number;
+  email: string;
+}
+
+// 交叉类型
+type AdminUser = Admin & User;
+
+const adminUser: AdminUser = {
+  name: 'John',
+  permissions: ['read', 'write'],
+  id: 1,
+  email: 'john@example.com'
+};
+```
+
+**对比示例：**
+
+```ts
+// 联合类型：要么是 string，要么是 number
+type unionType = string | number;
+
+// 交叉类型：既要满足 A 又要满足 B
+type A = { x: number };
+type B = { y: string };
+type intersectType = A & B;
+
+const obj: intersectType = {
+  x: 1,
+  y: 'hello'
+};
+```
+
+---
+
+## 4.在Vue3中, 如何使用Componsition API实现一个计算器组件
+
+```vue
+<template>
+  <div class="calculator">
+    <div class="display">{{ result }}</div>
+    <div class="buttons">
+      <button v-for="num in numbers" :key="num" @click="inputNumber(num)">
+        {{ num }}
+      </button>
+      <button @click="inputOperator('+')">+</button>
+      <button @click="inputOperator('-')">-</button>
+      <button @click="inputOperator('*')">*</button>
+      <button @click="inputOperator('/')">÷</button>
+      <button @click="calculate">=</button>
+      <button @click="clear">C</button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue';
+
+const result = ref<number | string>(0);
+const currentInput = ref('');
+const previousValue = ref<number | null>(null);
+const operator = ref<string | null>(null);
+const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+const inputNumber = (num: number) => {
+  currentInput.value += num.toString();
+  result.value = currentInput.value;
+};
+
+const inputOperator = (op: string) => {
+  if (currentInput.value) {
+    previousValue.value = parseFloat(currentInput.value);
+    operator.value = op;
+    currentInput.value = '';
+  }
+};
+
+const calculate = () => {
+  if (!previousValue.value || !operator.value || !currentInput.value) return;
+  
+  const prev = previousValue.value;
+  const current = parseFloat(currentInput.value);
+  let res = 0;
+  
+  switch (operator.value) {
+    case '+':
+      res = prev + current;
+      break;
+    case '-':
+      res = prev - current;
+      break;
+    case '*':
+      res = prev * current;
+      break;
+    case '/':
+      res = current !== 0 ? prev / current : 0;
+      break;
+  }
+  
+  result.value = res;
+  currentInput.value = '';
+  previousValue.value = null;
+  operator.value = null;
+};
+
+const clear = () => {
+  result.value = 0;
+  currentInput.value = '';
+  previousValue.value = null;
+  operator.value = null;
+};
+</script>
+
+<style scoped>
+.calculator {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.display {
+  font-size: 24px;
+  padding: 10px;
+  background: #f0f0f0;
+  margin-bottom: 10px;
+  text-align: right;
+}
+
+.buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+button {
+  padding: 10px;
+  cursor: pointer;
+}
+</style>
+```
+
+---
+
+## 5.TypeScript中的装饰器是什么? 请给出一个实用的例子
+
+**装饰器：** 是一种特殊的声明，能够被附加到类声明、方法、访问符、属性或参数上。
+
+**需要在 tsconfig.json 中启用：**
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
+**实用例子1：日志装饰器**
+
+```ts
+// 方法装饰器
+function Logger(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  const originalMethod = descriptor.value;
+  
+  descriptor.value = function(...args: any[]) {
+    console.log(`调用 ${propertyKey} 方法，参数: ${JSON.stringify(args)}`);
+    const result = originalMethod.apply(this, args);
+    console.log(`${propertyKey} 返回结果: ${result}`);
+    return result;
+  };
+  
+  return descriptor;
+}
+
+class Calculator {
+  @Logger
+  add(a: number, b: number): number {
+    return a + b;
+  }
+}
+
+const calc = new Calculator();
+calc.add(2, 3);
+// 输出：
+// 调用 add 方法，参数: [2,3]
+// add 返回结果: 5
+```
+
+**实用例子2：验证装饰器**
+
+```ts
+function Validate(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  const originalMethod = descriptor.value;
+  
+  descriptor.value = function(...args: any[]) {
+    // 验证参数
+    for (const arg of args) {
+      if (arg === null || arg === undefined) {
+        throw new Error('参数不能为空');
+      }
+    }
+    return originalMethod.apply(this, args);
+  };
+  
+  return descriptor;
+}
+
+class User {
+  @Validate
+  setEmail(email: string): void {
+    console.log(`邮箱已设置: ${email}`);
+  }
+}
+```
+
+---
+
+## 6.API调用: 解释REST API和GraphQL API的主要区别
+
+| 特性 | REST API | GraphQL API |
+|------|----------|------------|
+| **请求方式** | 多个端点（/users, /posts 等） | 单一端点 |
+| **数据获取** | 获取整个资源 | 只获取需要的字段 |
+| **过度获取** | 容易过度获取 | 避免过度获取 |
+| **缺少数据** | 可能缺少数据，需多次请求 | 一个请求获取所有需要的数据 |
+| **HTTP方法** | GET、POST、PUT、DELETE 等 | 主要是 POST |
+| **版本管理** | 需要版本控制（/v1/, /v2/） | 无需版本控制 |
+| **学习曲线** | 简单 | 较复杂 |
+
+**REST API 示例：**
+
+```js
+// 获取用户和其文章，需要多个请求
+const user = await fetch('/api/users/1').then(r => r.json());
+const posts = await fetch('/api/users/1/posts').then(r => r.json());
+
+// 获取的数据可能包含不需要的字段
+```
+
+**GraphQL API 示例：**
+
+```js
+const query = `
+  query GetUserWithPosts($id: ID!) {
+    user(id: $id) {
+      name
+      email
+      posts {
+        title
+        content
+      }
+    }
+  }
+`;
+
+const result = await fetch('http://api.example.com/graphql', {
+  method: 'POST',
+  body: JSON.stringify({ query, variables: { id: 1 } })
+}).then(r => r.json());
+
+// 只返回指定的字段
+```
+
+---
+
+## 7.HTML/CSS: 请解释BEM命名约定, 并给出一个例子
+
+**BEM：** Block Element Modifier，一种 CSS 命名约定
+
+- **Block（块）：** 独立的功能模块，如 `button`、`card`
+- **Element（元素）：** 块的组成部分，用 `__` 分隔，如 `button__text`
+- **Modifier（修饰符）：** 用来改变块或元素的状态，用 `--` 分隔，如 `button--active`
+
+**示例：**
+
+```html
+<!-- HTML 结构 -->
+<div class="card">
+  <h2 class="card__header">标题</h2>
+  <p class="card__content">内容描述</p>
+  <button class="card__button card__button--primary">主按钮</button>
+  <button class="card__button card__button--secondary">次按钮</button>
+</div>
+```
+
+```css
+/* CSS 样式 */
+
+/* Block */
+.card {
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Element */
+.card__header {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.card__content {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.card__button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+/* Modifier */
+.card__button--primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.card__button--secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.card__button--primary:hover {
+  background-color: #0056b3;
+}
+```
+
+---
+
+## 8.JavaScript: 解释Promise和async/await在异步编程中的用途
+
+**Promise：** 表示一个异步操作的最终完成或失败
+
+```js
+// 创建 Promise
+const promise = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    resolve('成功');
+  }, 1000);
+});
+
+// 消费 Promise
+promise
+  .then(result => console.log(result))
+  .catch(error => console.error(error))
+  .finally(() => console.log('完成'));
+```
+
+**async/await：** Promise 的语法糖，使异步代码看起来像同步代码
+
+```js
+// 定义 async 函数
+async function fetchUser() {
+  try {
+    const response = await fetch('/api/user');
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error('请求失败:', error);
+  }
+}
+
+fetchUser();
+```
+
+**对比总结：**
+
+```js
+// Promise 链式调用
+fetch('/api/user')
+  .then(res => res.json())
+  .then(data => fetch(`/api/posts/${data.id}`))
+  .then(res => res.json())
+  .then(posts => console.log(posts))
+  .catch(error => console.error(error));
+
+// async/await（更简洁）
+async function getDataAsync() {
+  try {
+    const userRes = await fetch('/api/user');
+    const userData = await userRes.json();
+    
+    const postsRes = await fetch(`/api/posts/${userData.id}`);
+    const posts = await postsRes.json();
+    
+    console.log(posts);
+  } catch (error) {
+    console.error(error);
+  }
+}
+```
+
+---
+
+## 9.性能优化: 请解释前端性能优化的一个策略
+
+**代码分割（Code Splitting）**
+
+**原理：** 将大的 JavaScript 包分分成小的、按需加载的块，减少初始加载时间。
+
+**Webpack 示例：**
+
+```js
+// 动态导入
+const Component = lazy(() => import('./heavy-component.js'));
+
+// 路由级别的代码分割
+const routes = [
+  {
+    path: '/dashboard',
+    component: () => import('./pages/Dashboard'),
+    // 仅在需要时加载
+  },
+  {
+    path: '/settings',
+    component: () => import('./pages/Settings')
+  }
+];
+```
+
+**优化效果：**
+
+| 优化前 | 优化后 |
+|------|------|
+| 单个 bundle.js：500KB | main.js：200KB + dashboard.js：150KB + settings.js：100KB 等 |
+| 首屏加载时间：3s | 首屏加载时间：1s |
+
+**最佳实践：**
+
+1. **路由级代码分割** - 为每个路由创建单独的 chunk
+2. **组件级代码分割** - 根据渲染条件延迟加载组件
+3. **第三方库分割** - 将 vendor 分离出来
+4. **按需加载** - 使用 React.lazy 或 Vue 的动态导入
+
+---

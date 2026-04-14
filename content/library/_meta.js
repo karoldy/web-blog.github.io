@@ -20,5 +20,6 @@ export default {
   "page_3": "Mantine UI：被低估的 React 神级 UI 框架，它可能是下一个 Tailwind？",
   "page_4": "uiverse.io",
   "page_5": "前端定时任务的神库！",
-  "page_6": "神库 Fuse.js，我愿称之为前端模糊搜索的王者！"
+  "page_6": "神库 Fuse.js，我愿称之为前端模糊搜索的王者！",
+  "stitch": "谷歌 Design"
 }

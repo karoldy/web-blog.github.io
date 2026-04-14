@@ -2,42 +2,123 @@
 
 ## 1.对于网页多端自适应效果，有什么解决方案
 
+- **响应式布局（Responsive）**：使用弹性布局（Flexbox/Grid）、百分比宽度、流式排版。
+- **媒体查询（CSS Media Queries）**：按视口宽度/像素比调整样式，常用 mobile-first 策略。
+- **相对单位**：使用 `rem`、`em`、百分比替代固定 `px`，结合 `html` 的 `font-size` 动态缩放（例如 2 / 3/ 设计稿方案）。
+- **视口 meta**：`<meta name="viewport" content="width=device-width,initial-scale=1">`。
+- **响应式图片**：`srcset`、`picture`、WebP 和大小裁剪，按设备加载合适资源。
+- **适配方案**：响应式（同一套布局适配）、自适配（服务端/客户端渲染不同模板）、混合（关键页面单独优化）。
+- **移动端交互优化**：触摸区域、滚动性能、懒加载、骨架屏。
+
 ---
 
 ## 2.cookies，sessionStorage，localStorage三者区别
+
+- **持久性**：`cookie` 可设置过期时间；`localStorage` 永久（除非被清除）；`sessionStorage` 随标签页会话结束清除。
+- **作用域**：`cookie` 会随每次请求发到服务器（域/路径可控）；`localStorage` 和 `sessionStorage` 仅在浏览器端可见（同源限制）。
+- **存储大小**：`cookie` 小（约 4KB）；`localStorage`/`sessionStorage` 通常 5MB+。
+- **安全**：敏感数据不应放在 `localStorage/sessionStorage`（XSS 风险）；`cookie` 可设置 `HttpOnly` 和 `Secure` 减少 XSS，但仍有 CSRF 风险。
 
 ---
 
 ## 3.事件冒泡和事件捕捉的区别
 
+- **事件捕获（捕捉）阶段**：事件从最外层向目标元素传播（document → ... → target）。
+- **目标阶段**：事件到达目标元素并触发对应监听。
+- **事件冒泡阶段**：事件从目标向外层传播（target → ... → document）。
+- **绑定时机**：`addEventListener(type, handler, true)` 开启捕获，`false`（默认）为冒泡。
+- **使用场景**：捕获可用于在更外层先行处理事件，冒泡常用于事件委托（在父容器统一处理子元素事件）。
+
 ---
 
 ## 4.Promise.all与async/await的异同
+
+- **相同点**：两者都用于处理异步操作，`async/await` 是基于 Promise 的语法糖。
+- **不同点**：`Promise.all([...])` 并行执行多个 Promise，返回所有结果数组；`await` 单独使用会等待该 Promise 解析，若在循环中顺序 `await` 会串行执行。
+- **错误处理**：`Promise.all` 若有任一 Promise 失败，则整体失败（reject）；使用 `async/await` 可在 `try/catch` 中逐个处理或配合 `Promise.allSettled`。
+
+示例：并行 vs 串行
+
+```js
+// 并行
+const results = await Promise.all([fetch(a), fetch(b), fetch(c)]);
+
+// 串行（不推荐）
+const r1 = await fetch(a);
+const r2 = await fetch(b);
+const r3 = await fetch(c);
+```
 
 ---
 
 ## 5.Vue的生命周期是哪些，代表的是哪个阶段
 
+- **创建阶段（Creation）**：`beforeCreate` → `created`（实例化、响应式初始化、事件/生命周期未挂载 DOM）。
+- **挂载阶段（Mounting）**：`beforeMount` → `mounted`（模板渲染并插入 DOM）。
+- **更新阶段（Updating）**：`beforeUpdate` → `updated`（响应式数据变化触发重新渲染）。
+- **销毁阶段（Unmounting）**：`beforeDestroy` / `beforeUnmount` → `destroyed` / `unmounted`（清理资源、解绑事件）。
+- **其它**：`activated`/`deactivated`（keep-alive 组件）、`errorCaptured`（错误捕获）。
+
+（Vue 3 钩子名基本一致，`beforeDestroy/destroyed` 在 Vue3 中改为 `beforeUnmount/unmounted`）
+
 ---
 
 ## 6.Vue组件的父子传值方式
+
+- **父传子**：`props`。
+- **子传父**：`$emit` 触发自定义事件，或通过回调函数（prop 传入函数）。
+- **跨级/跨组件通信**：`provide` / `inject`、全局状态管理（Vuex / Pinia）、事件总线（不推荐，推荐 mitt 或状态管理）、插槽（slot）和 `ref` 访问子组件方法/属性。
 
 ---
 
 ## 7.写出不少于6个Vue指令及其含义
 
+- `v-bind:prop` / `:`：绑定属性或表达式。
+- `v-model`：双向绑定表单输入值。
+- `v-if`：条件渲染（有销毁与重建）。
+- `v-else` / `v-else-if`：条件分支。
+- `v-for`：列表渲染（需要 `:key`）。
+- `v-on:event` / `@`：监听 DOM 事件并触发方法。
+- `v-show`：通过 `display` 切换显示或隐藏（不销毁 DOM）。
+- `v-pre`：跳过该元素及子元素的编译（用于原样输出）。
+- `v-once`：只渲染一次（性能优化）。
+
 ---
 
 ## 8.编写程序实现一维数组list去重
 
----
-
-## 9.下面代码输出什么
+简洁实用的几种写法：
 
 ```js
-for (var i =  0; i < 6; i++) {
-  setTimeout(() => {
-    console.log(i);
-  }, 0);
+// 1. Set（最快且最简）
+const unique = Array.from(new Set(list));
+
+// 2. filter + indexOf（保留首个出现）
+const unique2 = list.filter((v, i) => list.indexOf(v) === i);
+
+// 3. reduce + includes
+const unique3 = list.reduce((acc, cur) => (acc.includes(cur) ? acc : acc.concat(cur)), []);
+```
+
+---
+
+## 9.下面代码输出什么 & 原因 & 修正
+
+输出：会打印 `6` 共 6 次。
+
+原因：使用 `var i` 为函数作用域，`setTimeout` 的回调在循环结束后才执行，此时 `i` 已变为 6（循环终止条件），所以每次打印都是 6。
+
+修正：使用块级作用域 `let` 或立即执行函数捕获当前 `i`：
+
+```js
+for (let i = 0; i < 6; i++) {
+  setTimeout(() => console.log(i), 0);
+}
+
+// 或
+for (var i = 0; i < 6; i++) {
+  (function (iCopy) {
+    setTimeout(() => console.log(iCopy), 0);
+  })(i);
 }
 ```

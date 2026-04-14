@@ -1,0 +1,21 @@
+# CharityToday 香港一站式慈善援助津贴平台
+
+**项目描述**
+为香港圣雅各福群会开发的一站式援助津贴平台，供有需要人士搜寻、评估及申请合适的慈善援助计划，涵盖医疗、教育、住屋、就业、食物等多类援助类别。
+
+**技术栈**
+Next.js 15 · React 19 · TypeScript · Payload CMS · MongoDB · GraphQL · Apollo Client · MobX · Ant Design · Tailwind CSS · Google Cloud Platform (GCS + GKE) · Docker · i18n 多语言
+
+**主要职责与技术亮点**
+
+- 全栈架构搭建：采用 Next.js 15 App Router，整合 Payload CMS 3.0 作为 Headless CMS，通过 GraphQL API 实现前后端数据交互，并自动生成 TypeScript 类型定义
+- IAM Smart 身份认证集成：接入香港政府 iAM Smart 数字身份服务，实现 QR Code 扫描注册、用户身份证信息自动填表（姓名、HKID、出生日期、地址），并通过 Long Polling 轮询机制处理异步授权回调
+- 智能配对评估功能：开发初步评估问卷模块，根据用户家庭人口、月收入、资产上限、援助类别等条件，实时筛选并返回匹配的援助计划列表
+- 多语言国际化（i18n）：支持繁体中文、简体中文、英文三语切换，通过 Google Sheets 管理翻译文本，并集成自动上传/下载脚本实现翻译协作
+- 状态管理：使用 MobX + MobX Persist Store 管理全局状态（登录态、通知未读数、表单进度等），配合 React 19 最新特性优化渲染性能
+- CI/CD 自动化部署：配置 Google Cloud Build 流水线，根据分支（dev / uat）自动构建 Docker 镜像并推送至 Artifact Registry，通过 kubectl 滚动更新 GKE 集群
+- 媒体存储：对接 Google Cloud Storage（GCS）存储用户上传的图片及文件资产
+- 用户体验：集成 Google Analytics 4、reCAPTCHA 验证、Lottie 动画、无障碍访问（react-axe）支持
+
+**项目成果**
+按时交付，客户好评

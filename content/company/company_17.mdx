@@ -1,6 +1,6 @@
 # xxx科技-前端开发工程师
 
-### 以下代码输出什么
+## 以下代码输出什么
 
 ```js
 var a = {};
@@ -10,8 +10,148 @@ console.log(a.protopyte === b);
 console.log(Object.getProtoOf(a) === b);
 ```
 
-### cookie, sessionStorage, localStorage的区别
+**答案：**
 
-### 使用你熟悉的方式对数字数组按从小到大进行排序(不可使用sort)
+第一行：`console.log(a.protopyte === b);` → **TypeError: Object.protopyte is not defined**
 
-### 使用递归的方式进行阶乘的计算
+分析：
+- `Object.protopyte` 是**拼写错误**（应该是 `Object.prototype`）
+- 代码执行到 `var b = Object.protopyte;` 时就会抛错
+- 所以这段代码无法成功执行
+
+**正确写法：**
+
+```js
+var a = {};
+var b = Object.prototype;
+
+console.log(a.prototype === b);           // false（对象没有 prototype 属性）
+console.log(Object.getPrototypeOf(a) === b);  // true（a 的 __proto__ 指向 Object.prototype）
+
+// 输出：
+// false
+// true
+```
+
+---
+
+## cookie、sessionStorage、localStorage 的区别
+
+| 特性 | Cookie | SessionStorage | LocalStorage |
+|------|--------|----------------|--------------|
+| **存储大小** | ~4KB | ~5-10MB | ~5-10MB |
+| **有效期** | 可设置过期时间 | 浏览器关闭清除 | 永久存储 |
+| **作用域** | 跨域可配置 | 仅当前标签页 | 同源共享 |
+| **发送** | 每次请求自动发送 | 仅客户端 | 仅客户端 |
+| **安全性** | 可被窃取 | 较安全 | 较安全 |
+
+**使用示例：**
+
+```js
+// Cookie
+document.cookie = 'name=john; max-age=3600'; // 1小时
+const name = document.cookie.split('; ').find(c => c.startsWith('name')).split('=')[1];
+
+// SessionStorage
+sessionStorage.setItem('user', 'john');
+sessionStorage.getItem('user');        // john
+sessionStorage.removeItem('user');
+sessionStorage.clear();
+
+// LocalStorage
+localStorage.setItem('theme', 'dark');
+localStorage.getItem('theme');         // dark
+localStorage.removeItem('theme');
+localStorage.clear();
+```
+
+---
+
+## 使用你熟悉的方式对数字数组按从小到大进行排序(不可使用 sort)
+
+```js
+// 方式1：冒泡排序
+function bubbleSort(arr) {
+  const len = arr.length;
+  for (let i = 0; i < len - 1; i++) {
+    for (let j = 0; j < len - i - 1; j++) {
+      if (arr[j] > arr[j + 1]) {
+        // 交换
+        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+      }
+    }
+  }
+  return arr;
+}
+
+// 方式2：快速排序
+function quickSort(arr) {
+  if (arr.length <= 1) return arr;
+  
+  const pivot = arr[Math.floor(arr.length / 2)];
+  const left = arr.filter(x => x < pivot);
+  const middle = arr.filter(x => x === pivot);
+  const right = arr.filter(x => x > pivot);
+  
+  return [...quickSort(left), ...middle, ...quickSort(right)];
+}
+
+// 方式3：插入排序
+function insertSort(arr) {
+  for (let i = 1; i < arr.length; i++) {
+    let j = i - 1;
+    const current = arr[i];
+    while (j >= 0 && arr[j] > current) {
+      arr[j + 1] = arr[j];
+      j--;
+    }
+    arr[j + 1] = current;
+  }
+  return arr;
+}
+
+// 测试
+console.log(bubbleSort([5, 2, 8, 1, 9]));    // [1, 2, 5, 8, 9]
+console.log(quickSort([5, 2, 8, 1, 9]));     // [1, 2, 5, 8, 9]
+console.log(insertSort([5, 2, 8, 1, 9]));    // [1, 2, 5, 8, 9]
+```
+
+---
+
+## 使用递归的方式进行阶乘的计算
+
+```js
+// 基础递归
+function factorial(n) {
+  if (n <= 1) return 1;
+  return n * factorial(n - 1);
+}
+
+console.log(factorial(5)); // 120
+
+// 带缓存的递归（优化性能）
+function createFactorial() {
+  const cache = { 0: 1, 1: 1 };
+  
+  return function factorial(n) {
+    if (n in cache) return cache[n];
+    const result = n * factorial(n - 1);
+    cache[n] = result;
+    return result;
+  };
+}
+
+const factorial2 = createFactorial();
+console.log(factorial2(5));  // 120
+console.log(factorial2(10)); // 快速计算
+
+// 尾递归优化（某些引擎支持）
+function factorial3(n, acc = 1) {
+  if (n <= 1) return acc;
+  return factorial3(n - 1, n * acc);
+}
+
+console.log(factorial3(5)); // 120
+```
+
+---
