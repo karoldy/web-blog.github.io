@@ -2,21 +2,454 @@
 
 ### 1.写React / Vue项目时为什么要在列表组件中写key，其作用是什么?
 
-### 2.`['1".'2"."3].map(parselnt)` what & why?
+**key 的作用**：
+
+key 是给每一个 vnode 的唯一 id，依靠 key，可以更准确、更快速地拿到 oldVnode 中对应的 vnode 节点。
+
+1. **更准确**：因为带 key 就不是就地复用了，在 sameNode 函数 `a.key === b.key` 对比中可以避免就地复用的情况。所以会更加准确。
+2. **更快速**：利用 key 的唯一性生成 map 对象来获取对应节点，比遍历方式更快。
+
+**Vue 和 React 的 diff 算法对比**：
+
+Vue 和 React 的 diff 算法都是进行同层次的比较，主要有以下区别：
+
+1. **对比方式不同**：Vue 的 diff 算法使用双向指针，边对比边更新 DOM。React 主要使用 diff 队列保存需要更新的 DOM，得到 patch 树，再统一批量更新 DOM。
+2. **节点对比**：Vue 对比节点时，当节点元素类型相同，但是 className 不同时，认为是不同类型元素，会删除重建；而 React 则认为是同类型节点，只会修改节点属性。
+3. **列表对比**：Vue 的列表对比采用从两端到中间的方式，而 React 则采用从左到右依次对比的方式。当一个集合只是把最后一个节点移动到了第一个，React 会把前面的节点依次移动，而 Vue 只会把最后一个节点移动到第一个。总体上，Vue 的对比方式更高效。
+
+**为什么不能用 index 作为 key？**
+
+当以 index 作为 key 时，如果列表中的元素发生增删或顺序变化，index 会重新分配，导致 key 值发生变化。这样 diff 算法就无法准确判断哪些元素是新增的、哪些是被删除的、哪些是移动的。例如：
+
+- 在列表头部插入一个元素：所有元素的 index 都会变化，导致所有元素都被重新渲染。
+- 删除列表中间的一个元素：被删除元素之后的所有元素 index 都会变化。
+
+这会导致不必要的 DOM 操作，降低性能。因此，应当使用唯一且稳定的标识作为 key，比如数据中的 id 字段。
+
+---
+
+### 2.`['1', '2', '3'].map(parseInt)` what & why?
+
+**答案**：`[1, NaN, NaN]`
+
+**解析**：
+
+`map` 方法会传入三个参数：`(currentValue, index, array)`，而 `parseInt` 接受两个参数：`(string, radix)`。
+
+所以实际执行的是：
+
+```js
+parseInt('1', 0) // 1（radix 为 0 时，按十进制处理）
+parseInt('2', 1) // NaN（radix 为 1 不在 2-36 范围内）
+parseInt('3', 2) // NaN（'3' 不是合法的二进制字符）
+```
+
+常见变体：
+
+```js
+['10', '10', '10', '10'].map(parseInt)
+// [10, NaN, 2, 3]
+// parseInt('10', 0) = 10
+// parseInt('10', 1) = NaN
+// parseInt('10', 2) = 2  (二进制 '10' = 2)
+// parseInt('10', 3) = 3  (三进制 '10' = 3)
+```
+
+---
 
 ### 3.什么是防抖和节流?有什么区别?如何实现?
 
-### 4.介绍下Set、 Map. WeakSet和 WeakMap的区别?
+**防抖（debounce）**：在事件被触发 n 秒后再执行回调，如果在这 n 秒内事件又被触发，则重新计时。适用于输入框搜索、窗口 resize 等场景。
+
+**节流（throttle）**：规定在一个单位时间内，只能触发一次函数。如果这个单位时间内触发多次函数，只有一次生效。适用于滚动加载、高频点击等场景。
+
+**区别**：防抖是"延迟执行"，让连续的多次触发只执行最后一次；节流是"限频执行"，让函数在一定时间内只执行一次。
+
+**防抖实现**：
+
+```js
+function debounce(fn, delay) {
+  let timer = null
+  return function(...args) {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn.apply(this, args)
+    }, delay)
+  }
+}
+
+// 带立即执行选项的版本
+function debounce(fn, delay, immediate = false) {
+  let timer = null
+  return function(...args) {
+    if (timer) clearTimeout(timer)
+    if (immediate && !timer) {
+      fn.apply(this, args)
+    }
+    timer = setTimeout(() => {
+      if (!immediate) {
+        fn.apply(this, args)
+      }
+      timer = null
+    }, delay)
+  }
+}
+```
+
+**节流实现**：
+
+```js
+// 时间戳版本（第一次立即执行）
+function throttle(fn, delay) {
+  let last = 0
+  return function(...args) {
+    const now = Date.now()
+    if (now - last >= delay) {
+      fn.apply(this, args)
+      last = now
+    }
+  }
+}
+
+// 定时器版本（最后一次也会执行）
+function throttle(fn, delay) {
+  let timer = null
+  return function(...args) {
+    if (!timer) {
+      timer = setTimeout(() => {
+        fn.apply(this, args)
+        timer = null
+      }, delay)
+    }
+  }
+}
+```
+
+---
+
+### 4.介绍下Set、Map、WeakSet和WeakMap的区别?
+
+**Set**：
+- ES6 新增的数据结构，类似于数组，但成员的值都是唯一的，没有重复的值。
+- 常用方法：`add`、`delete`、`has`、`clear`，属性：`size`。
+- 遍历方法：`keys()`、`values()`、`entries()`、`forEach()`。
+- 可以存储任意类型的值。
+
+**Map**：
+- ES6 新增的数据结构，类似于对象，是键值对的集合，但"键"的范围不限于字符串，各种类型的值（包括对象）都可以当作键。
+- 常用方法：`set`、`get`、`delete`、`has`、`clear`，属性：`size`。
+- 遍历方法：`keys()`、`values()`、`entries()`、`forEach()`。
+
+**WeakSet**：
+- 成员只能是对象，不能是其他类型的值。
+- 成员都是弱引用，即垃圾回收机制不考虑 WeakSet 对该对象的引用。如果其他对象都不再引用该对象，垃圾回收机制会自动回收该对象所占用的内存。
+- 不可遍历（没有 `size` 属性，没有 `forEach` 方法）。
+- 常用方法：`add`、`delete`、`has`。
+
+**WeakMap**：
+- 只接受对象作为键名（null 除外），不接受其他类型的值作为键名。
+- 键名所指向的对象是弱引用，不计入垃圾回收机制。
+- 不可遍历（没有 `size` 属性，没有 `forEach` 方法）。
+- 常用方法：`set`、`get`、`delete`、`has`。
+
+**应用场景**：
+- Set：数组去重 `[...new Set(arr)]`。
+- Map：需要频繁增删键值对，或键不是字符串时。
+- WeakSet：存储 DOM 节点，不用担心节点从文档中移除时引发内存泄漏。
+- WeakMap：在 DOM 元素上关联数据，或实现私有属性。
+
+---
 
 ### 5.介绍下深度优先遍历和广度优先遍历，如何实现?
 
+**深度优先遍历（DFS）**：是指从某个顶点出发，首先访问这个顶点，然后找出刚访问这个结点的第一个未被访问的邻结点，然后再以此邻结点为顶点，继续找它的下一个顶点进行访问。重复此步骤，直至所有结点都被访问完为止。
+
+**广度优先遍历（BFS）**：是从某个顶点出发，首先访问这个顶点，然后找出刚访问这个结点所有未被访问的邻结点，访问完后再访问这些结点中第一个邻结点的所有结点，重复此方法，直到所有结点都被访问完为止。
+
+**深度优先遍历实现（DOM 树）**：
+
+```js
+// 递归写法
+function deepTraversal(node) {
+  let nodes = []
+  if (node != null) {
+    nodes.push(node)
+    let children = node.children
+    for (let i = 0; i < children.length; i++) {
+      nodes = nodes.concat(deepTraversal(children[i]))
+    }
+  }
+  return nodes
+}
+
+// 非递归写法（栈）
+function deepTraversal(node) {
+  let nodes = []
+  if (node != null) {
+    let stack = []
+    stack.push(node)
+    while (stack.length != 0) {
+      let item = stack.pop()
+      nodes.push(item)
+      let children = item.children
+      for (let i = children.length - 1; i >= 0; i--) {
+        stack.push(children[i])
+      }
+    }
+  }
+  return nodes
+}
+```
+
+**广度优先遍历实现（DOM 树）**：
+
+```js
+// 非递归写法（队列）
+function wideTraversal(node) {
+  let nodes = []
+  if (node != null) {
+    let queue = [node]
+    while (queue.length != 0) {
+      let item = queue.shift()
+      nodes.push(item)
+      let children = item.children
+      for (let i = 0; i < children.length; i++) {
+        queue.push(children[i])
+      }
+    }
+  }
+  return nodes
+}
+```
+
+**树的 DFS 与 BFS**：
+
+```js
+const tree = {
+  val: 'a',
+  children: [
+    { val: 'b', children: [...] },
+    { val: 'c', children: [...] }
+  ]
+}
+
+// DFS
+function dfs(root) {
+  console.log(root.val)
+  root.children && root.children.forEach(dfs)
+}
+
+// BFS
+function bfs(root) {
+  const queue = [root]
+  while (queue.length) {
+    const node = queue.shift()
+    console.log(node.val)
+    node.children && node.children.forEach(child => queue.push(child))
+  }
+}
+```
+
+---
+
 ### 6.请分别用深度优先思想和广度优先思想实现一个拷贝函数?
+
+```js
+// 工具函数：获取数据类型
+function getType(obj) {
+  return Object.prototype.toString.call(obj).slice(8, -1)
+}
+
+// 深度优先深拷贝
+function deepCloneDFS(obj, map = new WeakMap()) {
+  // 处理基本类型和 null
+  if (typeof obj !== 'object' || obj === null) return obj
+  
+  // 处理循环引用
+  if (map.has(obj)) return map.get(obj)
+  
+  let clone
+  const type = getType(obj)
+  
+  if (type === 'Array') {
+    clone = []
+    map.set(obj, clone)
+    for (let i = 0; i < obj.length; i++) {
+      clone[i] = deepCloneDFS(obj[i], map)
+    }
+  } else if (type === 'Object') {
+    clone = {}
+    map.set(obj, clone)
+    for (let key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        clone[key] = deepCloneDFS(obj[key], map)
+      }
+    }
+  } else if (type === 'Date') {
+    clone = new Date(obj.getTime())
+  } else if (type === 'RegExp') {
+    clone = new RegExp(obj.source, obj.flags)
+  } else if (type === 'Map') {
+    clone = new Map()
+    map.set(obj, clone)
+    obj.forEach((value, key) => {
+      clone.set(key, deepCloneDFS(value, map))
+    })
+  } else if (type === 'Set') {
+    clone = new Set()
+    map.set(obj, clone)
+    obj.forEach(value => {
+      clone.add(deepCloneDFS(value, map))
+    })
+  } else {
+    clone = obj
+  }
+  
+  return clone
+}
+
+// 广度优先深拷贝
+function deepCloneBFS(obj) {
+  if (typeof obj !== 'object' || obj === null) return obj
+  
+  // 创建根节点的拷贝
+  const root = Array.isArray(obj) ? [] : {}
+  const queue = [{ source: obj, target: root }]
+  const map = new WeakMap()
+  map.set(obj, root)
+  
+  while (queue.length) {
+    const { source, target } = queue.shift()
+    const type = getType(source)
+    
+    if (type === 'Array') {
+      for (let i = 0; i < source.length; i++) {
+        if (typeof source[i] === 'object' && source[i] !== null) {
+          if (map.has(source[i])) {
+            target[i] = map.get(source[i])
+          } else {
+            const childTarget = Array.isArray(source[i]) ? [] : {}
+            target[i] = childTarget
+            map.set(source[i], childTarget)
+            queue.push({ source: source[i], target: childTarget })
+          }
+        } else {
+          target[i] = source[i]
+        }
+      }
+    } else if (type === 'Object') {
+      for (let key in source) {
+        if (source.hasOwnProperty(key)) {
+          if (typeof source[key] === 'object' && source[key] !== null) {
+            if (map.has(source[key])) {
+              target[key] = map.get(source[key])
+            } else {
+              const childTarget = Array.isArray(source[key]) ? [] : {}
+              target[key] = childTarget
+              map.set(source[key], childTarget)
+              queue.push({ source: source[key], target: childTarget })
+            }
+          } else {
+            target[key] = source[key]
+          }
+        }
+      }
+    }
+  }
+  
+  return root
+}
+```
+
+---
 
 ### 7.ES5/ES6的继承除了写法以外还有什么区别?
 
+1. **class 声明会提升，但不会初始化赋值**（存在暂时性死区）。ES5 的构造函数可以当作普通函数使用，ES6 的 class 必须通过 new 调用。
+
+2. **class 内部默认启用严格模式**。ES5 需要手动声明 `'use strict'`。
+
+3. **class 的所有方法都是不可枚举的**（enumerable: false）。ES5 原型上的方法默认是可枚举的。
+
+4. **class 的所有方法都没有原型对象 prototype**，也没有 `[[Construct]]`，不能使用 new 来调用。
+
+5. **class 的继承机制不同**：
+   - ES5 的继承是先创建子类的实例对象 `this`，然后再将父类的方法添加到 `this` 上（`Parent.apply(this)`）。
+   - ES6 的继承是先将父类实例对象的属性和方法加到 `this` 上面（所以必须先调用 `super` 方法），然后再用子类的构造函数修改 `this`。
+
+6. **class 可以继承内置类型**（如 Array、Error 等），而 ES5 不能完美继承内置类型。
+
+7. **静态方法和静态属性**：class 支持 `static` 关键字定义静态方法和属性，ES5 中需要直接挂载在构造函数上。
+
+8. **不存在变量提升**：class 声明不存在变量提升，必须先声明后使用。
+
+---
+
 ### 8.setTimeout、Promise、Async/Await的区别?
 
+**事件循环中的执行顺序**：
+
+1. **setTimeout**：属于宏任务（macrotask）。会在当前执行栈清空后、下一轮事件循环中执行。即使设置延时为 0，也不会立即执行。
+2. **Promise**：`Promise` 构造函数中的代码是同步执行的，但 `.then()` / `.catch()` 中的回调属于微任务（microtask）。微任务在当前宏任务执行完毕后立即执行，优先于下一个宏任务。
+3. **Async/Await**：`async` 函数返回一个 Promise。`await` 关键字会等待后面的 Promise 完成，相当于 Promise 的 `.then()`，属于微任务。
+
+**三者的关系**：Async/Await 是 Generator 函数的语法糖，本质上是对 Promise 的封装。Promise 是对回调函数的封装，解决了回调地狱的问题。setTimeout 是传统的异步方案。
+
+**执行顺序**：同步代码 → 微任务（Promise.then / await 后续代码） → 宏任务（setTimeout / setInterval / I/O）
+
+```js
+// 示例
+console.log('1')
+setTimeout(() => console.log('2'), 0)
+Promise.resolve().then(() => console.log('3'))
+console.log('4')
+// 输出：1 4 3 2
+```
+
+---
+
 ### 9.Async/Await如何通过同步的方式实现异步?
+
+Async/Await 是 Generator 函数的语法糖。其核心原理是利用 Generator 函数的暂停/恢复执行能力，配合自动执行器来实现。
+
+**Generator 函数**（`function*`）可以通过 `yield` 关键字暂停函数的执行，通过 `next()` 方法恢复执行。Async/Await 就是将 Generator 函数和自动执行器包装在一个函数中。
+
+**简化实现**：
+
+```js
+function asyncToGenerator(generatorFunc) {
+  return function() {
+    const gen = generatorFunc.apply(this, arguments)
+    return new Promise((resolve, reject) => {
+      function step(key, arg) {
+        let generatorResult
+        try {
+          generatorResult = gen[key](arg)
+        } catch (error) {
+          return reject(error)
+        }
+        const { value, done } = generatorResult
+        if (done) {
+          return resolve(value)
+        } else {
+          return Promise.resolve(value).then(
+            val => step('next', val),
+            err => step('throw', err)
+          )
+        }
+      }
+      step('next')
+    })
+  }
+}
+```
+
+**与 Generator 的区别**：
+- Async/Await 自带执行器，不需要手动调用 `next()`。
+- Async/Await 的返回值是 Promise，Generator 返回的是 Iterator 对象。
+- `await` 后面可以跟 Promise 或普通值，`yield` 后面只能是值。
+
+---
 
 ### 10.异步笔试题请写出下面代码的运行结果
 
@@ -60,6 +493,8 @@ console.log('script end')
 //setTimeout
 ```
 
+---
+
 ### 11.算法手写题
 
 已知如下数组，编写一个程序将数组扁平化去并除其中重复部分数据，最终得到一个升序且不重复的数组
@@ -72,16 +507,196 @@ var arr = [ [1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14] ] ] ], 
 
 `Array.from(new Set(arr.flat(Infinity))).sort((a,b)=>{ return a-b})`
 
+**补充实现**：
+
+```js
+// 方法一：flat + Set
+const result = Array.from(new Set(arr.flat(Infinity))).sort((a, b) => a - b)
+
+// 方法二：手写扁平化 + 去重
+function flatten(arr) {
+  return arr.reduce((prev, cur) => {
+    return prev.concat(Array.isArray(cur) ? flatten(cur) : cur)
+  }, [])
+}
+
+const unique = [...new Set(flatten(arr))].sort((a, b) => a - b)
+console.log(unique)
+// [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+```
+
+---
 
 ### 12.JS 异步解决方案的发展历程以及优缺点。
 
+**1. 回调函数（Callback）**
+
+最早期的异步解决方案。通过将回调函数作为参数传递给异步操作，在操作完成时调用回调函数。
+
+```js
+fs.readFile('file.txt', (err, data) => {
+  if (err) throw err
+  console.log(data)
+})
+```
+
+**优点**：简单、直观，容易理解。
+
+**缺点**：
+- 回调地狱（Callback Hell）：多层嵌套导致代码难以维护。
+- 不能使用 try/catch 捕获错误。
+- 无法 return 返回值。
+- 多个异步操作并发时难以控制。
+
+**2. Promise**
+
+ES6 引入，解决了回调地狱的问题，提供链式调用。
+
+**优点**：
+- 链式调用，解决了回调地狱。
+- 统一了错误处理（catch）。
+- 提供了 Promise.all、Promise.race 等并发控制方法。
+
+**缺点**：
+- 无法取消 Promise。
+- 当处于 Pending 状态时，无法得知进度。
+- 错误需要通过回调函数捕获。
+
+**3. Generator**
+
+ES6 引入，通过 `yield` 关键字可以暂停函数执行。
+
+**优点**：可以控制函数的执行和暂停，配合 co 模块可以实现用同步方式写异步代码。
+
+**缺点**：需要手动执行 `next()`，需要配合自动执行器使用，使用相对复杂。
+
+**4. Async/Await**
+
+ES7（ES2017）引入，是 Generator 和 Promise 的语法糖。
+
+**优点**：
+- 代码清晰，以同步方式写异步代码。
+- 可以使用 try/catch 处理错误。
+- 调试方便，可以在 await 处设置断点。
+
+**缺点**：
+- 如果多个异步操作没有依赖关系，使用 await 会降低性能（应使用 Promise.all）。
+- await 只能出现在 async 函数内部。
+
+---
+
 ### 13.Promise构造函数是同步执行还是异步执行，那么then方法呢?
+
+**Promise 构造函数是同步执行的**。当通过 `new Promise()` 创建实例时，传入的执行器函数（executor）会立即同步执行。
+
+**`.then()` 方法是异步执行的**（微任务）。即使 Promise 的状态已经是 resolved，`.then()` 中的回调也会被放入微任务队列中，在当前同步代码执行完毕后再执行。
+
+```js
+console.log('1')
+
+new Promise((resolve) => {
+  console.log('2')   // 同步执行
+  resolve()
+}).then(() => {
+  console.log('3')   // 微任务，异步执行
+})
+
+console.log('4')
+
+// 输出顺序：1 2 4 3
+```
+
+**原因**：Promise A+ 规范要求，`.then()` 中的回调必须异步执行，不能在 Promise 解决时同步调用。这保证了异步行为的一致性。
+
+---
 
 ### 14.如何实现一个new
 
+```js
+function myNew(constructor, ...args) {
+  // 1. 创建一个新的空对象
+  const obj = {}
+  
+  // 2. 将新对象的原型指向构造函数的 prototype
+  obj.__proto__ = constructor.prototype
+  // 或者使用 Object.create：const obj = Object.create(constructor.prototype)
+  
+  // 3. 将构造函数的 this 指向新对象，并执行构造函数
+  const result = constructor.apply(obj, args)
+  
+  // 4. 如果构造函数返回的是一个对象，则返回该对象；否则返回新创建的对象
+  return result instanceof Object ? result : obj
+}
+
+// 测试
+function Person(name, age) {
+  this.name = name
+  this.age = age
+}
+
+Person.prototype.say = function() {
+  console.log(`I'm ${this.name}, ${this.age} years old.`)
+}
+
+const p = myNew(Person, 'Tom', 18)
+console.log(p.name)  // 'Tom'
+console.log(p.age)   // 18
+p.say()              // I'm Tom, 18 years old.
+console.log(p instanceof Person)  // true
+```
+
+---
+
 ### 15.简单讲解一下http2的多路复用
 
+HTTP/2 的多路复用（Multiplexing）允许在单个 TCP 连接上同时发送多个 HTTP 请求和接收多个 HTTP 响应，而不需要按照顺序一一对应。
+
+**HTTP/1.x 的问题**：
+- HTTP/1.0：每个请求都需要建立一个新的 TCP 连接（短连接）。
+- HTTP/1.1：引入了持久连接（Keep-Alive），可以在一个 TCP 连接上发送多个请求，但请求是串行的（队头阻塞，Head-of-Line Blocking）。一个请求的延迟会阻塞后续所有请求。
+
+**HTTP/2 多路复用的原理**：
+
+HTTP/2 引入了"帧"（Frame）和"流"（Stream）的概念：
+
+1. **帧（Frame）**：HTTP/2 中数据通信的最小单位。每个帧包含帧头，标识自己属于哪个流。
+2. **流（Stream）**：一个 TCP 连接上可以同时存在多个流，每个流承载一个请求-响应对。流之间互不干扰。
+3. **多路复用**：不同流的帧可以交错发送（interleaving），接收方根据帧头标识重新组装。这样就不需要等待上一个请求完成才能发送下一个请求。
+
+**优点**：
+- 避免了 HTTP/1.x 的队头阻塞。
+- 减少了 TCP 连接数，降低服务器压力。
+- 提高了带宽利用率。
+- 减少了 SSL 握手的开销。
+
+---
+
 ### 16.谈谈你对TCP三次握手和四次挥手的理解
+
+**三次握手（建立连接）**：
+
+1. **第一次握手**：客户端发送 SYN 包（SYN=1, seq=x）到服务器，客户端进入 `SYN_SENT` 状态。
+2. **第二次握手**：服务器收到 SYN 包后，回复 SYN+ACK 包（SYN=1, ACK=1, ack=x+1, seq=y），服务器进入 `SYN_RCVD` 状态。
+3. **第三次握手**：客户端收到 SYN+ACK 包后，回复 ACK 包（ACK=1, ack=y+1, seq=x+1），客户端和服务器都进入 `ESTABLISHED` 状态。
+
+**为什么是三次握手？**
+- 三次握手是为了防止已失效的连接请求报文段突然又传到服务器，从而产生错误。如果只有两次握手，服务器收到一个已经过期的连接请求后就会建立连接，造成资源浪费。第三次握手让客户端确认服务器的响应，确保双方都有收发能力。
+
+**四次挥手（断开连接）**：
+
+1. **第一次挥手**：主动关闭方发送 FIN 包（FIN=1, seq=u），进入 `FIN_WAIT_1` 状态。
+2. **第二次挥手**：被动关闭方收到 FIN 后，回复 ACK 包（ACK=1, ack=u+1, seq=v），进入 `CLOSE_WAIT` 状态。主动方收到 ACK 后进入 `FIN_WAIT_2` 状态。
+3. **第三次挥手**：被动关闭方数据发送完毕后，也发送 FIN 包（FIN=1, ACK=1, ack=u+1, seq=w），进入 `LAST_ACK` 状态。
+4. **第四次挥手**：主动方收到 FIN 后，回复 ACK 包（ACK=1, ack=w+1, seq=u+1），进入 `TIME_WAIT` 状态。等待 2MSL 后进入 `CLOSED` 状态。被动方收到 ACK 后直接进入 `CLOSED` 状态。
+
+**为什么是四次挥手？**
+- TCP 是全双工的，每个方向都需要单独关闭。当一方完成数据发送后，发送 FIN 表示不再发送数据，但仍可接收数据。另一方收到 FIN 后，可能还有数据要发送，所以先回复 ACK，等数据发完再发送自己的 FIN。因此 FIN 和 ACK 是分开发送的，需要四次。
+
+**为什么 TIME_WAIT 要等 2MSL？**
+- 确保最后一个 ACK 能到达服务器（如果丢失，服务器会重发 FIN）。
+- 让旧连接的所有报文段从网络中消失，防止干扰新连接。
+
+---
 
 ### 17.A、B机器正常连接后，B机器突然重启，问A此时处于TCP什么状态
 
@@ -89,11 +704,45 @@ var arr = [ [1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14] ] ] ], 
 
 因为 B 会在重启之后进入 tcp 状态机的 listen 状态，只要当 a 重新发送一个数据包（无论是 syn 包或者是应用数据），b 端应该会主动发送一个带 rst 位的重置包来进行连接重置，所以 a 应该在 syn_sent 状态
 
+**补充说明**：
+
+当 B 机器重启后，B 的 TCP 协议栈丢失了所有连接信息。此时 A 处于 `ESTABLISHED` 状态（因为 A 不知道 B 已经重启）。
+
+当 A 尝试向 B 发送数据时：
+- B 收到一个不属于任何现有连接的数据包，会根据 TCP 协议回复一个 RST（Reset）包。
+- A 收到 RST 包后，会立即终止连接，进入 `CLOSED` 状态。
+
+如果 A 一直不发送数据，可以启用 TCP Keep-Alive 机制来检测死连接。Keep-Alive 会定时发送探测包，当探测失败达到一定次数后，会关闭连接。
+
+---
+
 ### 18.React 中setState什么时候是同步的，什么时候是异步的?
 
 1、由 React 控制的事件处理程序，以及生命周期函数调用 setState 不会同步更新 state 。
 
 2、React 控制之外的事件中调用 setState 是同步更新的。比如原生 js 绑定的事件，setTimeout/setInterval 等。
+
+**React 18 更新**：
+
+在 React 18 中，所有 setState 都是异步批处理的（包括 setTimeout、原生事件中的调用）。React 18 通过 `createRoot` 启用了自动批处理（Automatic Batching）。
+
+```js
+// React 17
+setTimeout(() => {
+  setState({ count: 1 })
+  console.log(state.count) // 同步更新，可以获取到最新值
+}, 0)
+
+// React 18（使用 createRoot）
+setTimeout(() => {
+  setState({ count: 1 })
+  console.log(state.count) // 还是旧值，因为也变成了批处理
+}, 0)
+```
+
+如果需要获取更新后的值，可以使用 `flushSync`（React 18）或在 setState 的回调中获取（类组件）。
+
+---
 
 ### 19.React setState笔试题，下面的代码输出什么?
 
@@ -130,27 +779,492 @@ class Example extends React.Component {
 // 0, 0, 2, 3
 ```
 
-### 20.介绍下npm模块安装机制，为什么输入npm install就可以自动安装对应的
+**解析**：
+
+- 第 1、2 次 log：在 React 合成事件/生命周期中，setState 是异步批处理的，state 不会立即更新，所以两次都输出 0。
+- 第 3、4 次 log：在 setTimeout 中（React 17 及之前），setState 是同步的。第一次 setState 后 val 变为 2（因为之前批处理已经把 val 更新到了 1，这里再加 1），输出 2。第二次 setState 后 val 变为 3，输出 3。
+
+> 注意：在 React 18 中，由于自动批处理，setTimeout 中的 setState 也是异步的，结果会不同。
+
+---
+
+### 20.介绍下npm模块安装机制，为什么输入npm install就可以自动安装对应的模块?
+
+npm 模块安装机制：
+
+发出 npm install 命令
+
+1. **查询 node_modules 目录之中是否已经存在指定模块**：
+   - 若存在，不再重新安装
+   - 若不存在，继续下一步
+
+2. **npm 向 registry 查询模块压缩包的网址**，下载压缩包，存放在根目录下的 `.npm` 目录里（npm 缓存目录）。
+
+3. **解压压缩包到当前项目的 node_modules 目录**。
+
+**详细流程**：
+
+1. **执行工程自身的 preinstall 钩子**。
+2. **确定首层依赖模块**：即 `dependencies` 和 `devDependencies` 中指定的模块。
+3. **构建依赖树**：这是一个递归过程。每个模块的 `package.json` 中的依赖会继续被解析，最终形成一个完整的依赖树。
+4. **依赖扁平化（dedupe）**：npm v3 之后采用扁平化安装策略。尽量将依赖安装在顶层 `node_modules` 中，减少嵌套层级。当遇到版本冲突时，才会将冲突的版本嵌套安装。
+5. **安装模块**：从缓存中查找或从 registry 下载模块，解压到 `node_modules`。
+6. **执行工程自身的生命周期钩子**（install、postinstall 等）。
+
+**package-lock.json 的作用**：锁定安装时的版本号，确保不同环境中安装的依赖版本完全一致。
+
+---
 
 ### 21.说出3个判断数组的方法，请分别介绍它们之间的区别和优劣
 
+**1. `Object.prototype.toString.call()`**
+
+```js
+Object.prototype.toString.call([1, 2, 3]) // '[object Array]'
+```
+
+- **优点**：最可靠的方法，适用于所有 JavaScript 内置类型。对于检测数组来说，不存在跨 iframe 的问题。
+- **缺点**：写法较繁琐。
+- **推荐度**：★★★★★（最推荐）
+
+**2. `Array.isArray()`**
+
+```js
+Array.isArray([1, 2, 3]) // true
+```
+
+- **优点**：ES5 新增的方法，专门用于判断数组，语义清晰。解决了跨 iframe 判断的问题（iframe 中的数组用 `instanceof` 会判断失败）。
+- **缺点**：需要 ES5+ 环境（现代浏览器都支持，可 polyfill）。
+- **推荐度**：★★★★★（最推荐）
+
+**3. `instanceof Array`**
+
+```js
+[1, 2, 3] instanceof Array // true
+```
+
+- **优点**：写法简洁，语义清晰。
+- **缺点**：无法跨 iframe 判断（不同 iframe 中的 Array 构造函数不是同一个）。而且在原型链被修改的情况下会误判。
+- **推荐度**：★★★
+
+**4. `constructor` 属性**
+
+```js
+[1, 2, 3].constructor === Array // true
+```
+
+- **优点**：写法简洁。
+- **缺点**：`constructor` 属性可以被修改，不可靠。
+- **推荐度**：★★
+
+**总结**：优先使用 `Array.isArray()`，需要兼容旧环境时使用 `Object.prototype.toString.call()`。
+
+---
+
 ### 22.介绍下重绘和回流(Repaint & Reflow)，以及如何进行优化
+
+**回流（Reflow / Layout）**：当渲染树中部分或全部元素的尺寸、结构或位置发生改变时，浏览器需要重新计算元素的几何属性，然后重新构建渲染树的过程。
+
+**重绘（Repaint）**：当页面中元素的样式（如颜色、背景色等）发生改变但不影响布局时，浏览器重新绘制元素的外观。
+
+**关系**：回流必定触发重绘，重绘不一定触发回流。回流的代价远大于重绘。
+
+**触发回流的操作**：
+- 页面首次渲染
+- 添加/删除可见 DOM 元素
+- 元素位置、尺寸变化（margin、padding、width、height 等）
+- 内容变化（文本、图片替换等）
+- 浏览器窗口尺寸变化
+- 获取某些属性（offsetTop、scrollTop、clientWidth、getComputedStyle() 等）
+
+**触发重绘的操作**：
+- color、background-color、border-color、visibility、box-shadow 等不影响布局的样式变化。
+
+**优化策略**：
+
+1. **避免频繁操作 DOM**：使用 DocumentFragment 或一次性修改。
+2. **使用 class 代替内联样式修改**：将多次样式修改合并为一次 class 切换。
+3. **避免频繁读取会触发回流的属性**：如需读取和写入，采用"读写分离"或缓存。
+4. **使用 `transform` 代替 `top/left` 动画**：transform 不会触发回流（GPU 加速，只触发 composite）。
+5. **将动画元素脱离文档流**：使用 `position: absolute` 或 `position: fixed`。
+6. **使用 `visibility: hidden` 代替 `display: none`**（仅在需要保留占位时）。
+7. **使用 `will-change` 或 `translateZ(0)` 启用 GPU 加速**。
+8. **使用虚拟 DOM 框架**（React/Vue），它们有 diff 算法和批量更新策略。
+
+---
 
 ### 23.介绍下观察者模式和订阅-发布模式的区别，各自适用于什么场景
 
+**观察者模式（Observer Pattern）**：
+
+观察者直接订阅（被观察者）Subject。当 Subject 状态变化时，主动通知所有观察者。
+
+- 角色：Subject（被观察者）、Observer（观察者）。
+- 关系：Subject 和 Observer 是**直接依赖**的。Subject 维护观察者列表，Observer 需要实现统一的更新接口。
+- 耦合度：**较高**。Subject 知道 Observer 的存在。
+
+```js
+// 观察者模式
+class Subject {
+  constructor() {
+    this.observers = []
+  }
+  addObserver(observer) {
+    this.observers.push(observer)
+  }
+  notify(data) {
+    this.observers.forEach(observer => observer.update(data))
+  }
+}
+
+class Observer {
+  update(data) {
+    console.log('收到通知：', data)
+  }
+}
+
+const subject = new Subject()
+const observer1 = new Observer()
+const observer2 = new Observer()
+subject.addObserver(observer1)
+subject.addObserver(observer2)
+subject.notify('hello')
+```
+
+**发布-订阅模式（Publish-Subscribe Pattern）**：
+
+发布者和订阅者不直接通信，而是通过**事件中心（Event Channel / Broker）**来传递消息。
+
+- 角色：Publisher（发布者）、Subscriber（订阅者）、Event Channel（事件中心）。
+- 关系：发布者和订阅者**互不知晓**，完全解耦。
+- 耦合度：**较低**。通过事件中心解耦。
+
+```js
+// 发布-订阅模式
+class EventBus {
+  constructor() {
+    this.events = {}
+  }
+  on(event, callback) {
+    if (!this.events[event]) this.events[event] = []
+    this.events[event].push(callback)
+  }
+  emit(event, data) {
+    if (this.events[event]) {
+      this.events[event].forEach(cb => cb(data))
+    }
+  }
+  off(event, callback) {
+    if (this.events[event]) {
+      this.events[event] = this.events[event].filter(cb => cb !== callback)
+    }
+  }
+}
+
+const bus = new EventBus()
+bus.on('login', user => console.log('用户登录：', user))
+bus.emit('login', { name: 'Tom' })
+```
+
+**核心区别**：
+- 观察者模式是 Subject 直接通知 Observer。
+- 发布-订阅模式是通过事件中心间接通信，发布者和订阅者完全解耦。
+
+**适用场景**：
+- **观察者模式**：Vue 的响应式系统（Dep 和 Watcher），组件之间的直接交互。
+- **发布-订阅模式**：Vue 的 EventBus、Node.js 的 EventEmitter、消息队列（RabbitMQ、Kafka）、DOM 事件系统。
+
+---
+
 ### 24.聊聊Redux和Vuex的设计思想
+
+**Redux**：
+
+Redux 是受 Flux 架构启发的 JavaScript 状态管理库。核心设计思想：
+
+1. **单一数据源（Single Source of Truth）**：整个应用的状态存储在唯一的 Store 中，以对象树的形式存在。
+2. **状态是只读的（State is Read-Only）**：唯一改变状态的方式是派发（dispatch）一个 Action。
+3. **使用纯函数来执行修改（Changes are Made with Pure Functions）**：Reducer 是纯函数，接收旧的 State 和 Action，返回新的 State。
+
+核心概念：Store、Action、Reducer、Dispatch。
+
+**Vuex**：
+
+Vuex 是专为 Vue.js 设计的状态管理模式。核心设计思想：
+
+1. **State**：单一状态树，与 Redux 类似，驱动应用的数据源。
+2. **Getter**：相当于 Vue 的计算属性，用于从 State 中派生出一些状态。
+3. **Mutation**：更改 State 的唯一方法是提交 Mutation。**必须是同步函数**。
+4. **Action**：包含异步操作，通过提交 Mutation 来间接改变 State。
+5. **Module**：将 Store 分割成模块，每个模块拥有自己的 State、Getter、Mutation、Action。
+
+**异同点**：
+
+| 对比维度 | Redux | Vuex |
+|---------|-------|------|
+| 数据流 | 单向数据流 | 单向数据流 |
+| 修改状态 | 通过 Reducer（纯函数） | 通过 Mutation（同步函数） |
+| 异步处理 | 使用中间件（redux-thunk、redux-saga） | Action 支持异步 |
+| 不可变性 | 强制不可变，每次都返回新 State | 可以直接修改 State（Vue 的响应式追踪） |
+| 模块化 | 通过 combineReducers | 内置 Module 机制 |
+| 框架耦合 | 框架无关（React、Angular 等） | 与 Vue 深度绑定 |
+
+---
 
 ### 25.说说浏览器和Node事件循环的区别
 
+**浏览器事件循环**：
+
+浏览器的事件循环基于 HTML5 规范。执行栈清空后，事件循环从任务队列中取出任务执行。
+
+- **宏任务**（macrotask）：script（整体代码）、setTimeout、setInterval、I/O、UI rendering、setImmediate（Node.js）。
+- **微任务**（microtask）：Promise.then/catch/finally、MutationObserver、queueMicrotask、process.nextTick（Node.js）。
+- 执行顺序：每次宏任务执行完毕后，会清空微任务队列，然后执行 UI 渲染（如果需要），再取下一个宏任务。
+
+**Node.js 事件循环**：
+
+Node.js 的事件循环基于 libuv。分为 6 个阶段：
+
+1. **timers**：执行 `setTimeout`、`setInterval` 的回调。
+2. **pending callbacks**：执行延迟到下一个循环迭代的 I/O 回调。
+3. **idle, prepare**：仅供内部使用。
+4. **poll**：获取新的 I/O 事件，执行 I/O 回调（除 close 回调、timer 回调、setImmediate 回调）。
+5. **check**：执行 `setImmediate` 回调。
+6. **close callbacks**：执行关闭事件的回调，如 `socket.on('close')`。
+
+每个阶段执行完毕后，都会执行微任务队列。在 Node 中，微任务又分为两种优先级：`process.nextTick` 优先级最高，先于 Promise 回调。
+
+**主要区别**：
+
+1. **微任务执行时机**：
+   - 浏览器：一个宏任务执行完毕后立即清空微任务。
+   - Node：每个阶段执行完毕后清空微任务（nextTick → Promise）。
+
+2. **宏任务类型不同**：
+   - 浏览器有：UI rendering。
+   - Node 有：setImmediate、I/O 回调等。
+
+3. **process.nextTick**：Node 独有，优先于所有微任务。
+
+4. **事件循环驱动源不同**：
+   - 浏览器的事件循环由用户交互、网络请求等驱动。
+   - Node 的事件循环由 libuv 驱动。
+
+---
+
 ### 26.介绍模块化发展历程
 
-### 27.全局作用域中，用const和 let声明的变量不在window 上，那到底在哪
+**1. 全局函数时代（无模块）**
 
-### 28.cookie和token都存放在header 中，为什么不会劫持token?
+早期 JavaScript 代码通过全局函数和全局变量组织，所有代码都在全局作用域中。
 
-### 29.聊聊Vue的双向数据绑定，Model如何改变View, view又是如何改变
+- **问题**：命名冲突、全局污染、依赖关系不明确。
+
+**2. 命名空间模式（对象封装）**
+
+使用对象来模拟命名空间，减少全局变量的数量。
+
+```js
+var module = {
+  name: 'module',
+  fn: function() {}
+}
+```
+
+- **问题**：内部成员可以被外部修改，不安全。
+
+**3. IIFE（立即执行函数 + 闭包）**
+
+通过立即执行函数创建私有作用域，暴露公共接口。
+
+```js
+var module = (function() {
+  var privateVar = 'private'
+  return {
+    publicFn: function() {
+      console.log(privateVar)
+    }
+  }
+})()
+```
+
+- **优点**：实现了私有变量，解决全局污染。
+- **缺点**：依赖管理仍然困难。
+
+**4. CommonJS（2009）**
+
+Node.js 采用的模块规范。同步加载模块，主要用于服务端。
+
+```js
+// 导出
+module.exports = {}
+// 导入
+const module = require('./module')
+```
+
+- **特点**：运行时加载，输出值的拷贝。在服务端同步加载没问题，但不适合浏览器（同步加载会阻塞）。
+
+**5. AMD（Asynchronous Module Definition）**
+
+浏览器端的异步模块加载规范。代表：RequireJS。
+
+```js
+define(['moduleA', 'moduleB'], function(a, b) {
+  return {}
+})
+```
+
+- **特点**：依赖前置，提前声明和加载所有依赖。
+
+**6. CMD（Common Module Definition）**
+
+代表：SeaJS。按需加载，就近依赖。
+
+```js
+define(function(require, exports, module) {
+  var a = require('./a')
+  a.doSomething()
+})
+```
+
+- **特点**：依赖就近，用到时才 require。
+
+**7. ES Modules（ES6 / ES2015）**
+
+ECMAScript 官方模块规范，现代浏览器和 Node.js 都支持。
+
+```js
+// 导出
+export default {}
+export const name = 'hello'
+// 导入
+import module from './module'
+import { name } from './module'
+```
+
+- **特点**：编译时加载（静态分析），输出值的引用。支持 Tree Shaking。是目前的主流方案。
+
+---
+
+### 27.全局作用域中，用const和let声明的变量不在window上，那到底在哪里?
+
+`let` 和 `const` 声明的全局变量不在 `window` 对象上，而是存在一个单独的作用域中——**块级作用域（Script 作用域）**。
+
+在浏览器中，全局作用域分为两层：
+- 顶层是全局对象（window），存放 `var` 和 `function` 声明的全局变量。
+- 第二层是 Script 作用域，存放 `let`、`const` 和 `class` 声明的变量。
+
+```js
+var a = 1
+let b = 2
+const c = 3
+
+console.log(window.a) // 1
+console.log(window.b) // undefined
+console.log(window.c) // undefined
+```
+
+在 Chrome DevTools 的 Scope 面板中可以看到，`b` 和 `c` 存在于 **Script** 作用域中，而 `a` 存在于 **Global** 作用域中。
+
+这样设计的目的是让 `let`/`const` 的块级作用域特性保持一致，同时避免了全局变量的随意挂载和覆盖。
+
+---
+
+### 28.cookie和token都存放在header中，为什么不会劫持token?
+
+**Cookie 容易被劫持的原因**：
+
+1. Cookie 会**自动携带**：浏览器每次发送请求时，如果请求的域名和 Cookie 的 domain/path 匹配，Cookie 会被自动附加到请求头中。这意味着任何对该域名的请求都会携带 Cookie。
+2. **CSRF 攻击**：攻击者可以在第三方网站构造一个请求，浏览器会自动携带目标站点的 Cookie，导致跨站请求伪造攻击。
+
+**Token 不容易被劫持的原因**：
+
+1. **Token 需要手动添加**：Token 通常存储在 `localStorage` 或 `sessionStorage` 中，发送请求时需要手动将 Token 添加到请求头（如 `Authorization: Bearer xxx`）。攻击者的网站无法读取其他域名的 localStorage（受同源策略保护），因此无法获取 Token。
+2. **不受 CSRF 影响**：因为浏览器不会自动在请求中带上 Token，攻击者无法构造一个有效的跨站请求（除非攻击者能获取到 Token 本身）。
+
+**但是，Token 仍然可能被 XSS 攻击窃取**：
+- 如果一个网站存在 XSS 漏洞，攻击者可以通过注入 JavaScript 读取 `localStorage` 中的 Token。
+- **防御方案**：
+  - 对用户输入进行严格的转义和过滤。
+  - 使用 HttpOnly Cookie 存储敏感信息（JavaScript 无法读取）。
+  - 使用 `Content-Security-Policy`（CSP）。
+  - Token 设置短的有效期，配合 Refresh Token 机制。
+
+---
+
+### 29.聊聊Vue的双向数据绑定，Model如何改变View，View又是如何改变Model?
+
+Vue.js 的双向数据绑定基于**数据劫持 + 发布-订阅模式**实现。
+
+**Vue 2.x 的实现原理**：
+
+**Model → View（数据驱动视图）**：
+
+1. 使用 `Object.defineProperty()` 劫持（Observe）对象属性的 getter 和 setter。
+2. 每个组件实例对应一个 Watcher 实例，在组件渲染过程中，会把接触过的数据属性记录为依赖。
+3. 当数据的 setter 触发时，通知（Notify）所有依赖的 Watcher，Watcher 调用 update 方法重新渲染视图（触发 re-render）。
+
+**View → Model（视图更新模型）**：
+
+1. 通过 `v-model` 指令（语法糖）监听表单元素的 `input` / `change` 事件。
+2. 在事件回调中修改对应的数据属性。
+3. 数据变化后通过 setter → Watcher → 更新视图，形成闭环。
+
+**Vue 3.x 的改进**：
+
+使用 `Proxy` 替代 `Object.defineProperty()`：
+
+```js
+const handler = {
+  get(target, key, receiver) {
+    // 依赖收集
+    track(target, key)
+    return Reflect.get(target, key, receiver)
+  },
+  set(target, key, value, receiver) {
+    const oldValue = target[key]
+    Reflect.set(target, key, value, receiver)
+    // 派发更新
+    trigger(target, key)
+    return true
+  }
+}
+const proxy = new Proxy(data, handler)
+```
+
+**Proxy 比 Object.defineProperty 的优势**：
+- 可以监听数组索引和 length 的变化。
+- 可以监听对象属性的添加和删除（`Object.defineProperty` 做不到）。
+- 代理的是整个对象，不需要递归遍历所有属性。
+- 性能更好。
+
+---
 
 ### 30.两个数组合并成一个数组
+
+```js
+let arr1 = [1, 2, 3]
+let arr2 = [4, 5, 6]
+
+// 方法一：concat（不改变原数组）
+let result1 = arr1.concat(arr2) // [1, 2, 3, 4, 5, 6]
+
+// 方法二：展开运算符（ES6）
+let result2 = [...arr1, ...arr2] // [1, 2, 3, 4, 5, 6]
+
+// 方法三：push.apply（改变原数组）
+Array.prototype.push.apply(arr1, arr2) // arr1 变为 [1, 2, 3, 4, 5, 6]
+
+// 方法四：for 循环（逐个 push）
+arr2.forEach(item => arr1.push(item))
+
+// 方法五：Array.from
+let result5 = Array.from([...arr1, ...arr2])
+```
+
+> **推荐**：使用展开运算符 `[...arr1, ...arr2]`，语法简洁，不会改变原数组。
+
+---
 
 ### 31.改造下面的代码，使之输出0 -9，写出你能想到的所有解法。
 
@@ -184,7 +1298,66 @@ for (var i = 0; i < 10; i++>) {
 }
 ```
 
-### 32.virtual DOM真的比操作原生DOM快吗?谈谈你的想法。
+**补充更多解法**：
+
+```js
+// 解法三：使用 bind
+for (var i = 0; i < 10; i++) {
+  setTimeout(function(i) {
+    console.log(i)
+  }.bind(null, i), 1000)
+}
+
+// 解法四：setTimeout 第三个参数
+for (var i = 0; i < 10; i++) {
+  setTimeout(function(i) {
+    console.log(i)
+  }, 1000, i)
+}
+
+// 解法五：使用闭包 + 立即执行函数
+for (var i = 0; i < 10; i++) {
+  (function(i) {
+    setTimeout(function() {
+      console.log(i)
+    }, 1000)
+  })(i)
+}
+
+// 解法六：使用 try...catch（利用 let 的块级作用域）
+for (var i = 0; i < 10; i++) {
+  try { throw i } catch(i) {
+    setTimeout(() => {
+      console.log(i)
+    }, 1000)
+  }
+}
+```
+
+---
+
+### 32.Virtual DOM真的比操作原生DOM快吗?谈谈你的想法。
+
+**并非绝对更快，但有显著优势**：
+
+Virtual DOM 本身并不一定比直接操作原生 DOM 更快。实际上，直接操作 DOM 在理论上是最快的，因为 Virtual DOM 多了一层 diff 计算的开销。
+
+**Virtual DOM 的优势**：
+
+1. **减少 DOM 操作次数**：通过 diff 算法找到最小的变化，批量更新 DOM，避免频繁的 DOM 操作。DOM 操作是昂贵的，真正的性能瓶颈在 DOM 操作本身，而不是 JS 计算。
+
+2. **跨平台**：Virtual DOM 是平台无关的 JavaScript 对象，可以渲染到不同平台（Web、Native、Canvas 等）。
+
+3. **开发体验**：开发者不需要手动管理 DOM 更新，框架自动完成，减少心智负担。手动优化 DOM 操作通常会导致代码复杂且容易出错。
+
+4. **函数式编程**：UI = f(state)。开发者只需关心状态变化，Virtual DOM 确保视图与状态同步。
+
+**总结**：Virtual DOM 的价值不在于"比原生 DOM 更快"，而在于：
+- 在保证可接受的性能的前提下，极大提升了开发体验。
+- 通过批量更新和 diff 策略，避免了手动优化 DOM 的复杂性和出错可能。
+- 对于大多数应用场景，Virtual DOM 的性能已经足够好。
+
+---
 
 ### 33.下面的代码打印什么内容，为什么?
 
@@ -195,6 +1368,22 @@ var b = 10;
   console.log(b);
 })();
 ```
+
+**答案**：打印 `function b() { ... }`（即函数自身）。
+
+**解析**：
+
+1. 命名函数表达式（NFE, Named Function Expression）的函数名 `b` 在函数内部是**只读的**（常量）。
+2. 在函数内部，标识符 `b` 指向函数自身，不能被重新赋值。
+3. `b = 20` 在严格模式下会报错（TypeError），在非严格模式下静默失败。
+4. `console.log(b)` 输出的是函数本身，而不是 20。
+
+**关键点**：
+- 命名函数表达式的名称绑定是不可变的。
+- 这个绑定只存在于函数自身的作用域中，不影响外部作用域。
+- 外部的 `var b = 10` 被函数表达式 `function b()` 覆盖（变量提升），但函数内部的 `b` 指向函数自身。
+
+---
 
 ### 34.简单改造下面的代码，使之分别打印10和20.
 
@@ -224,11 +1413,134 @@ var b = 10;
 })
 ```
 
+---
+
 ### 35.浏览器缓存读取规则
+
+浏览器缓存分为**强缓存**和**协商缓存**两种策略。
+
+**强缓存**（不会向服务器发送请求，直接从缓存中读取）：
+
+1. **Expires**（HTTP/1.0）：指定资源的绝对过期时间。缺点：客户端时间和服务器时间可能不一致。
+2. **Cache-Control**（HTTP/1.1）：优先级高于 Expires。
+   - `max-age=N`：资源在 N 秒内有效，相对时间。
+   - `no-cache`：需要经过协商缓存验证。
+   - `no-store`：不缓存任何内容。
+   - `public`：可以被任何中间人缓存（CDN 等）。
+   - `private`：只能被浏览器缓存。
+   - `immutable`：资源不会改变，永远不需要重新验证。
+
+**协商缓存**（向服务器发送请求，由服务器判断是否使用缓存）：
+
+1. **Last-Modified / If-Modified-Since**：
+   - 服务器返回 `Last-Modified` 头（资源的最后修改时间）。
+   - 下次请求时浏览器带上 `If-Modified-Since`。
+   - 服务器比较时间，若未修改返回 304，否则返回 200 + 新内容。
+   - 缺点：时间是秒级精度，且文件内容可能没变但修改时间变了。
+
+2. **ETag / If-None-Match**（优先级高于 Last-Modified）：
+   - 服务器返回 `ETag` 头（资源的唯一标识，通常是 hash）。
+   - 下次请求时浏览器带上 `If-None-Match`。
+   - 服务器比较 ETag，若匹配返回 304，否则返回 200 + 新内容。
+
+**完整的缓存读取流程**：
+
+1. 浏览器发起请求，先检查强缓存（Cache-Control / Expires）。
+2. 强缓存命中 → 直接从缓存读取（状态码显示 `200 (from disk cache)` 或 `200 (from memory cache)`）。
+3. 强缓存未命中 → 发送请求到服务器，带上协商缓存头（If-None-Match / If-Modified-Since）。
+4. 服务器判断资源是否更新：
+   - 未更新 → 返回 304 Not Modified，浏览器使用缓存。
+   - 已更新 → 返回 200 + 新资源 + 新的缓存头。
+
+---
 
 ### 36.使用迭代的方式实现flatten 函数。
 
-### 37.为什么Vuex的mutation和 Redux的reducer中不能做异步
+```js
+// 使用栈实现（类似深度遍历）
+function flatten(arr) {
+  const result = []
+  const stack = [...arr]
+  
+  while (stack.length) {
+    const item = stack.pop()
+    if (Array.isArray(item)) {
+      stack.push(...item)
+    } else {
+      result.unshift(item)
+    }
+  }
+  
+  return result
+}
+
+// 使用队列实现（类似广度遍历）
+function flattenBFS(arr) {
+  const result = []
+  const queue = [...arr]
+  
+  while (queue.length) {
+    const item = queue.shift()
+    if (Array.isArray(item)) {
+      queue.push(...item)
+    } else {
+      result.push(item)
+    }
+  }
+  
+  return result
+}
+
+// 使用 reduce + 递归判断迭代
+function flattenReduce(arr) {
+  return arr.reduce((prev, cur) => {
+    return prev.concat(Array.isArray(cur) ? flattenReduce(cur) : cur)
+  }, [])
+}
+
+// 支持指定深度的 flatten
+function flattenDepth(arr, depth = 1) {
+  if (depth === 0) return arr
+  const result = []
+  for (let item of arr) {
+    if (Array.isArray(item) && depth > 0) {
+      result.push(...flattenDepth(item, depth - 1))
+    } else {
+      result.push(item)
+    }
+  }
+  return result
+}
+
+// 测试
+const arr = [1, [2, [3, [4]]]]
+console.log(flatten(arr)) // [1, 2, 3, 4]
+console.log(flattenBFS(arr)) // [1, 2, 3, 4]
+console.log(flattenDepth(arr, 1)) // [1, 2, [3, [4]]]
+console.log(flattenDepth(arr, 2)) // [1, 2, 3, [4]]
+```
+
+---
+
+### 37.为什么Vuex的mutation和Redux的reducer中不能做异步操作?
+
+**Vuex Mutation 必须是同步的原因**：
+
+1. **状态追踪**：Vuex 要求 Mutation 必须是同步函数，是因为当 Mutation 触发时，DevTools 需要捕捉到前一状态和后一状态的快照。如果 Mutation 中有异步操作，DevTools 将无法准确记录状态变更的时间点，导致状态追踪不可预测。
+2. **可调试性**：任何状态的改变都应该在 Mutation 中完成，并且是可追踪的。异步操作放在 Action 中，Action 提交 Mutation，这样状态的每次变化都有迹可循。
+3. **设计理念**：Mutation 是改变状态的唯一途径，应该简单、可预测。异步操作本身不改变状态，改变状态的是异步操作完成后提交的 Mutation。
+
+**Redux Reducer 必须是纯函数（不能做异步）的原因**：
+
+1. **纯函数的要求**：Reducer 必须是纯函数——给定相同的输入，永远返回相同的输出。异步操作的结果取决于网络、时间等外部因素，破坏了纯函数的特性。
+2. **时间旅行调试**：Redux DevTools 支持撤销/重做，依赖于 Reducer 的确定性。如果 Reducer 中有异步操作，状态的回滚和重放将不可靠。
+3. **状态可预测性**：Redux 的核心原则之一是保证状态变化的可预测性。
+
+**正确做法**：
+- Vuex：在 Action 中处理异步，完成后通过 `commit` 触发 Mutation。
+- Redux：使用中间件（redux-thunk、redux-saga、redux-observable）处理异步。
+
+---
 
 ### 38.下面代码中a在什么情况下会打印1?
 
@@ -264,9 +1576,141 @@ if (a == 1 && a == 2 && a == 4) {
 }
 ```
 
+**补充更多解法**：
+
+```js
+// 解法三：使用 valueOf
+var a = {
+  i: 1,
+  valueOf() {
+    return this.i++
+  }
+}
+
+// 解法四：使用 Symbol.toPrimitive
+var a = {
+  i: 1,
+  [Symbol.toPrimitive]() {
+    return this.i++
+  }
+}
+
+// 解法五：使用 defineProperty + get
+var i = 1
+Object.defineProperty(window, 'a', {
+  get() {
+    return i++
+  }
+})
+```
+
+**原理**：`==` 运算符在比较时，如果一边是对象，会调用对象的 `toString()` / `valueOf()` / `[Symbol.toPrimitive]()` 方法进行类型转换。利用这个特性，每次比较时返回递增的值即可。
+
+---
+
 ### 39.介绍下BFC及其应用。
 
-### 40.在Vue中，子组件为何不可以修改父组件传递的Prop
+**BFC（Block Formatting Context，块级格式化上下文）** 是 CSS 布局中的一个独立渲染区域，容器内的元素布局不会影响外部元素，外部元素的布局也不会影响 BFC 内部。
+
+**触发 BFC 的条件**：
+
+1. `float` 不为 `none`
+2. `position` 为 `absolute` 或 `fixed`
+3. `overflow` 不为 `visible`（如 `auto`、`hidden`、`scroll`）
+4. `display` 为 `inline-block`、`table-cell`、`table-caption`、`flex`、`inline-flex`、`grid`、`inline-grid`、`flow-root`
+5. `contain` 为 `layout`、`content`、`paint`
+6. 根元素（`<html>`）
+
+**BFC 的特性（布局规则）**：
+
+1. 内部的 Box 会在垂直方向一个接一个放置。
+2. 同一个 BFC 中两个相邻的 Box 的 margin 会发生重叠（margin collapse）。
+3. 每个元素的左外边距与包含块的左边界相接触（从左到右），即使浮动元素也是如此。
+4. BFC 的区域不会与 float box 重叠。
+5. BFC 可以包含浮动的子元素（清除浮动）。
+6. 计算 BFC 高度时，浮动元素也参与计算。
+
+**BFC 的应用场景**：
+
+1. **解决外边距折叠（margin collapse）**：将元素放入不同的 BFC 中。
+
+```css
+.container { overflow: hidden; }
+.child { margin: 20px 0; }
+```
+
+2. **清除浮动（父元素塌陷）**：
+
+```css
+.parent { overflow: hidden; } /* 触发 BFC */
+```
+
+3. **防止文字环绕浮动元素（自适应两栏布局）**：
+
+```css
+.left { float: left; width: 200px; }
+.right { overflow: hidden; } /* 触发 BFC，不会与 float 重叠 */
+```
+
+4. **使用 `display: flow-root` 创建 BFC**（无副作用的现代方案）：
+
+```css
+.container { display: flow-root; }
+```
+
+---
+
+### 40.在Vue中，子组件为何不可以修改父组件传递的Prop?
+
+**单向数据流原则**：
+
+Vue 遵循单向数据流原则，父组件通过 Props 向子组件传递数据，数据只能从父组件流向子组件，不能反向修改。
+
+**为什么不能直接修改**：
+
+1. **数据流清晰可追踪**：如果子组件可以直接修改 Props，当数据出现问题时，很难定位数据是从哪里被修改的。保持单向数据流使组件的数据流转更加清晰和可预测。
+
+2. **防止组件间的隐式耦合**：如果子组件可以修改 Props，会导致父组件的数据被意外修改，使组件间的耦合变得不可控。
+
+3. **保证渲染一致性**：父组件的 Props 发生变化时，子组件会自动重新渲染。如果子组件自己也修改 Props，可能导致父子组件状态不一致。
+
+**正确做法**：
+
+1. **子组件需要转换 Props 的值**：使用计算属性。
+
+```js
+props: ['size'],
+computed: {
+  normalizedSize() {
+    return this.size.trim().toLowerCase()
+  }
+}
+```
+
+2. **子组件需要修改 Props 的值（触发父组件更新）**：通过事件通知父组件。
+
+```js
+// 子组件
+this.$emit('update:value', newValue)
+
+// 父组件
+<Child :value="value" @update:value="value = $event" />
+// 或使用 .sync 修饰符（Vue 2.x）/ v-model（Vue 3.x）
+<Child v-model:value="value" />
+```
+
+3. **子组件以 Props 的初始值作为本地数据**：在 data 中定义本地变量。
+
+```js
+props: ['initialValue'],
+data() {
+  return {
+    localValue: this.initialValue
+  }
+}
+```
+
+---
 
 ### 41.下面代码输出什么
 
@@ -282,6 +1726,27 @@ var a = 10;
 })()
 ```
 
+**答案**：
+
+```
+undefined
+10
+20
+```
+
+**解析**：
+
+1. `var a` 在函数内部被提升（hoisting），所以函数内部有自己的变量 `a`，初始值为 `undefined`。
+2. 第一个 `console.log(a)` 输出 `undefined`（函数内部的 `a` 已声明但未初始化）。
+3. `a = 5` 将函数内部的 `a` 赋值为 5（不影响全局的 `a`）。
+4. `console.log(window.a)` 输出全局的 `a`（即 10）。
+5. `var a = 20` 将函数内部的 `a` 赋值为 20。
+6. `console.log(a)` 输出函数内部的 `a`（即 20）。
+
+**核心知识点**：变量提升 + 作用域链。函数内部的 `var a` 被提升到函数顶部，所以函数内的 `a` 指向的是局部变量，而不是全局的 `window.a`。
+
+---
+
 ### 42.实现一个 sleep函数
 
 比如 sleep(1000) 意味着等待 1000 毫秒，可从 Promise、Generator、Async/Await等角度实现
@@ -292,27 +1757,313 @@ const sleep = (time) => {
 }
 ```
 
-### 43.使用`sort()`对数组`[3,15,8,29,102,22]`进行排序，
+**补充更多实现方式**：
+
+```js
+// 1. Promise（最常用）
+const sleep = (time) => {
+  return new Promise(resolve => setTimeout(resolve, time))
+}
+
+// 使用
+sleep(1000).then(() => {
+  console.log('1秒后执行')
+})
+
+// async/await 中使用
+async function test() {
+  console.log('开始')
+  await sleep(2000)
+  console.log('2秒后执行')
+}
+
+// 2. Generator
+function* sleep(time) {
+  yield new Promise(resolve => setTimeout(resolve, time))
+}
+
+// 使用 Generator
+const gen = sleep(1000)
+gen.next().value.then(() => {
+  console.log('1秒后执行')
+})
+
+// 3. 回调函数方式
+function sleep(time, callback) {
+  setTimeout(callback, time)
+}
+
+sleep(1000, () => {
+  console.log('1秒后执行')
+})
+```
+
+---
+
+### 43.使用`sort()`对数组`[3,15,8,29,102,22]`进行排序
+
+**问题**：如果直接调用 `sort()`，会将元素转换为字符串进行排序，按照 Unicode 码点排序。
+
+```js
+[3, 15, 8, 29, 102, 22].sort()
+// 结果：[102, 15, 22, 29, 3, 8] （注意：不是按数字大小排序！）
+```
+
+**正确做法**：
+
+```js
+const arr = [3, 15, 8, 29, 102, 22]
+
+// 升序
+arr.sort((a, b) => a - b)
+// 结果：[3, 8, 15, 22, 29, 102]
+
+// 降序
+arr.sort((a, b) => b - a)
+// 结果：[102, 29, 22, 15, 8, 3]
+```
+
+**V8 引擎中的 sort 实现**：
+
+在 V8 7.0 之前，对于数组长度 ≤ 10 使用插入排序，长度 > 10 使用快速排序。V8 7.0+ 后改用 Timsort（一种稳定的排序算法，时间复杂度 O(n log n)，对于部分有序的数组效率更高）。
+
+---
 
 ### 44.介绍HTTPS握手过程
 
-### 45.HTTPS 握手过程中，客户端如何验证证书的合法性
+HTTPS = HTTP + SSL/TLS，通过 SSL/TLS 协议对数据进行加密传输。
+
+**TLS 握手过程（以 TLS 1.2 为例，简化版）**：
+
+**1. Client Hello**
+- 客户端发送支持的 TLS 版本、支持的加密套件列表（Cipher Suites）、一个随机数（Client Random）。
+
+**2. Server Hello**
+- 服务器返回：选定的 TLS 版本、选定的加密套件、一个随机数（Server Random）、服务器证书（包含公钥）。
+
+**3. 客户端验证证书**
+- 验证证书的合法性（颁发机构、域名、有效期等）。
+- 生成 Premaster Secret（预主密钥），用服务器的公钥加密后发送给服务器。
+
+**4. 服务器解密**
+- 服务器用私钥解密 Premaster Secret。
+
+**5. 生成会话密钥**
+- 客户端和服务器各自使用 Client Random + Server Random + Premaster Secret 通过 PRF（伪随机函数）生成相同的会话密钥（Session Key）。
+
+**6. 完成握手**
+- 客户端发送 Finished 消息（用会话密钥加密），通知服务器加密通信开始。
+- 服务器发送 Finished 消息（用会话密钥加密），通知客户端加密通信开始。
+
+**7. 加密通信**
+- 之后的数据传输使用对称加密（会话密钥），效率更高。
+
+**TLS 1.3 的改进**：
+- 握手从 2-RTT 减少到 1-RTT。
+- 移除了不安全的加密算法。
+- 支持 0-RTT 模式（复用之前的会话）。
+
+---
+
+### 45.HTTPS握手过程中，客户端如何验证证书的合法性
+
+客户端验证服务器证书的完整流程：
+
+**1. 证书链验证**：
+- 检查证书是否由受信任的 CA（证书颁发机构）签发。
+- 验证证书链：服务器证书 → 中间 CA 证书 → 根 CA 证书。
+- 根 CA 证书预置在操作系统/浏览器中，是信任锚点。
+
+**2. 证书签名验证**：
+- CA 使用自己的私钥对证书内容（TBS, To Be Signed）进行签名，生成签名值。
+- 客户端使用 CA 的公钥验证签名，确保证书内容未被篡改。
+
+**3. 证书有效期检查**：
+- 检查当前时间是否在证书的 `Not Before` 和 `Not After` 之间。
+- 如果证书过期，浏览器会显示安全警告。
+
+**4. 域名匹配验证**：
+- 检查请求的域名是否与证书中的 `CN`（Common Name）或 `SAN`（Subject Alternative Name，主题备用名称）匹配。
+- 现代浏览器主要检查 SAN。
+
+**5. 证书吊销状态检查**：
+- **CRL（Certificate Revocation List）**：证书吊销列表，由 CA 定期发布。缺点：更新不及时，文件较大。
+- **OCSP（Online Certificate Status Protocol）**：在线证书状态协议，实时查询证书状态。缺点：暴露用户访问隐私。
+- **OCSP Stapling**：服务器预先获取 OCSP 响应并在握手时附带，客户端无需自己查询，解决了隐私和性能问题。
+
+**6. 其他检查**：
+- 证书用途检查（Extended Key Usage）。
+- 是否为 EV（Extended Validation）证书。
+
+---
 
 ### 46.输出以下代码执行的结果并解释为什么
 
+**以下代码**：
+
+```js
+Promise.resolve().then(() => {
+  console.log(0)
+  return Promise.resolve(4)
+}).then((res) => {
+  console.log(res)
+})
+
+Promise.resolve().then(() => {
+  console.log(1)
+}).then(() => {
+  console.log(2)
+}).then(() => {
+  console.log(3)
+}).then(() => {
+  console.log(5)
+}).then(() => {
+  console.log(6)
+})
 ```
-// TODO
-```
+
+**答案**：`0 1 2 3 4 5 6`
+
+**解析**：
+
+1. 第一个微任务：打印 `0`，返回 `Promise.resolve(4)`。
+2. 注意：`return Promise.resolve(4)` 会产生**额外的两次微任务**（Promise 的 resolve 展开机制）。第一个 `.then` 的回调需要等待这个 Promise 完成。
+3. 第二个微任务：打印 `1`，并把第二个 `.then` 放入微任务队列。
+4. 依次打印 `2`、`3`。
+5. 然后 `4` 被打印（因为 `Promise.resolve(4)` 的展开完成）。
+6. 最后打印 `5`、`6`。
+
+> 注：该题在不同 Promise 实现中可能存在差异。核心考察的是 `Promise.resolve()` 嵌套时的微任务调度机制。
+
+---
 
 ### 47.双向绑定和vuex是否冲突
 
+**不冲突。**
+
+Vuex 遵循单向数据流，而 Vue 的双向绑定（v-model）是组件级别的语法糖。两者可以共存，但需要注意使用方式。
+
+**在 Vuex 的严格模式下**：
+- Vuex 的状态只能通过 Mutation 来修改。
+- 如果直接使用 `v-model` 绑定 Vuex 中的 State，相当于直接修改 State，会在严格模式下抛出错误。
+
+**解决方案**：
+
+1. **使用 computed + get/set**：
+
+```html
+<input v-model="message">
+```
+
+```js
+computed: {
+  message: {
+    get() {
+      return this.$store.state.message
+    },
+    set(value) {
+      this.$store.commit('updateMessage', value)
+    }
+  }
+}
+```
+
+2. **使用 `v-bind` + `@input` 替代  `v-model`**：
+
+```html
+<input :value="message" @input="updateMessage">
+```
+
+```js
+methods: {
+  updateMessage(e) {
+    this.$store.commit('updateMessage', e.target.value)
+  }
+}
+```
+
+3. **使用 Vuex 的 `mapState` + `mapMutations`**：
+
+```js
+computed: {
+  ...mapState(['message'])
+},
+methods: {
+  ...mapMutations(['updateMessage'])
+}
+```
+
+---
+
 ### 48.call和apply的区别是什么，哪个性能更好一些
+
+**区别**：
+
+- **`call`**：接受参数列表：`fn.call(thisArg, arg1, arg2, arg3, ...)`
+- **`apply`**：接受参数数组：`fn.apply(thisArg, [arg1, arg2, arg3])`
+
+```js
+function greet(greeting, punctuation) {
+  console.log(greeting + ', ' + this.name + punctuation)
+}
+
+const person = { name: 'Tom' }
+
+greet.call(person, 'Hello', '!')    // Hello, Tom!
+greet.apply(person, ['Hi', '!!'])   // Hi, Tom!!
+```
+
+**性能比较**：
+
+`call` 的性能通常**优于** `apply`（尤其是在参数数量较多时）。因为 `apply` 需要处理数组（或类数组对象）的解包过程，而 `call` 直接接收展开的参数列表。
+
+当参数数量超过 3 个时，`call` 的性能优势更加明显。
+
+**ES6 中的替代方案**：使用展开运算符可以替代 `apply`：
+
+```js
+// 旧写法
+Math.max.apply(null, [1, 2, 3]) // 3
+
+// 新写法
+Math.max(...[1, 2, 3]) // 3
+Math.max.call(null, ...[1, 2, 3]) // 3
+```
+
+**使用场景建议**：
+- 参数已知 → 用 `call`。
+- 参数是数组 → 用 `apply`（或用 ES6 展开运算符 `...` 配合 `call`）。
+- 使用展开运算符可读性更好，ES6+ 推荐使用 `...`。
+
+---
 
 ### 49.为什么通常在发送数据埋点请求的时候使用的是1x1像素的透明gif图片?
 
 1. 没有跨域问题，一般这种上报数据，代码要写通用的；（排除 ajax）
 2. 不会阻塞页面加载，影响用户的体验，只要 new Image 对象就好了；（排除 JS/CSS 文件资源方式上报）
 3. 在所有图片中，体积最小；（比较 PNG/JPG）
+
+**补充详细原因**：
+
+1. **跨域友好**：`<img>` 标签天然支持跨域，不受同源策略限制。不需要服务器配置 CORS。
+
+2. **不会阻塞页面**：图片加载是异步的，不会阻塞页面渲染和其他资源加载。也不需要插入 DOM，只需要创建 Image 对象即可。
+
+3. **体积最小**：1×1 像素的 GIF 是所有图片格式中最小的（约 43 字节），比 PNG（约 67 字节）、BMP 都要小。
+
+4. **兼容性好**：所有浏览器都支持 Image 对象和 GIF 格式，即使是最老的浏览器。
+
+5. **对页面无视觉影响**：1×1 像素的透明 GIF 对用户完全不可见。
+
+6. **无需处理响应**：和 JSONP 不同，不需要处理服务器返回的数据，也不需要担心 XSS 安全问题。
+
+**实现示例**：
+
+```js
+new Image().src = 'https://analytics.example.com/pv.gif?page=home&ts=' + Date.now()
+```
+
+---
 
 ### 50.实现(5).add(3).minus(2)功能
 
@@ -328,21 +2079,500 @@ Number.prototype.minus = function(n) {
 };
 ```
 
+**补充更完善的实现**：
+
+```js
+// 基础实现
+Number.prototype.add = function(n) {
+  return this.valueOf() + n
+}
+
+Number.prototype.minus = function(n) {
+  return this.valueOf() - n
+}
+
+// 链式调用实现（扩展更多方法）
+Number.prototype.add = function(n) {
+  return this.valueOf() + n
+}
+
+Number.prototype.minus = function(n) {
+  return this.valueOf() - n
+}
+
+Number.prototype.multiply = function(n) {
+  return this.valueOf() * n
+}
+
+Number.prototype.divide = function(n) {
+  return this.valueOf() / n
+}
+
+console.log((5).add(3).minus(2)) // 6
+console.log((10).add(5).multiply(2).minus(4).divide(2)) // 13
+```
+
+**注意**：`5.add(3)` 会报语法错误，因为 JavaScript 引擎会将 `5.` 解析为小数点。需要使用 `(5).add(3)` 或 `5..add(3)`。
+
+---
+
 ### 51.JavaScript有哪七种内置数据类型?
+
+JavaScript 共有 **8 种**数据类型（ES2020+），分为**基本类型**和**引用类型**：
+
+**基本类型（7 种）**：
+
+1. **`string`**：字符串类型
+2. **`number`**：数值类型（整数和浮点数，以及 `NaN` 和 `Infinity`）
+3. **`boolean`**：布尔类型（`true` / `false`）
+4. **`null`**：空值（`typeof null === 'object'`，这是一个历史遗留 bug）
+5. **`undefined`**：未定义
+6. **`symbol`**（ES6）：表示唯一且不可变的值
+7. **`bigint`**（ES2020）：可以表示任意大的整数
+
+**引用类型（1 种）**：
+
+8. **`object`**：对象类型，包括普通对象、数组、函数、Date、RegExp 等。
+
+**为什么 `typeof null === 'object'`？**
+这是 JavaScript 第一版的历史遗留问题。在底层实现中，类型标签存储在二进制的前几位。对象的类型标签是 `000`，而 `null` 被表示为全零（即 `000`），因此被错误地识别为对象。
+
+---
 
 ### 52.JavaScript类型判断，常用的方法有哪些？它们之间的区别和联系?
 
+**1. `typeof`**
+
+```js
+typeof 'hello'   // 'string'
+typeof 123       // 'number'
+typeof true      // 'boolean'
+typeof undefined // 'undefined'
+typeof Symbol()  // 'symbol'
+typeof 123n      // 'bigint'
+typeof {}        // 'object'
+typeof []        // 'object'（无法区分数组）
+typeof null      // 'object'（历史遗留 bug）
+typeof function(){} // 'function'
+```
+
+- **优点**：快速判断基本类型。
+- **缺点**：无法区分 `null`、数组和普通对象。
+
+**2. `instanceof`**
+
+```js
+[] instanceof Array       // true
+{} instanceof Object      // true
+new Date() instanceof Date // true
+```
+
+- **原理**：检测构造函数的 `prototype` 是否出现在实例对象的原型链上。
+- **优点**：可以判断引用类型。
+- **缺点**：无法跨 iframe（不同窗口的 `Array` 不是同一个构造函数），且基本类型无法使用（`'str' instanceof String` → `false`）。
+
+**3. `Object.prototype.toString.call()`**
+
+```js
+Object.prototype.toString.call('hello')    // '[object String]'
+Object.prototype.toString.call(123)        // '[object Number]'
+Object.prototype.toString.call(true)       // '[object Boolean]'
+Object.prototype.toString.call(null)       // '[object Null]'
+Object.prototype.toString.call(undefined)  // '[object Undefined]'
+Object.prototype.toString.call(Symbol())   // '[object Symbol]'
+Object.prototype.toString.call(123n)       // '[object BigInt]'
+Object.prototype.toString.call({})         // '[object Object]'
+Object.prototype.toString.call([])         // '[object Array]'
+Object.prototype.toString.call(new Date()) // '[object Date]'
+Object.prototype.toString.call(function(){}) // '[object Function]'
+```
+
+- **优点**：最可靠的方法，可以准确判断所有内置类型。
+- **缺点**：写法较繁琐，无法区分自定义类的实例。
+
+**4. `constructor`**
+
+```js
+[].constructor === Array  // true
+(1).constructor === Number // true
+```
+
+- **优点**：简洁。
+- **缺点**：`constructor` 可以被修改，`null` 和 `undefined` 会报错。
+
+**总结**：
+| 方法 | 适用场景 |
+|------|---------|
+| `typeof` | 判断基本类型（除 null） |
+| `instanceof` | 判断引用类型，检查原型链 |
+| `Object.prototype.toString.call()` | 最通用的精确判断 |
+| `Array.isArray()` | 专门判断数组 |
+
+---
+
 ### 53.instanceof是做什么的,能用代码实现一个instanceof吗？
+
+`instanceof` 用于检测构造函数的 `prototype` 属性是否出现在某个实例对象的原型链上。
+
+**手写实现**：
+
+```js
+function myInstanceof(instance, constructor) {
+  // 基本类型直接返回 false
+  if (typeof instance !== 'object' || instance === null) return false
+  
+  // 获取实例的原型
+  let proto = Object.getPrototypeOf(instance)
+  // 或者使用 proto = instance.__proto__
+  
+  // 沿原型链向上查找
+  while (proto) {
+    // 找到了构造函数的 prototype
+    if (proto === constructor.prototype) return true
+    // 继续向上查找
+    proto = Object.getPrototypeOf(proto)
+  }
+  
+  return false
+}
+
+// 测试
+console.log(myInstanceof([], Array))      // true
+console.log(myInstanceof([], Object))     // true
+console.log(myInstanceof({}, Array))      // false
+console.log(myInstanceof(null, Object))   // false
+console.log(myInstanceof(123, Number))    // false
+
+function Person() {}
+const p = new Person()
+console.log(myInstanceof(p, Person))      // true
+console.log(myInstanceof(p, Object))      // true
+```
+
+**注意**：`Object.prototype.isPrototypeOf()` 方法与 `instanceof` 行为类似：
+
+```js
+Array.prototype.isPrototypeOf([]) // true
+```
+
+---
 
 ### 54.如果在浏览器中使用原生ES模块方案，需要在标签上添加什么属性？
 
+需要在 `<script>` 标签上添加 **`type="module"`** 属性。
+
+```html
+<!-- 导入模块 -->
+<script type="module">
+  import { foo } from './module.js'
+  console.log(foo)
+</script>
+
+<!-- 或者引入外部模块文件 -->
+<script type="module" src="./main.js"></script>
+```
+
+**ES 模块的特性**：
+
+1. **默认是严格模式**（`'use strict'`），无需手动声明。
+2. **作用域隔离**：模块内的变量不会污染全局作用域。
+3. **延迟执行（defer）**：`<script type="module">` 默认行为类似于 `<script defer>`，即等 HTML 文档解析完成后才执行。
+4. **CORS 限制**：模块脚本必须遵守同源策略（除非服务器设置了 CORS 头）。
+5. **只执行一次**：同一个模块即使被多次导入，也只会执行一次。
+
+**动态导入**：
+
+```js
+// 动态导入（返回 Promise）
+import('./module.js').then(module => {
+  module.doSomething()
+})
+
+// 配合 async/await
+const module = await import('./module.js')
+```
+
+**与普通 script 的对比**：
+
+| 特性 | 普通 script | ES Module |
+|------|------------|-----------|
+| 类型属性 | 无 / `text/javascript` | `type="module"` |
+| 严格模式 | 需手动声明 | 默认 |
+| 作用域 | 全局 | 模块内 |
+| 执行时机 | 同步 | 默认 defer |
+| 跨域 | 无限制 | CORS 限制 |
+
+---
+
 ### 55.对JavaScript模块化的发展有什么看法
+
+JavaScript 从最初的无模块，到如今的 ES Modules，模块化经历了一个从社区驱动到标准化的演进过程，这对前端工程化的推动是巨大的：
+
+**1. 解决的核心问题**：
+- 命名冲突和全局污染 → 模块作用域隔离。
+- 依赖管理混乱 → 显式的导入/导出声明。
+- 代码组织和复用 → 按功能拆分模块。
+
+**2. 标准化是关键转折**：
+- ES Modules 作为官方标准，统一了浏览器和 Node.js 的模块体系。
+- 编译时静态分析使得 Tree Shaking、代码分割（Code Splitting）成为可能。
+
+**3. 现状**：
+- ES Modules 已成为事实标准，现代构建工具（Webpack、Vite、Rollup、esbuild）都基于它构建。
+- CommonJS 在 Node.js 生态中仍广泛使用，但 npm 包越来越多地同时提供 ESM 和 CJS 双格式。
+
+**4. 未来趋势**：
+- 越来越多的库迁移到 ESM-only。
+- 浏览器原生支持 import maps，减少对打包工具的依赖。
+- 模块联邦（Module Federation）等新技术推动微前端发展。
+
+---
 
 ### 56.模块化对于"循环引用"的处理有什么不同的表现吗？
 
+**循环引用**（Circular Dependency）：模块 A 依赖模块 B，模块 B 也依赖模块 A，形成循环。
+
+**CommonJS 的处理**：
+
+CommonJS 遇到循环引用时，会返回**当前已执行部分的导出值**（即不完整版本），而不是等待模块完全加载。
+
+```js
+// a.js
+exports.done = false
+const b = require('./b.js')
+console.log('在 a 中, b.done =', b.done)
+exports.done = true
+console.log('a 执行完毕')
+
+// b.js
+exports.done = false
+const a = require('./a.js')
+console.log('在 b 中, a.done =', a.done) // 输出 false（a 还没执行完）
+exports.done = true
+console.log('b 执行完毕')
+
+// main.js
+const a = require('./a.js')
+console.log('a.done =', a.done) // true
+```
+
+- `require` 是运行时的，遇到时立即执行并返回。
+- 循环引用时返回的是不完整的模块导出。
+
+**ES Modules 的处理**：
+
+ES Modules 通过**静态分析 + 动态绑定**（Live Bindings）来处理循环引用。import 的变量是对导出模块的"实时引用"，会随着导出值的变化而更新。
+
+```js
+// a.mjs
+import { b } from './b.mjs'
+console.log('a 中, b =', b)
+export const a = 'a 的值'
+console.log('a 执行完毕')
+
+// b.mjs
+import { a } from './a.mjs'
+console.log('b 中, a =', a) // undefined（a 还没被赋值）
+export const b = 'b 的值'
+console.log('b 执行完毕')
+```
+
+- ES Modules 的 import 是声明式的（静态提升），在模块顶层，import 声明会被提升并先于模块代码执行。
+- 导出是动态绑定的（live bindings），外部导入的值会随着模块内部值的变化而变化。
+
+**关键区别**：
+
+| | CommonJS | ES Modules |
+|---|---|---|
+| 加载时机 | 运行时，遇到 `require` 时加载 | 编译时确定依赖，按深度优先加载 |
+| 导出绑定 | 值的拷贝 | 值的引用（Live Binding） |
+| 循环引用 | 返回不完整的导出 | `import` 被提升，可能拿到 undefined |
+
+**最佳实践**：尽量避免循环引用。如果确实需要，可以：
+- 抽离公共模块，打破循环。
+- 将 import 移到函数内部进行动态导入。
+
+---
+
 ### 57.ES模块化导出有哪两种方式？建议使用哪种？为什么？
+
+**两种导出方式**：
+
+**1. 命名导出（Named Export）**
+
+```js
+// 逐个导出
+export const name = 'hello'
+export function foo() {}
+export class Bar {}
+
+// 批量导出
+const name = 'hello'
+function foo() {}
+export { name, foo }
+```
+
+**导入命名导出**：
+
+```js
+import { name, foo } from './module.js'
+import * as Module from './module.js' // 导入所有，作为命名空间对象
+```
+
+**2. 默认导出（Default Export）**
+
+```js
+// 导出一个函数
+export default function() {}
+
+// 导出一个类
+export default class {}
+
+// 导出一个对象
+const obj = { name: 'hello', foo: () => {} }
+export default obj
+```
+
+**导入默认导出**：
+
+```js
+import foo from './module.js' // 可以任意命名
+import foo, { name } from './module.js' // 同时导入默认和命名导出
+```
+
+**推荐使用命名导出（Named Export）**：
+
+**原因**：
+
+1. **更好的自动补全和 IDE 支持**：命名导出时，IDE 可以精确提示可导出的变量名。
+2. **Tree Shaking 更高效**：打包工具（如 Webpack、Rollup）可以更容易地分析哪些导出被使用了，从而剔除未使用的代码。默认导出（特别是导出整个对象时）很难进行 Tree Shaking。
+3. **重构更安全**：重命名导出时，所有引用处都会同步更新（通过 IDE 重构工具）。默认导出导入时可以任意命名，重构容易遗漏。
+4. **语义更清晰**：命名导出让使用者明确知道导入了什么，增强了代码的可读性。
+5. **与 CommonJS 互操作更友好**：`import * as` 与 `module.exports` 的互操作更直观。
+
+**默认导出适用场景**：
+- 模块只有一个主要功能（如组件文件中的默认组件导出）。
+- 保持某些框架的约定（如 Next.js 页面组件）。
+
+---
 
 ### 58.全局环境下的this，箭头函数的this，构造函数的this等，各自是什么？
 
+**1. 全局环境下的 this**
+
+```js
+// 浏览器
+console.log(this) // window
+
+// Node.js 模块
+console.log(this) // module.exports（空对象 {}）
+
+// Node.js 全局环境（非模块）
+console.log(this) // global
+```
+
+**2. 普通函数中的 this**
+
+```js
+function fn() {
+  console.log(this)
+}
+fn() // 严格模式：undefined，非严格模式：window（浏览器）/ global（Node.js）
+```
+
+**3. 箭头函数中的 this**
+
+箭头函数没有自己的 `this`，它继承自**定义时所在的外部作用域**的 `this`（词法作用域）。
+
+```js
+const obj = {
+  name: 'obj',
+  fn: function() {
+    const arrow = () => {
+      console.log(this.name) // this 继承自 fn 的 this
+    }
+    arrow()
+  }
+}
+obj.fn() // 'obj'
+```
+
+箭头函数的 `this` 一旦绑定，无法通过 `call`/`apply`/`bind` 改变。
+
+```js
+const arrow = () => console.log(this)
+arrow.call({ name: 'obj' }) // window（无法改变）
+```
+
+**4. 构造函数中的 this**
+
+通过 `new` 调用构造函数时，`this` 指向**新创建的实例对象**。
+
+```js
+function Person(name) {
+  this.name = name // this 指向新创建的实例
+}
+const p = new Person('Tom')
+console.log(p.name) // 'Tom'
+```
+
+**5. 对象方法中的 this**
+
+```js
+const obj = {
+  name: 'obj',
+  fn() {
+    console.log(this.name) // this 指向调用方法的对象
+  }
+}
+obj.fn() // 'obj'
+
+const fn = obj.fn
+fn() // undefined（严格模式），this 丢失
+```
+
+**6. 事件处理函数中的 this**
+
+```js
+// 普通函数：this 指向绑定事件的元素
+button.addEventListener('click', function() {
+  console.log(this) // button 元素
+})
+
+// 箭头函数：this 指向外部作用域
+button.addEventListener('click', () => {
+  console.log(this) // window
+})
+```
+
+**7. call/apply/bind 绑定的 this**
+
+```js
+function fn() {
+  console.log(this.name)
+}
+fn.call({ name: 'call' }) // 'call'
+fn.apply({ name: 'apply' }) // 'apply'
+const bound = fn.bind({ name: 'bind' })
+bound() // 'bind'
+```
+
+---
+
 ### 59.请用一句话总结this的指向
+
+**this 的指向取决于函数的调用方式，而不是定义方式。**
+
+具体遵循以下优先级（从高到低）：
+
+1. **new 绑定**：通过 `new` 调用，`this` 指向新创建的实例。
+2. **显式绑定**：通过 `call`、`apply`、`bind` 调用，`this` 指向指定的对象。
+3. **隐式绑定**：作为对象的方法调用，`this` 指向调用该方法的对象。
+4. **默认绑定**：直接调用函数，严格模式下 `this` 为 `undefined`，非严格模式下为全局对象（浏览器中的 `window`）。
+
+**特例**：箭头函数没有自己的 `this`，它继承定义时外层作用域的 `this`，且无法被 `call`/`apply`/`bind` 改变。
+
+记忆口诀：**"谁调用就指向谁，箭头函数看定义。"**
+
+---
 

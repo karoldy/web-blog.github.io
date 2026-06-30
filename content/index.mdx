@@ -2,99 +2,184 @@
 
 一句真理，没有什么是一个中间件解决不了的，有的话就再加一个中间件
 
-## 页面适配
+---
 
-为了在移动端让页面获得更好的现实效果, 我们必须让布局视口、视觉视口都尽可能等于理想视口。我们可以借助`<meta>`元素的viewport来帮助我们设置视口、缩放等
+## Windows 使用 U 盘启动盘重装系统教程
 
-```html showLineNumbers copy
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
->
-```
+### 一、准备工作
 
-参数解释:
+#### 1. 备份重要数据
 
+重装系统会清空系统盘（通常是 C 盘），**请务必备份以下内容**：
 
-|width=device-width|布局视口的宽度等于当前设备视口的宽度|
-|:---|:---|
-|initial-scale|初始的缩放比列(默认设置为1.0)|
-|minimum-scale|允许用户缩放的最小比例(默认设置为1.0)|
-|maximum-scale|允许用户缩放的最大比列(默认设置为1.0)|
-|user-scalable|用户是否可以手动缩放(默认设置为no,因为我们不希望用户放大缩小页面)|
+- 桌面文件、文档、图片、下载等个人文件
+- 浏览器书签、密码（建议同步到账号或导出）
+- 聊天记录（微信、QQ 等，注意迁移到非系统盘）
+- 开发相关：SSH 密钥、Git 配置、IDE 配置文件
+- 驱动备份（网卡驱动尤其重要，否则重装后可能无法上网）
+
+> 建议直接拷贝到移动硬盘或非系统盘（D 盘 / E 盘），重装时**只格式化 C 盘**即可。
+
+#### 2. 准备工具
+
+| 工具 | 说明 |
+|------|------|
+| 一个 8GB 以上的 U 盘 | U 盘会被格式化，请提前备份 U 盘数据 |
+| Windows 官方 ISO 镜像 | 从 [Microsoft 官网](https://www.microsoft.com/zh-cn/software-download/windows11) 或 [MSDN 我告诉你](https://next.itellyou.cn/) 下载 |
+| 启动盘制作工具 | 推荐 **Ventoy**（最简单）或 **Rufus**（功能全面） |
+
+#### 3. 制作启动 U 盘
+
+**方式一：Ventoy（推荐，最简单）**
+
+1. 下载 [Ventoy](https://www.ventoy.net/) 并安装到 U 盘（点击「安装」，U 盘会被格式化）
+2. 安装完成后，U 盘会变成一个普通可读写盘
+3. 直接把下载好的 Windows ISO 镜像文件**复制粘贴**到 U 盘里即可
+4. 完成！U 盘就变成了启动盘
+
+> Ventoy 的优点：不需要每次都重新制作，以后换系统只需要替换 ISO 文件，U 盘剩余空间还能正常存文件。
+
+**方式二：Rufus（Windows 上制作）**
+
+1. 下载 [Rufus](https://rufus.ie/) 并打开
+2. 设备选择你的 U 盘
+3. 点击「选择」，找到下载好的 ISO 镜像
+4. 分区方案根据你的电脑选择：
+   - 较新的电脑（UEFI）→ 选 **GPT**
+   - 老旧电脑（Legacy BIOS）→ 选 **MBR**（不确定就选这个）
+5. 点击「开始」，等待写入完成
 
 ---
 
-## shell脚本更新分支标签
+### 二、进入 BIOS/UEFI 设置启动项
 
-```bash showLineNumbers copy
-# !/bin/bash
+制作好启动盘后，需要让电脑从 U 盘启动：
 
-echo "please input your tag name: "
+| 电脑品牌 | 进入 BIOS 的快捷键 |
+|----------|-------------------|
+| 联想 / ThinkPad | `F2` 或 `Fn + F2` |
+| 华硕 ASUS / ROG | `F2` 或 `Delete` |
+| 戴尔 Dell | `F2` 或 `F12` |
+| 惠普 HP | `F10` 或 `Esc` |
+| 宏碁 Acer | `F2` |
+| 微星 MSI | `Delete` |
+| 华为 MateBook | `F2` |
+| 小米 | `F2` |
+| 神舟 / 机械革命 | `F2` 或 `F7` |
+| 台式机组装机 | `Delete`（最通用） |
 
-read TAG_NAME
+**操作步骤：**
 
-git tag -d  ${TAG_NAME}
+1. 关机状态下插入制作好的 U 盘
+2. 开机，**立刻反复按**对应的快捷键（不要等出现 Windows logo）
+3. 进入 BIOS 后找到 **Boot（启动）** 选项卡
+4. 将 U 盘（通常显示为 USB 开头或 U 盘品牌名）调整到第一启动项
+5. 按 `F10` 保存并退出，电脑会自动重启进入 U 盘
 
-git tag ${TAG_NAME}
-
-git push origin --delete tag ${TAG_NAME}
-
-git push origin ${TAG_NAME}
-```
-
----
-
-## linux批量修改文件名
-
-```bash showLineNumbers copy
-# !/bin/bash
-
-i=1
-
-for file in *.mkv
-
-do
-
-mv "$file" "Coffee.Cat.Mama.2013.EP$i.1080P.WEB-DL.H264.AAC-Huawei.mkv"
-
-let i++
-
-done
-```
+> **快捷方式**：很多电脑支持启动快捷键（如 F12），可以直接选择从哪个设备启动，不需要进 BIOS 改启动顺序。
 
 ---
 
-## 简易的暴力攻击尝试破解rar加密
+### 三、安装 Windows
 
-```python showLineNumbers copy
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+从 U 盘启动后，你会看到 Windows 安装界面：
 
-import os,sys
-from unrar import rarfile
+#### 1. 选择语言和键盘布局
 
-def rar_attack(file_name, passwords):
-  # 打开rar文件
-  file_handle = rarfile.RarFile(file_name)
-  # 加载密码字典
-  handle_password = open(passwords)
-  for pwd in handle_password:
-    pwd = pwd.rstrip()
-    try:
-      file_handle.extractall(path='test', pwd=pwd.encode())
-      print('Found:'+pwd)
-      break
-    except:
-      pass
-  handle_password.close()
-  file_handle.close()
+- 语言：**中文（简体）**
+- 时间和货币格式：**中文（简体，中国）**
+- 键盘：**微软拼音**
+- 点击「下一步」→「现在安装」
 
-if __name__=='__main__':
-  file_name = sys.argv[1]
-  passwords = '/path/passwords.txt'
-  if os.path.isfile(file_name) and file_name.endswith('.rar'):
-    rar_attack(file_name, passwords)
-  else:
-    print('Not RAR')
+#### 2. 激活 Windows
+
+- 有产品密钥就输入
+- 没有的话点击「**我没有产品密钥**」，安装后再激活
+
+#### 3. 选择系统版本
+
+- 家庭用户选 **Windows 11/10 家庭版**
+- 专业用户选 **Windows 11/10 专业版**（推荐）
+
+#### 4. 选择安装类型
+
+**一定要选「自定义：仅安装 Windows（高级）」**，不要选「升级」！
+
+#### 5. 分区操作（关键步骤）
+
+你会看到硬盘的分区列表：
+
+- **如果只想重装系统**：选择原来的 C 盘所在分区 → 点击「格式化」→ 选中该分区 → 「下一步」
+- **如果想彻底清理**：删除所有分区，重新创建：
+  1. 逐个删除所有分区，直到只剩一个「未分配的空间」
+  2. 选中未分配空间 → 点击「新建」→ 设置大小（1GB = 1024MB，建议 C 盘至少 150GB）
+  3. 系统会自动创建额外的恢复分区和 EFI 分区，这是正常的，点确认即可
+  4. 选中最主要的大分区 → 点击「格式化」→ 格式化完成后选中该分区 → 「下一步」
+  5. **注意**：只需要格式化大分区，系统分区和恢复分区（通常为"系统"、"MSR"、"恢复"等）**不要操作**
+
+> ⚠️ **删除分区会丢失该分区上的所有数据**，请确认已经备份！
+
+#### 6. 等待安装
+
+系统会自动复制文件、安装功能、安装更新，期间会重启几次。**重启时拔掉 U 盘**，否则会再次进入安装界面。
+
+---
+
+### 四、初始化设置
+
+安装完成后进入 OOBE（开箱体验）设置：
+
+1. **选择地区**：中国
+2. **键盘布局**：微软拼音
+3. **网络连接**：
+   - 有网线 → 直接插上
+   - 连 Wi-Fi → 选择你的 Wi-Fi 网络
+
+4. **跳过微软账户登录（Win11）**：
+   - Win11 默认强制要求微软账户登录
+   - **跳过方法**：在网络连接界面按 `Shift + F10` 打开命令提示符，输入 `OOBE\BYPASSNRO` 回车，电脑会重启，再次到网络界面时就会出现「我没有 Internet 连接」选项，点击即可创建本地账户
+
+5. **隐私设置**：建议全部关闭，到系统里再按需开启
+
+---
+
+### 五、装完系统后必做的事
+
+#### 1. 安装驱动
+
+- **联网后 Windows 会自动安装大部分驱动**（等待 10-30 分钟）
+- 显卡驱动建议手动安装：
+  - NVIDIA：[nvidia.cn](https://www.nvidia.cn/)
+  - AMD：[amd.com](https://www.amd.com/)
+  - Intel 核显：Windows 更新会自动安装
+- 品牌笔记本可以去官网下载专属驱动（触控板、快捷键、电源管理等）
+
+#### 2. 激活 Windows
+
+以管理员身份打开 PowerShell，执行以下命令：
+
+```powershell
+irm massgrave.dev/get.ps1 | iex
 ```
+
+or
+
+```powershell
+irm https://get.activated.win | iex
+```
+
+[参考](https://zhuanlan.zhihu.com/p/21955874829)
+
+按提示选择激活方式即可。
+
+#### 3. 安装常用软件
+
+```
+浏览器：Chrome / Edge
+压缩工具：7-Zip / Bandizip
+输入法：系统自带微软拼音即可
+开发工具：VS Code / Git / Node.js 等
+聊天：微信 / QQ / Telegram
+办公：Office / WPS
+```
+

@@ -6,13 +6,40 @@ export default {
     },
     "display": "hidden"
   },
-  "blog": "笔记",
-  "interview": "面试题",
-  "collection": "前端面试题合集",
-  "company": "企业真题",
-  "summary": "面试总结",
-  "web_high_interview": "前端(高级)面试体系手册",
-  "project": "项目",
-  "library": "工具库",
-  "markdown": "Markdown"
+  "blog": {
+    "title": "笔记",
+    "display": "hidden"
+  },
+  "interview": {
+    "title": "面试题",
+    "display": "hidden"
+  },
+  "collection": {
+    "title": "前端面试题合集",
+    "display": "hidden"
+  },
+  "company": {
+    "title": "企业真题",
+    "display": "hidden"
+  },
+  "summary": {
+    "title": "面试总结",
+    "display": "hidden"
+  },
+  "web_high_interview": {
+    "title": "前端(高级)面试体系手册",
+    "display": "hidden"
+  },
+  "project": {
+    "title": "项目",
+    "display": "hidden"
+  },
+  "library": {
+    "title": "工具库",
+    "display": "hidden"
+  },
+  "markdown": {
+    "title": "Markdown",
+    "display": "hidden"
+  }
 }
