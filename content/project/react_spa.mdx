@@ -13,6 +13,39 @@
 - zod/yup
 - dayjs
 
+## 项目架构
+
+```
+my-project/
+├── index.html            # 入口
+├── .storybook/           # Storybook 配置
+├── stories/              # Storybook 故事
+├── mocks/                # 模拟数据
+├── src/
+│   ├── assets/           # 静态资源
+│   ├── components/       # 组件
+│   │   ├── atoms/        # 原子组件
+│   │   ├── molecules/    # 分子组件
+│   │   ├── organisms/    # 组织组件
+│   │   ├── layouts/      # 布局组件
+│   │   ├── templates/    # 模板组件
+│   ├── features/         # 功能模块
+|   |   ├── pages/        # 页面
+│   │   ├── services/     # 业务服务
+│   │   ├── hooks/        # 业务钩子
+│   │   ├── types/        # 业务类型定义
+│   │   ├── utils/        # 业务工具函数
+|   ├── lib/              # 库
+│   ├── hooks/            # 钩子
+│   ├── routes/           # 路由
+│   ├── stores/           # 状态管理
+│   ├── styles/           # 样式
+│   ├── types/            # 类型定义
+│   ├── utils/            # 工具函数
+│   ├── app.tsx           # App
+│   ├── main.tsx          # 入口
+```
+
 ## `.release-it.json`
 
 ```json
@@ -84,3 +117,4 @@
   }
 }
 ```
+

@@ -3,5 +3,6 @@
   "react_spa": "React SPA 项目",
   "react_ssr": "React SSR 项目",
   "vue3_spa": "Vue SPA 项目",
-  "vue3_ssr": "Vue SSR 项目"
+  "vue3_ssr": "Vue SSR 项目",
+  "monorepo": "全栈方案: Monorepo 架构"
 }
