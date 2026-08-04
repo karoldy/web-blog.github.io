@@ -1,0 +1,18 @@
+export default {
+  "common": "公共库",
+  "monorepo": "全栈方案: Monorepo 架构",
+  "react_spa": "React SPA 项目",
+  "react_ssr": "React SSR 项目",
+  "react_native": "React Native 项目",
+  "vue3_spa": "Vue SPA 项目",
+  "vue3_ssr": "Vue SSR 项目",
+  // "vue_native": "Vue Native 项目",
+  // "flutter": "Flutter 项目",
+  // "uniapp": "UniApp 项目",
+  // "taro": "Taro 项目",
+  // "wechat_miniprogram": "微信小程序项目",
+  // "alipay_miniprogram": "支付宝小程序项目",
+  // "baidu_miniprogram": "百度小程序项目",
+  // "toutiao_miniprogram": "头条小程序项目",
+  // "kuaishou_miniprogram": "快手小程序项目",
+}
