@@ -1,4 +1,5 @@
 export default {
+  "docs": "项目文档树",
   "common": "公共库",
   "monorepo": "全栈方案: Monorepo 架构",
   "react_spa": "React SPA 项目",
