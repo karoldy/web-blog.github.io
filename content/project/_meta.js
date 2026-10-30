@@ -7,6 +7,8 @@ export default {
   "react_native": "React Native 项目",
   "vue3_spa": "Vue SPA 项目",
   "vue3_ssr": "Vue SSR 项目",
+  "turbo_web": "项目体系",
+  "pocket_learning_assistant": "掌上学习助手"
   // "vue_native": "Vue Native 项目",
   // "flutter": "Flutter 项目",
   // "uniapp": "UniApp 项目",

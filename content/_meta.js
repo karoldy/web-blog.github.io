@@ -6,6 +6,9 @@ export default {
     },
     "display": "hidden"
   },
+  "vim": {
+    "title": "Vim"
+  },
   "blog": {
     "title": "笔记",
     // "display": "hidden"
