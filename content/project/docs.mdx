@@ -1,0 +1,67 @@
+# 项目文档树
+
+> 💡 导读：一个规范的项目脚手架，除了代码，还需要一套清晰的文档体系。本文给出推荐的文档结构 —— 从协作规范 `AGENTS.md` 到架构、组件、开发、部署的全链路文档，让开发者（尤其让 AI Agent）拿到项目就能快速理解约定、保持一致，避免重复沟通与返工。
+
+## 📁 目录结构
+
+```
+<project-name>
+├── AGENTS.md                    # 项目协作与 AI Agent 代码开发规范
+├── README.md                    # 项目简介、技术栈和快速开始说明
+├── DESIGN.md                    # 官网视觉风格、布局与交互设计规范
+├── CHANGELOG.md                 # 项目版本更新记录
+├── TODO.md                      # 项目开发计划和当前进度
+├── skills/                      # Skill
+│
+└── docs/
+    ├── PROJECT_SPEC.md          # 项目定位、产品目标和功能范围
+    ├── ARCHITECTURE.md          # 项目技术架构、目录结构和模块依赖
+    ├── COMPONENT_GUIDELINES.md  # 组件 API、样式、依赖、测试和无障碍规范
+    ├── PAGE_STRUCTURE.md        # 网站页面及组件详情页的结构说明
+    ├── DEVELOPMENT.md           # 项目开发、测试和组件发布流程
+    ├── REGISTRY.md              # 组件构建、注册、校验和分发机制
+    └── DEPLOYMENT.md            # 项目构建、部署与 Cloudflare 发布说明
+```
+
+## 📋 文档职责一览
+
+| 文档 | 回答的问题 | 一句话职责 |
+| :--- | :--- | :--- |
+| `AGENTS.md` | 怎么协作、怎么写代码 | 规定 AI Agent 在项目里应遵守的协作与编码规则 |
+| `README.md` | 项目是什么 | 一句话介绍项目、技术栈、如何快速启动运行 |
+| `DESIGN.md` | 产品长什么样 | 定义视觉风格、布局与交互规范 |
+| `docs/PROJECT_SPEC.md` | 为什么做、做什么 | 明确项目定位、产品目标与功能范围（Scope） |
+| `docs/ARCHITECTURE.md` | 技术上怎么实现 | 说明架构选型、目录组织与模块依赖关系 |
+| `docs/COMPONENT_GUIDELINES.md` | 组件怎么写 | 约束组件 API、样式、依赖、测试与无障碍（a11y） |
+| `docs/PAGE_STRUCTURE.md` | 页面由什么组成 | 描述页面由哪些区域、哪些组件构成 |
+| `docs/DEVELOPMENT.md` | 从开发到发布怎么走 | 定义开发、测试、Review、发布一整套流程 |
+| `docs/REGISTRY.md` | 组件如何被复用 | 说明组件的构建、注册、校验与分发机制 |
+| `docs/DEPLOYMENT.md` | 如何上线 | 说明构建方式与 Cloudflare 部署发布流程 |
+| `TODO.md` | 接下来做什么 | 记录当前计划、待办与进行中的任务 |
+| `CHANGELOG.md` | 过去做了哪些 | 按版本记录已发布的变更 |
+
+## 🧩 各文档内容速查
+
+一份合格的文档，除了"讲清楚"，还要让读者能**照着执行**。每个文件建议包含：
+
+- **`AGENTS.md`（最重要）**：项目技术栈总览、目录约定、编码风格、命名规范、禁止事项、测试要求，以及"遇到 X 做什么"的规则。它是 AI 协作者的行为准则。
+- **`README.md`**：项目简介 + 环境要求 + `安装 → 启动 → 测试 → 构建` 的最小命令序列。
+- **`DESIGN.md`**：配色、字体、间距、圆角、栅格、暗色模式等设计 Tokens，配简单示例说明。
+- **`docs/PROJECT_SPEC.md`**：一句话定位、目标用户、核心功能清单、非目标（明确不做什么）、验收标准。
+- **`docs/ARCHITECTURE.md`**：技术选型及理由、目录树、核心数据流/模块依赖图、关键约定。
+- **`docs/COMPONENT_GUIDELINES.md`**：组件 Props/API 规范、命名约定、样式方案、测试与无障碍要求、提交前的自检清单。
+- **`docs/PAGE_STRUCTURE.md`**：站点有哪些页面、每页的分区布局、复用哪些组件、路由结构。
+- **`docs/DEVELOPMENT.md`**：环境准备、分支规范、Code Review 流程、测试命令、组件发布步骤。
+- **`docs/REGISTRY.md`**：组件构建产物格式、如何注册到组件库、校验规则、如何被消费者分发引用。
+- **`docs/DEPLOYMENT.md`**：构建命令、产物、环境变量、Cloudflare 配置、发布步骤与回滚方式。
+- **`TODO.md`**：`待办 / 进行中 / 已完成` 分组，含优先级与预计工作量。
+- **`CHANGELOG.md`**：按 [Keep a Changelog](https://keepachangelog.com/zh-CN/) 约定，`Added / Changed / Fixed` 分组版本记录。
+
+## 🤖 与 AI Agent 协作
+
+这套文档体系的点睛之作是根目录的 `AGENTS.md`。
+
+- 把 `PROJECT_SPEC`、`ARCHITECTURE`、`COMPONENT_GUIDELINES` 中的关键约定，摘要进 `AGENTS.md`，AI 每次编码前都会读到，从而一次写对、少走弯路。
+- `TODO.md` + `CHANGELOG.md` 让 AI 知道"当前做到哪、下一步是什么"，可以自主推进而非反复追问。
+- 让 AI 直接在项目里生成/维护这套文档：初始脚手架可自动产出 README + 目录树，之后随开发持续更新，保持文档与代码同步。
+ 

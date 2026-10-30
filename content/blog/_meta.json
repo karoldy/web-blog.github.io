@@ -16,6 +16,7 @@
   "vite": "Vite",
   "applet": "微信小程序",
   "hybrid": "混合开发",
+  "flutter": "Flutter",
   "http": "Http",
   "linux": "Linux",
   "nodejs": "NodeJS",

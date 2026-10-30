@@ -1,0 +1,30 @@
+# 从零搭建Flutter项目
+
+## 架构设计与分层理念
+
+优秀的框架首先是“解耦”的。我们采用经典的三层架构设计思想，确保模块之间职责单一
+
+1. **数据层 (Data Layer)**： 负责网络请求（Dio）、本地存储（Isar/Shared Preferences）以及底层数据的封装与转换。
+2. **领域/业务层 (Domain/Business Layer)**： 处理纯业务逻辑，通常由状态管理组件（如 Bloc/Riverpod）承载，不关心 UI 的具体呈现。
+3. **表现层 (Presentation Layer)**： 纯 UI 渲染，包含 Page、Widget、主题样式与国际化配置。
+
+## 科学的目录结构 (Project Structure)
+
+```
+lib/
+├── app/                 # 应用全局配置
+│   ├── config/          # 全局常量、环境配置 (Env)
+│   ├── routes/          # 路由管理 (go_router)
+│   └── theme/           # 皮肤、主题、字体样式
+├── core/                # 核心公共基础模块 (与业务无关)
+│   ├── http/            # 网络请求二次封装 (Dio)
+│   ├── storage/         # 本地缓存 (Preferences/Database)
+│   └── utils/           # 工具类 (Log, Extension, Toast)
+├── features/            # 业务功能模块 (按业务分包)
+│   ├── auth/            # 登录/注册模块
+│   │   ├── data/        # 鉴权数据源
+│   │   ├── logic/       # 鉴权业务逻辑 (Provider/Bloc)
+│   │   └── views/       # 登录界面 UI
+│   └── home/            # 首页模块
+└── main.dart            # 应用入口
+```

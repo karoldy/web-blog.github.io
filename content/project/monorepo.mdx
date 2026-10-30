@@ -1,0 +1,116 @@
+# 全栈方案: Monorepo 架构
+
+> 💡 导读：经过深入调研和对比，本文整理了一套适用于企业级项目的完整技术栈方案。覆盖 Web、Admin、Mobile 三个端，核心优势是“大而全”，帮助项目打牢底层架构，避免后续重复重构。
+
+## 🤖 AI 项目初始化提示词
+
+> 📌 提示：可直接复制以下 Prompt 发送给 AI 工具（如 Cursor / Claude / ChatGPT），一键帮你自动生成 Monorepo 基础脚手架。
+
+```
+请帮我初始化一个 Monorepo 项目，结构如下：
+
+my-project/
+├── apps/
+│   ├── web/              # 前端 (Next.js 或 Vite + React)
+│   ├── admin/            # 管理后台 (Vite + React + Arco Design)
+│   ├── mobile/           # 移动端 (Expo + React Native)
+│   └── server/           # NestJS API 后端
+├── shared-types/         # 共享类型定义
+└── turbo.json
+```
+
+技术栈要求：
+- 后端：NestJS + Drizzle ORM + Better Auth + @nestjs/schedule + @nestjs/websockets + Stripe
+- 前端构建：Vite / Next.js
+- Web UI：Tailwind + shadcn/ui
+- Admin UI：Arco Design
+- 移动端：Expo + React Native
+- i18n：react-i18next (前端) + nestjs-i18n (后端)
+- 状态管理：TanStack Query + Zustand
+
+请执行以下步骤：
+1. 初始化 pnpm workspace + turbo
+2. 创建 NestJS server，安装上述依赖
+3. 创建 web 前端
+4. 创建 admin 管理后台
+5. 创建 mobile 移动端
+6. 创建 shared-types 共享类型
+7. 配置 CORS、数据库连接、环境变量
+
+端口：server=3000, web=3001, admin=3002, mobile=8081
+
+## 🏗️ 推荐架构
+
+整体采用 Turborepo + pnpm workspace 组织 Monorepo，实现类型共享与极速构建：
+
+## ⚡ 核心技术选型
+
+|模块|推荐方案|说明|
+|:---|:---|:---|
+|后端框架|NestJS|企业级架构，模块化、依赖注入、原生支持微服务|
+|移动端|Expo + React Native|跨平台 iOS/Android，一套代码多端运行|
+|ORM|Drizzle / Prisma|Drizzle 轻量极速高性能，Prisma 上手容易|
+|Auth 认证|Better Auth|官方支持 NestJS 集成，开箱即用的 Auth 方案|
+|前端构建|TypeScript|TypeScript 类型定义，提供静态类型检查和代码提示|
+|前端框架|React|视图层基石，生态庞大，人才储备丰富(AI友好)|
+|Web UI|Tailwind + shadcn/ui|现代 CSS 框架 + 高度自由定制的组件库|
+|Admin UI|Arco Design|字节开源企业级 UI，内置完整 Admin 生态|
+|状态管理|TanStack Query + Zustand|Query 负责服务端缓存，Zustand 管理客户端状态|
+|国际化 (i18n)|react-i18next (前端)/nestjs-i18n (后端)|前后端全链路国际化支持|
+|支付|Stripe|国际标准支付方案，开发者友好|
+|实时通信|@nestjs/websockets|框架原生 WebSocket 机制|
+|定时任务|@nestjs/schedule|原生 Cron 装饰器支持|
+
+## 🔍 核心模块详解
+
+###  1️⃣ ORM：为什么首推 Drizzle？
+
+Drizzle 示例代码：
+
+```ts
+// schema.ts - Schema 即类型
+import { pgTable, serial, text, integer } from'drizzle-orm/pg-core';
+
+exportconst users = pgTable('users', {
+id: serial('id').primaryKey(),
+name: text('name').notNull(),
+email: text('email').notNull().unique(),
+});
+
+// 类型自动生成
+type User = typeof users.$inferSelect;
+```
+
+### 2️⃣ Auth 认证：Better Auth 集成
+
+Better Auth 已提供对 NestJS 的官方支持，集成开箱即用：
+
+```bash
+npm install better-auth nestjs-better-auth
+```
+
+代码示例：
+
+
+```ts
+// main.ts
+app.use(bodyParser.json()); // 禁用默认 body parser
+
+// app.module.ts
+import { AuthModule } from"nestjs-better-auth";
+
+@Module({
+imports: [AuthModule],
+})
+exportclassAppModule {}
+
+// 路由保护
+@Controller('posts')
+exportclassPostsController {
+@Get()
+@UseGuards(AuthGuard) // 全局守卫，所有路由受保护
+getPosts(@Session() session: Session) {
+// session.user 包含当前登录用户信息
+  }
+}
+```
